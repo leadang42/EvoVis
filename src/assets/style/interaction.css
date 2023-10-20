@@ -1,0 +1,86 @@
+/* Circle Buttons */
+.circle-btn {
+    height: 50px;
+    width: 50px;
+    background-color: var(--background-color); /* Blue background */
+    padding-block: 0px;
+    padding-inline: 0px;
+    padding: 0;
+    margin: 4px;
+    cursor: pointer; /* Mouse pointer on hover */
+    border: solid; 
+    border-color: #FFFFFF;
+    border-width: 3px;
+    border-radius: 50%; 
+    text-align: center;
+}
+
+.circle-btn:hover {
+    background-color: var(--accent-color);
+}
+
+/* Metric Buttons */
+.metric-btn {
+    height: 50px;
+    width: 50px;
+    background-color: var(--background-color); /* Blue background */
+    padding: 0;
+    margin: 4px;
+    cursor: pointer; /* Mouse pointer on hover */
+    border: none; 
+    border-width: 3px;
+    border-radius: 15px; 
+    text-align: center;
+}
+
+.metric-btn:hover {
+    background-color: var(--accent-color);
+}
+
+/* Circle Select */
+.circle-select{
+    display: inline-block;
+    vertical-align: middle;
+    margin:4px;
+    position: absolute;
+    top: 15px;
+}
+  
+.mantine-Select-input{
+    font-family: var(--font-family);
+    background-color: var(--background-color);
+    border-radius: 50px; 
+    min-height: 50px;
+    min-width: 480px;
+    border: 3px solid #FFFFFF;
+    display: inline-block;
+}
+
+.mantine-Select-input:focus{ /* Type without icon */
+    border-color: var(--accent-color);
+}
+
+.mantine-Input-withIcon:focus{ /* Type with icon */
+    border-color: var(--accent-color);
+}
+
+.mantine-Select-dropdown{
+    font-family: var(--font-family);
+    background-color: var(--background-color);
+    border-radius: 20px; 
+    min-height: 50px;
+    border: 3px solid #FFFFFF;
+    display: inline-block;
+}
+
+.mantine-12zgr9[data-selected] {
+    font-family: var(--font-family);
+    background-color: var(--accent-color);
+    border-radius: 15px;
+}
+
+/* Label visibilties */
+label[for="run-select"] {
+    height: 0px;
+    display: none;
+}

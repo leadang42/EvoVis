@@ -1,0 +1,55 @@
+/* Basic elements */
+body {
+    background-color:var(--background-color);
+    padding: 1rem 1rem;
+    margin: 0;
+}
+
+#page-content {
+    background-color: var(--background-color);
+    padding: 1rem 1rem;
+    margin: 0;   
+}
+
+.wrapper {
+    margin-right: auto; 
+    margin-left:  auto; 
+    max-width: 2000px;
+    padding-top: 10px;
+    padding-right: 10px;
+    padding-left:  10px;
+    padding-bottom: 10px;
+    background-color: var(--background-color);
+    vertical-align: top;
+}
+
+.wrapper-col {
+    margin-right: auto; 
+    margin-left:  auto; 
+    max-width: 2000px;
+    padding-top: 10px;
+    padding-right: 10px;
+    padding-left:  10px;
+    padding-bottom: 10px;
+    background-color: var(--background-color);
+    display: inline-block;
+    vertical-align: top;
+}
+
+/* Navigation */
+
+#navbar {
+    display: flex;
+    justify-content: space-between; /* Aligns the left and right divs at opposite ends */
+    align-items: center; /* Vertically center the divs within the container */
+}
+
+#navrun {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+#navlinks {
+    display: inline-block;
+    vertical-align: middle;
+}

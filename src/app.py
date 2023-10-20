@@ -1,62 +1,56 @@
 import dash
-import dash_bootstrap_components as dbc
-from dash import Input, Output, dcc, html
-from styles import PAGE_STYLE, SIDEBAR_STYLE
+from dash import dcc, html, Input, Output, callback
+from dash_iconify import DashIconify
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
-from dash_iconify import DashIconify
+from utils import runs
 
-app = dash.Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.FLATLY]) 
+app = dash.Dash(__name__, use_pages=True)
 
-#sidebar = html.Div(
-#    [
-#        html.H3("EvoNAS", className="display-4"),
-#        html.Hr(),
-#       #html.P( "A simple sidebar layout with navigation links", className="lead" ),
-#        dbc.Nav(
-#            [
-#                dbc.NavLink("Hyperparameter",  href=dash.page_registry['pages.hyperparameters']['relative_path'], active="exact"),
-#                dbc.NavLink("Genepool", href=dash.page_registry['pages.genepool']['relative_path'], active="exact"),
-#                dbc.NavLink("Results", href=dash.page_registry['pages.results']['relative_path'], active="exact"),
-#                dbc.NavLink("Family Tree", href=dash.page_registry['pages.family_tree']['relative_path'], active="exact"),
-#            ],
-#            vertical=True,
-#            pills=True,
-#        ),
-#    ],
-#    style=SIDEBAR_STYLE,
-#)
-
-navbar = dbc.NavbarSimple(
-    children=[
-        dmc.NavLink(
-            label="",
-            icon=DashIconify(icon="mdi:github", height=25, color="#c2c7d0"),
-            href="#",
-            
-        ),
-        #dmc.NavLink(dbc.NavLink(" ", href="#", icon=DashIconify(icon="mdi:github", height=16, color="#c2c7d0"))),
-        dbc.DropdownMenu(
-            children=[
-                dbc.DropdownMenuItem("More pages", header=True),
-                dbc.DropdownMenuItem("Hyperparameter",  href=dash.page_registry['pages.hyperparameters']['relative_path']),
-                dbc.DropdownMenuItem("Genepool", href=dash.page_registry['pages.genepool']['relative_path']),
-                dbc.DropdownMenuItem("Results", href=dash.page_registry['pages.results']['relative_path']),
-                dbc.DropdownMenuItem("Family Tree", href=dash.page_registry['pages.family_tree']['relative_path']),
+# Navigation bar with run select and navigation items
+navbar = html.Div(
+    [
+        html.Div(
+            [   
+                html.A(children=html.Img(src="assets/media/evonas-logo.png", height="50px"), href=dash.page_registry['pages.hyperparameters']['relative_path']),
+                dmc.Select(
+                    label="Select run",
+                    placeholder="Select run",
+                    icon=DashIconify(icon="mdi:run", height=20, width=20, color="#6173E9"),
+                    data=[{"value":run, "label":run.replace("_", " ")} for run in runs()],
+                    id="run-select",
+                    className="circle-select",
+                ),
             ],
-            nav=True,
-            in_navbar=True,
-            label="More",
+            id="navrun"
         ),
+        html.Div(
+            [
+                html.A(html.Button(children=DashIconify(icon="bi:github", height=25, width=25, color="#000000"), className="circle-btn", id="github-link"), href="https://github.com/leadang42/EvoNAS-Dashboard.git", target="_blank"),
+                html.A(html.Button(children=DashIconify(icon="tabler:math-function", height=25, width=25, color="#000000"), className="circle-btn", id="hyperparameter-link"), href=dash.page_registry['pages.hyperparameters']['relative_path']),
+                html.A(html.Button(children=DashIconify(icon="tabler:dna", height=25, width=25, color="#000000"), className="circle-btn", id="genepool-link"), href=dash.page_registry['pages.genepool']['relative_path']),
+                html.A(html.Button(children=DashIconify(icon="simple-line-icons:graph", height=25, width=25,color="#000000"), className="circle-btn", id="results-link"), href=dash.page_registry['pages.results']['relative_path']),
+                html.A(html.Button(children=DashIconify(icon="grommet-icons:graph-ql", height=25, width=25, color="#000000"), className="circle-btn", id="family-tree-link"), href=dash.page_registry['pages.family_tree']['relative_path']),
+            ],
+            id="navlinks",
+        )    
     ],
-    brand="NavbarSimple",
-    brand_href="#",
-    color="primary",
-    dark=True,
+    id="navbar",
 )
 
-page = html.Div([dash.page_container], id="page-content", style=PAGE_STYLE)
-app.layout = html.Div([dcc.Location(id="url"), navbar, page])
+# Store run in callback
+@callback(
+    output=Output("run-value", "data"), 
+    inputs=Input("run-select", "value")
+)
+def new_item(value):
+    return value
+
+# Pages from multipage
+page = html.Div([ dash.page_container], id="page-content")
+
+# Page Layout with navbar and pages from multipage
+app.layout = html.Div([dcc.Location(id="url"), dcc.Store(id="run-value"), navbar, page])
 
 if __name__ == "__main__":
     app.run(debug=True)
