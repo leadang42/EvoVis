@@ -3,7 +3,7 @@ from dash import dcc, html, Input, Output, callback
 from dash_iconify import DashIconify
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
-from utils import runs
+from utils import get_runs
 
 app = dash.Dash(__name__, use_pages=True)
 
@@ -17,7 +17,7 @@ navbar = html.Div(
                     label="Select run",
                     placeholder="Select run",
                     icon=DashIconify(icon="mdi:run", height=20, width=20, color="#6173E9"),
-                    data=[{"value":run, "label":run.replace("_", " ")} for run in runs()],
+                    data=[{"value":run, "label":run.replace("_", " ")} for run in get_runs()],
                     id="run-select",
                     className="circle-select",
                 ),
