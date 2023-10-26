@@ -13,15 +13,47 @@ col1b = html.Div([ ], className="wrapper-col")
 first_row = html.Div([ col1a ], className="wrapper")
 
 # Body
-elements = get_family_tree(run, 5, "important_chital", None)
+individual = 'important_chital'
+elements, roots = get_family_tree(run, 5, individual, range(2, 6))
+
+cytoscape_stylesheet = [
+    {
+        'selector': 'node',
+        'style': {
+            'background-color': '#6173E9',
+            'content': 'data(label)',
+        }
+    },
+    {
+        'selector': 'edge',
+        'style': {
+            'line-color': '#6173E9',
+        }
+    }, 
+    {
+        'selector': 'label',
+        'style': {
+            'color': '#6173E9',
+            'text-background-color': '#FFFFF3',
+        }
+    },
+    {
+        'selector': f'[id = "{individual}"]',
+        'style': {
+            'background-color': '#8BC267',
+            'content': 'data(label)'
+        }
+    },
+]
 
 cytoscape = cyto.Cytoscape(
-    id='cytoscape-layout-1',
+    id='cytoscape-family-tree',
     elements=elements,
-    style={'width': '100%', 'height': '800px'},
+    style={'width': '100%', 'height': '550px'},
+    stylesheet=cytoscape_stylesheet,
     layout={
         'name': 'breadthfirst',
-        'roots': '[id = "hal"]'
+        'roots': roots
     }
 )
 

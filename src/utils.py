@@ -2,6 +2,7 @@ import pandas as pd
 import os
 
 ### READ HELPERS ###
+
 def remove_comments(text):
     """Removes comments from a string"""
 
@@ -28,6 +29,7 @@ def txt_to_eval(filepath):
 
 
 ### NAMES OF DIRECTORIES ###
+
 def get_runs():
     """Get all available runs"""
     run_path = f"../data"
@@ -85,8 +87,9 @@ def get_individual_power_measurements(run, generation, individual):
 
 
 ### INDIVIDUALS INFORMATION ###
+
 def get_individuals_of_generation(run, generation, value="name"):
-    """List of individuals' "names" or dict of "results", "chromosomes" or "power_measurements" for one generation"""
+    """List of individuals' "names" or dict or list of "results", "chromosomes" or "power_measurements" for one generation"""
 
     items = os.listdir(f"../data/{run}/Generation_{generation}")
     individuals_names = [item for item in items if os.path.isdir(os.path.join(f"../data/{run}/Generation_{generation}", item))]
@@ -106,7 +109,7 @@ def get_individuals_of_generation(run, generation, value="name"):
 
         elif value == "power_measurements":
             individual_dict[individual] = get_individual_power_measurements(run, generation, individual)
-            
+    
     return individual_dict
 
 
@@ -114,23 +117,39 @@ def get_individuals(run, generation_range=None, value="name", as_generation_dict
     """List of individuals' "names", "results", "chromosomes" or "power_measurements" for generation range"""
 
     generation_range = range(1, len(get_generations(run)) + 1) if generation_range is None else generation_range
-
-    if as_generation_dict:
     
+    if as_generation_dict:
         generations = {}
 
         for generation in generation_range:
             generations[generation] = get_individuals_of_generation(run, generation, value)
-
+    
         return generations
-
-    else:
+    
+    else: 
         individuals = []
 
         for generation in generation_range:
-            individuals += get_individuals_of_generation(run, generation, value)
+
+            individuals += list(get_individuals_of_generation(run, generation, value).values())
+            print(list(get_individuals_of_generation(run, generation, value).values()))
 
         return individuals
+    
+
+def get_number_of_genes(run, generation, genename):
+    """Outputs number of genes in a certain generation"""
+    chromosomes = get_individuals(run, range(generation, generation+1), value="chromosomes", as_generation_dict=False)
+
+    count = 0
+    for chromosome in chromosomes:
+
+        for gene in chromosome:
+
+            if gene["layer"] == genename:
+                count += 1
+
+    return count
 
 
 ### RUN INFORMATION ###
@@ -168,7 +187,7 @@ def get_ruleset(run, cytoscape_dag=True):
 
         # Not start layers
         else:
-            nodes.append({ 'data': {'id': rule['layer'], 'label': rule['layer']}})
+            nodes.append({ 'data': {'id': rule['layer'], 'label': rule['layer'].replace('_', ' ')}})
 
             for allowed_after in rule['allowed_after']:
                 edges.append({'data': {'source': rule['layer'], 'target': allowed_after}})
@@ -244,11 +263,9 @@ def get_crossover_parents_df(run):
         df.loc[idx, "parent2"] = p2.split(",")[0]
         df.loc[idx, "crossover2"] = p2.split(",")[1]
 
-    return df
-
+    return df        
 
 ### FAMILY TREE GENERATION ###
-# TODO Positioning
 
 def get_upstream_tree(run, generation, individual, generation_range, x_max=1000, y_max=1000):
     """Get upstream individuals of an individual until stop generation with maybe duplicate nodes"""
@@ -257,7 +274,7 @@ def get_upstream_tree(run, generation, individual, generation_range, x_max=1000,
 
     # End condition with only one individual
     if min_generation == generation:
-        return [{'data': {'id': individual, 'label': individual[0:3]}}]
+        return ([{'data': {'id': individual, 'label': individual[0:3]}}], [individual])
 
     # Nodes and edges for individual
     crossovers = get_crossover_parents(run)
@@ -276,17 +293,17 @@ def get_upstream_tree(run, generation, individual, generation_range, x_max=1000,
         parent1_el = [{'data': {'id': parent1, 'label': parent1[0:3]}}]
         parent2_el = [{'data': {'id': parent2, 'label': parent2[0:3]}}]
 
-        return parent1_el + individual_el + parent2_el
+        return (parent1_el + individual_el + parent2_el, [parent1, parent2])
 
     # Recursion for moving up the tree
-    parent1_tree = get_upstream_tree(run, generation-1, parent1, generation_range)
-    parent2_tree = get_upstream_tree(run, generation-1, parent2, generation_range)
+    parent1_tree, roots1 = get_upstream_tree(run, generation-1, parent1, generation_range)
+    parent2_tree, roots2 = get_upstream_tree(run, generation-1, parent2, generation_range)
 
-    return parent1_tree + individual_el + parent2_tree
+    return (parent1_tree + individual_el + parent2_tree, roots1 + roots2)
 
 
 def get_downstream_tree(run, generation, individual, generation_range, x_max=1000, y_max=1000):
-    """Get parents of an individual"""
+    """Get children of an individual"""
 
     max_generation = generation_range[-1]
 
@@ -297,7 +314,7 @@ def get_downstream_tree(run, generation, individual, generation_range, x_max=100
     # Nodes and edges for individual
     crossovers = get_crossover_parents_df(run)
     
-    children = crossovers[crossovers['parent1'].str.contains('important_chital') | crossovers['parent2'].str.contains('important_chital')]
+    children = crossovers[crossovers['parent1'].str.contains(individual) | crossovers['parent2'].str.contains(individual)]
     children = list(children["individual"].values)
 
     individual_el = [{'data': {'id': individual, 'label': individual[0:3]}}]
@@ -317,7 +334,7 @@ def get_downstream_tree(run, generation, individual, generation_range, x_max=100
         children_tree += get_downstream_tree(run, generation+1, child, generation_range)
 
     return children_tree + individual_el
-    
+
 
 def get_family_tree(run, generation, individual, generation_range=None):
     """List of nodes and edges for element param in cytoscape"""
@@ -327,26 +344,27 @@ def get_family_tree(run, generation, individual, generation_range=None):
         generation_range = range(generation-2, generation+1)
 
     # Get the entire tree without duplicates
-    upstream_tree = get_upstream_tree(run, generation, individual, generation_range)
+    upstream_tree, roots = get_upstream_tree(run, generation, individual, generation_range)
     downstream_tree = get_downstream_tree(run, generation, individual, generation_range)
 
     family_tree = []
+    unique_roots = []
 
     for el in upstream_tree + downstream_tree:
         if el not in family_tree: family_tree.append(el)
+
+    for el in roots:
+        if el not in unique_roots: unique_roots.append(el)
     
-    return family_tree
+    return (family_tree, unique_roots)
 
 
-
-    
 
 
 run = "ga_20230116-110958_sc_2d_4classes"
 generation = 1
 individual = "abstract_wildebeest"
 
-#ls = get_family_tree(run, 5, "important_chital", None)
+#print(get_number_of_genes(run, generation, 'C_2D'))
 
-#for el in ls:
-#   print(el)
+#print(get_individual_chromosome(run, generation, individual))

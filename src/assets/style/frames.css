@@ -37,7 +37,6 @@ body {
 }
 
 /* Navigation */
-
 #navbar {
     display: flex;
     justify-content: space-between; /* Aligns the left and right divs at opposite ends */
@@ -52,4 +51,29 @@ body {
 #navlinks {
     display: inline-block;
     vertical-align: middle;
+}
+
+/* Cytoscape */
+.__________cytoscape_container {
+    background: #FFFFFF;
+    border-radius: 15px; 
+    box-shadow: 3px 3px 10px 1px rgba(0, 0, 0, 0.05);
+}
+
+#cytoscape-genepool {
+    background: radial-gradient(45% 45% at 50% 50%, rgba(97, 115, 233, 0.20) 0%, rgba(255, 255, 255, 0.00) 100%);
+    box-shadow: 3px 3px 10px 1px rgba(0, 0, 0, 0.0);
+}
+
+/* Metriccard*/
+.metric-card {
+  width: 260px;
+  display: inline-flex;
+  margin: 5px;
+  vertical-align: center;
+  background-color: #FFFFFF;
+  border-radius: 20px;
+  align-items: center;
+  justify-content: flex-start;
+  box-shadow: 3px 3px 10px 1px rgba(0, 0, 0, 0.05);
 }

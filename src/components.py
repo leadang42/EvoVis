@@ -20,10 +20,6 @@ def dot_heading(heading):
                 })
         ],
         className="dot-heading",
-        style={
-            "display": "flex",
-            "margin": "10px", 
-        }
     )
     return heading_div
 
@@ -52,17 +48,7 @@ def metric_card(metrictype, metric, icon):
                 }
             )   
         ], 
-        style={ 
-            "width": "260px",
-            "display": "inline-flex",
-            "margin": "5px", 
-            "vertical-align":"center",
-            "background-color": "#FFFFFF",
-            "border-radius": "20px",
-            "align-items": "center",
-            "justify-content": "flex-start",
-            "box-shadow": "3px 3px 10px 1px rgba(0, 0, 0, 0.05)",
-        }
+        className="metric-card"
     )
 
     return metric_card_div

@@ -15,13 +15,55 @@ first_row = html.Div([ col1a], className="wrapper")
 # Body
 elements = get_ruleset(run)
 
+cytoscape_stylesheet = [
+    {
+        'selector': 'node',
+        'style': {
+            'background-color': '#6173E9',
+            #'background-color': '#EFEFEF',
+            #'border-color': '#6173E9',
+            #'border-width': '3px',
+
+            'content': 'data(label)',
+            'width':'50px',
+            'height':'50px'
+        }
+    },
+    {
+        'selector': 'edge',
+        'style': {
+            'line-color': '#6173E9'
+        }
+    },
+    {
+        'selector': 'label',
+        'style': {
+            'font-family': 'sans-serif',
+            'color': '#FFFFFF',
+            'font-size': '12px',
+            'font-weight': 'bold',
+            'text-valign': 'center',
+        }
+    },
+    {
+        'selector': '[id = "Start"]',
+        'style': {
+            'background-color': '#FFFFFF',
+            'border-color': '#6173E9',
+            'border-width': '3px',
+            'content': 'data(label)',
+            'color': '#000000', # Font color
+        }
+    },
+]
+
 cytoscape = cyto.Cytoscape(
-    id='cytoscape-layout-1',
+    id='cytoscape-genepool',
     elements=elements,
-    style={'width': '100%', 'height': '800px'},
+    style={'height': '550px', 'max-width': '800px'},
+    stylesheet=cytoscape_stylesheet,
     layout={
-            'name': 'breadthfirst',
-            'roots': '#tha, #hall'
+            'name': 'cose',
         }
 )
 
