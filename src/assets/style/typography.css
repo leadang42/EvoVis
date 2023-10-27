@@ -1,5 +1,5 @@
 body {
-    font-family: sans-serif;
+    font-family: var(--font-family);
 }
 
 h2, h3, h4, h5, h6 {
@@ -8,7 +8,7 @@ h2, h3, h4, h5, h6 {
 
 h1 {
     color: #262626;
-    font-family: sans-serif;
+    font-family: var(--font-family);
     font-size: 60px;
     font-style: normal;
     line-height: 60px;
@@ -20,3 +20,33 @@ h1 {
     align-items: center;
     justify-content: flex-start; /* This aligns items to the left */
 }
+
+/* Box centered text */
+.bottom-center {
+    font-family: var(--font-family);
+    font-weight: bold;
+    position: absolute;
+    bottom: 54px;
+    left: 280px;
+}
+
+.center-left {
+    font-family: var(--font-family);
+    font-weight: 500;
+    font-size: 30px;
+    position: absolute;
+    top: 90px;
+    left: 40px;
+    color: #000000;
+}
+  
+.top-left {
+    font-family: var(--font-family);
+    position: absolute;
+    font-weight: 500;
+    top: 45px;
+    left: 55px;
+}
+  
+
+  

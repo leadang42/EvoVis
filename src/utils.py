@@ -160,9 +160,18 @@ def get_hyperparamters(run):
     return txt_to_eval(f'../data/{run}/params.json')
 
 
-def get_genepool(run):
-    """List of genes dicts"""
-    return txt_to_eval(f'../data/{run}/gene_pool.txt')
+def get_genepool(run, get_dict=False):
+    """List of genes dicts or dict with layerid as keys"""
+    genes = txt_to_eval(f'../data/{run}/gene_pool.txt')
+    genes_dict = {}
+
+    if not get_dict:
+        return genes
+
+    for gene in genes:
+        genes_dict[gene['layer']] = gene
+
+    return genes_dict
 
 
 def get_ruleset(run, cytoscape_dag=True):
@@ -194,6 +203,17 @@ def get_ruleset(run, cytoscape_dag=True):
         
     elements = nodes + edges
     return elements
+
+
+def get_start_gene(run):
+    """Dict of start gene"""
+    ruleset = get_ruleset(run, cytoscape_dag=False)
+    genepool = get_genepool(run, get_dict=True)
+
+    for rule in ruleset:
+        if rule['layer'] == 'Start':
+            return genepool[rule['start_with'][0]]
+            
 
 
 def get_best_individuals(run):
@@ -266,6 +286,8 @@ def get_crossover_parents_df(run):
     return df        
 
 ### FAMILY TREE GENERATION ###
+
+# TODO Change node data into gene data
 
 def get_upstream_tree(run, generation, individual, generation_range, x_max=1000, y_max=1000):
     """Get upstream individuals of an individual until stop generation with maybe duplicate nodes"""
@@ -364,7 +386,3 @@ def get_family_tree(run, generation, individual, generation_range=None):
 run = "ga_20230116-110958_sc_2d_4classes"
 generation = 1
 individual = "abstract_wildebeest"
-
-#print(get_number_of_genes(run, generation, 'C_2D'))
-
-#print(get_individual_chromosome(run, generation, individual))

@@ -1,20 +1,47 @@
 import dash
-from dash import html
+from dash import html, Input, Output, callback
 import dash_cytoscape as cyto
-from utils import get_ruleset
+from utils import get_ruleset, get_start_gene
+from components import metric_card, dot_heading
+import json
 
 run = "ga_20230116-110958_sc_2d_4classes"
-
 dash.register_page(__name__, path='/genepool')
 
-# Header
-col1a = html.Div([ html.H1("Genepool"), ], className="wrapper-col")
-col1b = html.Div([ ], className="wrapper-col")
-first_row = html.Div([ col1a], className="wrapper")
-
-# Body
+# Ruleset of evonas run
 elements = get_ruleset(run)
 
+# Header
+numb_genes = 500
+dimension = "2D"
+gene = "STFT"
+
+row1a = html.Div( [ html.H1("Genepool")], className="wrapper")
+row1b = html.Div(
+    [ html.Div([
+
+        html.Img(src="assets/media/gene-background.png", height="250px", width="600px"),
+        html.Div([f"#{numb_genes}"], className="top-left"),
+        html.Div([gene], className="center-left", id="gene-name"),
+        html.Div([dimension], className="bottom-center"),],
+
+    className="image-text-container",)], 
+    className="wrapper"
+)
+row1c = html.Div(
+    [
+        metric_card("padding", 'val', "fluent:memory-16-regular", width="285px"),
+        metric_card("kernel", 'val', "uiw:time-o", width="285px"),
+        metric_card("pooling", 'val', "simple-line-icons:energy", width="285px"),
+        metric_card("pooling", 'val', "simple-line-icons:energy", width="285px"),
+    ],
+    className="wrapper",
+    style={'width':'600px'}
+)
+
+first_col = html.Div([row1a, row1b, row1c, ], className="wrapper-col")
+
+# Body
 cytoscape_stylesheet = [
     {
         'selector': 'node',
@@ -60,15 +87,20 @@ cytoscape_stylesheet = [
 cytoscape = cyto.Cytoscape(
     id='cytoscape-genepool',
     elements=elements,
-    style={'height': '550px', 'max-width': '800px'},
+    style={'height': '550px', 'width':'50%','display': 'inline-block', 'margin-top':'70px'},
     stylesheet=cytoscape_stylesheet,
     layout={
             'name': 'cose',
         }
 )
 
-#col2a = html.Div([cytoscape], className="wrapper-col")
-#col2b = html.Div([ ], className="wrapper-col")
-#second_row = html.Div([ col2a], className="wrapper")
+# Cytoscape interactions
+@callback(Output('gene-name', 'children'), Input('cytoscape-genepool', 'tapNodeData'))
+def displayTapNodeData(data):
+    if data is None:
+        get_start_gene(run)["f_name"]
 
-layout = html.Div([ first_row, cytoscape ], className="wrapper")
+    return data["id"]
+
+
+layout = html.Div([ first_col, cytoscape], className="wrapper")

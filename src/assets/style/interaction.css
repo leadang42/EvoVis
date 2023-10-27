@@ -20,18 +20,6 @@
 }
 
 /* Metric Buttons */
-.metric-btn {
-    height: 50px;
-    width: 50px;
-    background-color: var(--background-color); /* Blue background */
-    padding: 0;
-    margin: 4px;
-    cursor: pointer; /* Mouse pointer on hover */
-    border: none; 
-    border-width: 3px;
-    border-radius: 15px; 
-    text-align: center;
-}
 
 .metric-btn:hover {
     background-color: var(--accent-color);

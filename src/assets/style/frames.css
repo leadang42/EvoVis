@@ -65,15 +65,9 @@ body {
     box-shadow: 3px 3px 10px 1px rgba(0, 0, 0, 0.0);
 }
 
-/* Metriccard*/
-.metric-card {
-  width: 260px;
-  display: inline-flex;
-  margin: 5px;
-  vertical-align: center;
-  background-color: #FFFFFF;
-  border-radius: 20px;
-  align-items: center;
-  justify-content: flex-start;
-  box-shadow: 3px 3px 10px 1px rgba(0, 0, 0, 0.05);
+/* Images with Text */
+.image-text-container{
+    position: relative;
+    text-align: center;
+    color: white;
 }
