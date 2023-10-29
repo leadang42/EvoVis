@@ -1,9 +1,13 @@
 import dash
-from dash import html, Input, Output, callback
+from dash import html, Input, Output, callback, dcc
 import dash_cytoscape as cyto
-from utils import get_ruleset, get_start_gene
-from components import metric_card, dot_heading
 import json
+import re
+import plotly.express as px
+import pandas as pd
+
+from utils import get_ruleset, get_start_gene, get_number_of_genes, get_generations
+from components import metric_card, dot_heading
 
 run = "ga_20230116-110958_sc_2d_4classes"
 dash.register_page(__name__, path='/genepool')
@@ -26,20 +30,13 @@ row1b = html.Div(
         html.Div([dimension], className="bottom-center"),],
 
     className="image-text-container",)], 
-    className="wrapper"
-)
-row1c = html.Div(
-    [
-        metric_card("padding", 'val', "fluent:memory-16-regular", width="285px"),
-        metric_card("kernel", 'val', "uiw:time-o", width="285px"),
-        metric_card("pooling", 'val', "simple-line-icons:energy", width="285px"),
-        metric_card("pooling", 'val', "simple-line-icons:energy", width="285px"),
-    ],
-    className="wrapper",
-    style={'width':'600px'}
 )
 
-first_col = html.Div([row1a, row1b, row1c, ], className="wrapper-col")
+row1c = html.Div( [], style={'width':'600px'}, id="metric-cards-section")
+
+row1d = html.Div( [], style={'width':'600px'}, id="number-of-genes", className="wrapper")
+
+first_col = html.Div([row1a, row1b, row1c, row1d], className="wrapper-col")
 
 # Body
 cytoscape_stylesheet = [
@@ -47,19 +44,17 @@ cytoscape_stylesheet = [
         'selector': 'node',
         'style': {
             'background-color': '#6173E9',
-            #'background-color': '#EFEFEF',
-            #'border-color': '#6173E9',
-            #'border-width': '3px',
-
             'content': 'data(label)',
             'width':'50px',
-            'height':'50px'
+            'height':'50px',
         }
     },
     {
         'selector': 'edge',
         'style': {
-            'line-color': '#6173E9'
+            'line-color': '#6173E9',
+            #'target-arrow-color': '#6173E9',
+            #'target-arrow-shape': 'chevron'
         }
     },
     {
@@ -87,7 +82,7 @@ cytoscape_stylesheet = [
 cytoscape = cyto.Cytoscape(
     id='cytoscape-genepool',
     elements=elements,
-    style={'height': '550px', 'width':'50%','display': 'inline-block', 'margin-top':'70px'},
+    style={'height': '600px', 'width':'50%','display': 'inline-block', 'margin-top':'70px'},
     stylesheet=cytoscape_stylesheet,
     layout={
             'name': 'cose',
@@ -95,12 +90,74 @@ cytoscape = cyto.Cytoscape(
 )
 
 # Cytoscape interactions
-@callback(Output('gene-name', 'children'), Input('cytoscape-genepool', 'tapNodeData'))
+@callback(
+    Output('gene-name', 'children'), 
+    Output('metric-cards-section', 'children'), 
+    Output('number-of-genes', 'children'),
+    Output('cytoscape-genepool', 'stylesheet'),
+    
+    Input('cytoscape-genepool', 'tapNodeData'))
 def displayTapNodeData(data):
+    
+    gene = data
+    
     if data is None:
-        get_start_gene(run)["f_name"]
-
-    return data["id"]
+        gene = get_start_gene(run)
+        print(gene)
+    
+    # Gene name
+    gene_name = gene["f_name"].replace("()", "").replace("2D", "").replace("1D", "").replace("Conv", "Convolution").replace("STFT", "Short Time Fourier Trans.")
+    gene_name = ' '.join(re.findall('[A-Z][a-z]*', gene_name)).replace("Re L U", "ReLU")
+    
+    # Metric cards
+    metric_cards = []
+    for key, value in gene.items():
+        
+        if str(key) != "id" and str(key) != "label" and str(key) != "f_name" and key != "layer":
+            
+            mc = metric_card(key, str(value), "mdi:input", width="290px")
+            metric_cards.append(mc)   
+            
+    # Number of genes per generation
+    numb_of_genes = []
+    for generation in range(1, len(get_generations(run))+1):
+        numb_of_genes.append(get_number_of_genes(run, generation, gene["layer"]))
+    
+    df = pd.DataFrame({"x": list(range(1, len(get_generations(run))+1)), "y": numb_of_genes})
+    fig = px.bar(x = list(range(1, len(get_generations(run))+1)), y = numb_of_genes, labels={"x": "Generation", "y": f"{gene['layer']} layers"})
+    graph = dcc.Graph(figure=fig, style={'width':'585px', 'height':'200px'})
+    
+    fig.update_layout(
+        plot_bgcolor='white'
+    )
+    fig.update_xaxes(
+        mirror=True,
+        ticks='outside',
+        showline=True,
+        linecolor='black',
+        gridcolor='lightgrey'
+    )
+            
+    # New node style when node is clicked
+    cytoscape_stylesheet_copy = cytoscape_stylesheet.copy()
+    cytoscape_stylesheet_copy.append({
+        'selector': f'[id = "{gene["layer"]}"]',
+        'style': {
+            'background-color': '#CD3B3B',
+            'border-color': '#CD3B3B',
+            'border-width': '3px',
+            'content': 'data(label)',
+            'color': '#FFFFFF', # Font color
+        }})
+    
+    cytoscape_stylesheet_copy.append({
+        'selector': f'.{gene["layer"]}',
+        'style': {
+            'line-color': '#CD3B3B',
+            #'line-fill': 'radial-gradient'
+        }})
+    
+    return gene_name, metric_cards, graph, cytoscape_stylesheet_copy
 
 
 layout = html.Div([ first_col, cytoscape], className="wrapper")

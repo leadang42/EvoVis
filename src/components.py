@@ -23,7 +23,7 @@ def dot_heading(heading):
     )
     return heading_div
 
-def metric_card(metrictype, metric, icon, width="260px"):
+def metric_card(metrictype, metric, icon, width="260px", metric_card_id="metric-card"):
     metric_card_style = {
         'width': width,
         'display': 'inline-flex',
@@ -42,30 +42,18 @@ def metric_card(metrictype, metric, icon, width="260px"):
         "background-color": "#FFFFFF",
     }
 
-    metric_btn_style = {
-        'height': '50px',
-        'width': '50px',
-        'background-color': 'var(--background-color)',
-        'padding': '0',
-        'margin': '4px',
-        'cursor': 'pointer',
-        'border': 'none',
-        'border-width': '3px',
-        'border-radius': '15px', 
-        'text-align': 'center',
-    }
-
     metric_card_div = html.Div([
 
-        html.Button(children=DashIconify(icon=icon, height=25, width=25, color="#000000"), className="metric-btn", style = metric_btn_style),
+        html.Button(children=DashIconify(icon=icon, height=25, width=25, color="#000000"), className="metric-btn"),
 
         html.Div([   
-            html.P(metrictype, style={"margin": "5px", "font-weight": "lighter","font-size": "15px",}),
-            html.H4(metric, style={ "margin": "5px" })],
+            html.P(metrictype, style={"margin": "5px", "font-weight": "lighter","font-size": "15px",}, id=f"{metric_card_id}-label"),
+            html.H4(metric, style={ "margin": "5px" }, id=f"{metric_card_id}-value")],
             style= text_block_style)   
         ], 
         
-        style = metric_card_style
+        style = metric_card_style, 
+        id = metric_card_id
     )
 
     return metric_card_div

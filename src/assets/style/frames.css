@@ -61,7 +61,7 @@ body {
 }
 
 #cytoscape-genepool {
-    background: radial-gradient(45% 45% at 50% 50%, rgba(97, 115, 233, 0.20) 0%, rgba(255, 255, 255, 0.00) 100%);
+    background: radial-gradient(45% 45% at 50% 50%, rgba(97, 115, 233, 0.5) 0%, rgba(255, 255, 255, 0.00) 100%);
     box-shadow: 3px 3px 10px 1px rgba(0, 0, 0, 0.0);
 }
 

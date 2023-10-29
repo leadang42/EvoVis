@@ -132,7 +132,6 @@ def get_individuals(run, generation_range=None, value="name", as_generation_dict
         for generation in generation_range:
 
             individuals += list(get_individuals_of_generation(run, generation, value).values())
-            print(list(get_individuals_of_generation(run, generation, value).values()))
 
         return individuals
     
@@ -178,6 +177,7 @@ def get_ruleset(run, cytoscape_dag=True):
     """List of nodes and edges for element param in cytoscape"""
 
     ruleset = txt_to_eval(f'../data/{run}/rule_set.txt')
+    genepool = get_genepool(run, get_dict=True)
 
     if not cytoscape_dag:
         return ruleset
@@ -189,17 +189,26 @@ def get_ruleset(run, cytoscape_dag=True):
 
         # Start layer
         if rule['layer'] == 'Start':
-            nodes.append({ 'data': {'id': rule['layer'], 'label': rule['layer']}})
+            nodes.append({ 'data': {'id': rule['layer'], 'label': rule['layer'], 'selectable': False, 'locked': True}})
 
             for start_with in rule['start_with']:
-                edges.append({'data': {'source': rule['layer'], 'target': start_with}})
+                edges.append({
+                    'data': {'source': rule['layer'], 'target': start_with}, 
+                    'classes': f'{rule["layer"]} {start_with}'
+                })
 
         # Not start layers
         else:
-            nodes.append({ 'data': {'id': rule['layer'], 'label': rule['layer'].replace('_', ' ')}})
+            genepool[rule['layer']]['id'] = rule['layer']
+            genepool[rule['layer']]['label'] = rule['layer'].replace('_', ' ')
+            
+            nodes.append({ 'data': genepool[rule['layer']] })
 
             for allowed_after in rule['allowed_after']:
-                edges.append({'data': {'source': rule['layer'], 'target': allowed_after}})
+                edges.append({
+                    'data': {'source': rule['layer'], 'target': allowed_after}, 
+                    'classes': f'{rule["layer"]} {allowed_after}'
+                })
         
     elements = nodes + edges
     return elements
@@ -214,7 +223,6 @@ def get_start_gene(run):
         if rule['layer'] == 'Start':
             return genepool[rule['start_with'][0]]
             
-
 
 def get_best_individuals(run):
     """Dataframe of parents of individuals"""
@@ -287,7 +295,7 @@ def get_crossover_parents_df(run):
 
 ### FAMILY TREE GENERATION ###
 
-# TODO Change node data into gene data
+# TODO Change node data into individual data
 
 def get_upstream_tree(run, generation, individual, generation_range, x_max=1000, y_max=1000):
     """Get upstream individuals of an individual until stop generation with maybe duplicate nodes"""
@@ -381,8 +389,13 @@ def get_family_tree(run, generation, individual, generation_range=None):
     return (family_tree, unique_roots)
 
 
-
-
 run = "ga_20230116-110958_sc_2d_4classes"
 generation = 1
 individual = "abstract_wildebeest"
+
+ruleset = get_ruleset(run)
+
+for rule in ruleset:
+    if "source" not in str(rule):
+        #print(rule)
+        1+1

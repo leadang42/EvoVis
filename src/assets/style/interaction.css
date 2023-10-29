@@ -25,6 +25,19 @@
     background-color: var(--accent-color);
 }
 
+.metric-btn {
+    height: 50px;
+    width: 50px;
+    background-color: var(--background-color);
+    padding: 0;
+    margin: 4px;
+    cursor: pointer;
+    border: none;
+    border-width: 3px;
+    border-radius: 15px;
+    text-align: center;
+}
+
 /* Circle Select */
 .circle-select{
     display: inline-block;
