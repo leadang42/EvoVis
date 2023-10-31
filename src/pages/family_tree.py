@@ -22,6 +22,8 @@ cytoscape_stylesheet = [
         'style': {
             'background-color': '#6173E9',
             'content': 'data(label)',
+            'width':'50px',
+            'height':'50px',
         }
     },
     {
@@ -29,19 +31,25 @@ cytoscape_stylesheet = [
         'style': {
             'line-color': '#6173E9',
         }
-    }, 
+    },
     {
         'selector': 'label',
         'style': {
-            'color': '#6173E9',
-            'text-background-color': '#FFFFF3',
+            'font-family': 'sans-serif',
+            'color': '#FFFFFF',
+            'font-size': '12px',
+            'font-weight': 'bold',
+            'text-valign': 'center',
         }
     },
     {
         'selector': f'[id = "{individual}"]',
         'style': {
-            'background-color': '#8BC267',
-            'content': 'data(label)'
+            'background-color': '#FFFFFF',
+            'border-color': '#6173E9',
+            'border-width': '3px',
+            'content': 'data(label)',
+            'color': '#000000', # Font color
         }
     },
 ]
@@ -49,7 +57,7 @@ cytoscape_stylesheet = [
 cytoscape = cyto.Cytoscape(
     id='cytoscape-family-tree',
     elements=elements,
-    style={'width': '100%', 'height': '550px'},
+    style={'width': '550px', 'height': '550px'},
     stylesheet=cytoscape_stylesheet,
     layout={
         'name': 'breadthfirst',

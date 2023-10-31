@@ -36,6 +36,7 @@ training = html.Div(
 fitness = html.Div(
     [
         dot_heading("Fitness parameters"),
+        html.Img(src="assets/media/fitness-function.png", id="fitness-function"),
         metric_card("Max memory footprint", f'{get_hyperparamters(run)["max_memory_footprint"]} B', "fluent:memory-16-regular"),
         metric_card("Max inference time", f'{get_hyperparamters(run)["max_inference_time"]} ms', "uiw:time-o"),
         metric_card("Max energy consumption", f'{get_hyperparamters(run)["max_energy_consumption"]} mJ', "simple-line-icons:energy"),

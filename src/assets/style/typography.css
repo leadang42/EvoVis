@@ -24,10 +24,10 @@ h1 {
 /* Box centered text */
 .bottom-center {
     font-family: var(--font-family);
-    font-weight: bold;
+    font-weight: 500;
     position: absolute;
     bottom: 54px;
-    left: 280px;
+    left: 240px;
 }
 
 .center-left {
@@ -43,9 +43,10 @@ h1 {
 .top-left {
     font-family: var(--font-family);
     position: absolute;
+    font-size: 13px;
     font-weight: 500;
-    top: 45px;
-    left: 55px;
+    top: 47px;
+    left: 46px;
 }
   
 

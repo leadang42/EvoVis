@@ -16,25 +16,22 @@ dash.register_page(__name__, path='/genepool')
 elements = get_ruleset(run)
 
 # Header
-numb_genes = 500
-dimension = "2D"
-gene = "STFT"
 
 row1a = html.Div( [ html.H1("Genepool")], className="wrapper")
 row1b = html.Div(
     [ html.Div([
 
         html.Img(src="assets/media/gene-background.png", height="250px", width="600px"),
-        html.Div([f"#{numb_genes}"], className="top-left"),
-        html.Div([gene], className="center-left", id="gene-name"),
-        html.Div([dimension], className="bottom-center"),],
+        html.Div([], className="top-left", id="gene-amount"),
+        html.Div([], className="center-left", id="gene-name"),
+        html.Div([], className="bottom-center", id="gene-dimension"),],
 
     className="image-text-container",)], 
 )
 
-row1c = html.Div( [], style={'width':'600px'}, id="metric-cards-section")
+row1c = html.Div( [], style={'width':'600px'}, id="metric-cards-section", className="wrapper")
 
-row1d = html.Div( [], style={'width':'600px'}, id="number-of-genes", className="wrapper")
+row1d = html.Div( [], style={'width':'600px'}, id="number-of-genes-graph", className="wrapper")
 
 first_col = html.Div([row1a, row1b, row1c, row1d], className="wrapper-col")
 
@@ -92,8 +89,10 @@ cytoscape = cyto.Cytoscape(
 # Cytoscape interactions
 @callback(
     Output('gene-name', 'children'), 
+    Output('gene-amount', 'children'),
+    Output('gene-dimension', 'children'),
     Output('metric-cards-section', 'children'), 
-    Output('number-of-genes', 'children'),
+    Output('number-of-genes-graph', 'children'),
     Output('cytoscape-genepool', 'stylesheet'),
     
     Input('cytoscape-genepool', 'tapNodeData'))
@@ -103,7 +102,17 @@ def displayTapNodeData(data):
     
     if data is None:
         gene = get_start_gene(run)
-        print(gene)
+        
+    # Gene dimension
+    gene_dimension = ""
+    if "2D" in gene["layer"]:
+        gene_dimension = "2D Layer Dimension"
+        
+    if "1D" in gene["layer"]:
+        gene_dimension = "1D Layer Dimension"
+        
+    if "STFT" == gene["layer"]:
+        gene_dimension = "Transform 1D to 2D"
     
     # Gene name
     gene_name = gene["f_name"].replace("()", "").replace("2D", "").replace("1D", "").replace("Conv", "Convolution").replace("STFT", "Short Time Fourier Trans.")
@@ -115,7 +124,7 @@ def displayTapNodeData(data):
         
         if str(key) != "id" and str(key) != "label" and str(key) != "f_name" and key != "layer":
             
-            mc = metric_card(key, str(value), "mdi:input", width="290px")
+            mc = metric_card(key, str(value), "mdi:input", width="282px")
             metric_cards.append(mc)   
             
     # Number of genes per generation
@@ -125,18 +134,28 @@ def displayTapNodeData(data):
     
     df = pd.DataFrame({"x": list(range(1, len(get_generations(run))+1)), "y": numb_of_genes})
     fig = px.bar(x = list(range(1, len(get_generations(run))+1)), y = numb_of_genes, labels={"x": "Generation", "y": f"{gene['layer']} layers"})
-    graph = dcc.Graph(figure=fig, style={'width':'585px', 'height':'200px'})
+    graph = dcc.Graph(figure=fig, style={'width':'585px', 'height':'150px'})
     
     fig.update_layout(
-        plot_bgcolor='white'
+        plot_bgcolor='white',
+        margin=dict(l=20, r=20, t=20, b=20),
+        paper_bgcolor="white",
+        font_color="black",
     )
     fig.update_xaxes(
-        mirror=True,
-        ticks='outside',
-        showline=True,
-        linecolor='black',
-        gridcolor='lightgrey'
+        title_standoff=10
     )
+    fig.update_yaxes(
+        title_standoff=10
+    )
+    
+    # Amount of genes
+    gene_amount = 0
+    
+    for numb_gen in numb_of_genes:
+        gene_amount += numb_gen
+        
+    gene_amount = f"{gene_amount} Count"
             
     # New node style when node is clicked
     cytoscape_stylesheet_copy = cytoscape_stylesheet.copy()
@@ -157,7 +176,7 @@ def displayTapNodeData(data):
             #'line-fill': 'radial-gradient'
         }})
     
-    return gene_name, metric_cards, graph, cytoscape_stylesheet_copy
+    return gene_name, gene_amount, gene_dimension , metric_cards, graph, cytoscape_stylesheet_copy
 
 
 layout = html.Div([ first_col, cytoscape], className="wrapper")
