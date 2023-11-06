@@ -16,7 +16,6 @@ dash.register_page(__name__, path='/genepool')
 elements = get_ruleset(run)
 
 # Header
-
 row1a = html.Div( [ html.H1("Genepool")], className="wrapper")
 row1b = html.Div(
     [ html.Div([
@@ -24,7 +23,7 @@ row1b = html.Div(
         html.Img(src="assets/media/gene-background.png", height="250px", width="600px"),
         html.Div([], className="top-left", id="gene-amount"),
         html.Div([], className="center-left", id="gene-name"),
-        html.Div([], className="bottom-center", id="gene-dimension"),],
+        html.Div([], className="bottom-center", id="gene-type"),],
 
     className="image-text-container",)], 
 )
@@ -50,6 +49,7 @@ cytoscape_stylesheet = [
         'selector': 'edge',
         'style': {
             'line-color': '#6173E9',
+            'width': '2px'
             #'target-arrow-color': '#6173E9',
             #'target-arrow-shape': 'chevron'
         }
@@ -60,7 +60,7 @@ cytoscape_stylesheet = [
             'font-family': 'sans-serif',
             'color': '#FFFFFF',
             'font-size': '12px',
-            'font-weight': 'bold',
+            'font-weight': '500',
             'text-valign': 'center',
         }
     },
@@ -69,9 +69,134 @@ cytoscape_stylesheet = [
         'style': {
             'background-color': '#FFFFFF',
             'border-color': '#6173E9',
-            'border-width': '3px',
+            'border-width': '2px',
             'content': 'data(label)',
             'color': '#000000', # Font color
+        }
+    },
+    {
+        'selector': '[id = "end"]',
+        'style': {
+            'background-color': '#FFFFFF',
+            'border-color': '#6173E9',
+            'border-width': '2px',
+            'content': 'data(label)',
+            'color': '#000000', # Font color
+        }
+    },
+    {
+        'selector': '[id = "pr"]',
+        'style': {
+            #Box
+            'background-fill': 'radial-gradient', 
+            'background-gradient-stop-colors': '#EFEFEF #6173E9',
+            'background-gradient-stop-positions': '0% 50%',
+            'background-opacity': '0.5',
+            'shape': 'round-rectangle',
+            'border-color': '#6173E9',
+            'border-width': '2px',
+            'width':'100px',
+            'height':'100px',
+            #Font
+            'color': '#6173E9',
+            'text-background-color': '#FFFFFF',
+            'text-background-shape': 'round-rectangle',
+            'text-background-padding': '5px',
+            'text-background-opacity': '1',
+            'text-border-color':'#6173E9',
+            'text-border-opacity':'1',
+            'text-border-width': '1px',
+            'text-valign': 'bottom',
+            'line-height': '10',
+            'font-size': '15px',
+        }
+    },
+    {
+        'selector': '[id = "fe"]',
+        'style': {
+            #Box
+            'background-fill': 'radial-gradient', 
+            'background-gradient-stop-colors': '#EFEFEF #6173E9',
+            'background-gradient-stop-positions': '0% 50%',
+            'background-opacity': '0.5',
+            'shape': 'round-rectangle',
+            'border-color': '#6173E9',
+            'border-width': '2px',
+            'width':'400px',
+            'height':'400px',
+            #Font
+            'color': '#6173E9',
+            'text-background-color': '#FFFFFF',
+            'text-background-shape': 'round-rectangle',
+            'text-background-padding': '5px',
+            'text-background-opacity': '1',
+            'text-border-color':'#6173E9',
+            'text-border-opacity':'1',
+            'text-border-width': '1px',
+            'text-valign': 'bottom',
+            'line-height': '10',
+            'font-size': '15px',
+        }
+    },
+    {
+        'selector': '[id = "gl"]',
+        'style': {
+            #Box
+            'background-fill': 'radial-gradient', 
+            'background-gradient-stop-colors': '#EFEFEF #6173E9',
+            'background-gradient-stop-positions': '0% 50%',
+            'background-opacity': '0.5',
+            'shape': 'round-rectangle',
+            'border-color': '#6173E9',
+            'border-width': '2px',
+            'width':'400px',
+            'height':'400px',
+            #Font
+            'color': '#6173E9',
+            'text-background-color': '#FFFFFF',
+            'text-background-shape': 'round-rectangle',
+            'text-background-padding': '5px',
+            'text-background-opacity': '1',
+            'text-border-color':'#6173E9',
+            'text-border-opacity':'1',
+            'text-border-width': '1px',
+            'text-valign': 'bottom',
+            'line-height': '10',
+            'font-size': '15px',
+        }
+    },
+    {
+        'selector': '[id = "de"]',
+        'style': {
+            #Box
+            'background-fill': 'radial-gradient', 
+            'background-gradient-stop-colors': '#EFEFEF #6173E9',
+            'background-gradient-stop-positions': '0% 50%',
+            'background-opacity': '0.5',
+            'shape': 'round-rectangle',
+            'border-color': '#6173E9',
+            'border-width': '2px',
+            'width':'400px',
+            'height':'400px',
+            #Font
+            'color': '#6173E9',
+            'text-background-color': '#FFFFFF',
+            'text-background-shape': 'round-rectangle',
+            'text-background-padding': '5px',
+            'text-background-opacity': '1',
+            'text-border-color':'#6173E9',
+            'text-border-opacity':'1',
+            'text-border-width': '1px',
+            'text-valign': 'bottom',
+            'line-height': '10',
+            'font-size': '15px',
+        }
+    },
+    {
+        'selector': '[id = "class-connect"]',
+        'style': {
+            'width': '2px',
+            'line-color': '#6173E9',
         }
     },
 ]
@@ -90,7 +215,7 @@ cytoscape = cyto.Cytoscape(
 @callback(
     Output('gene-name', 'children'), 
     Output('gene-amount', 'children'),
-    Output('gene-dimension', 'children'),
+    Output('gene-type', 'children'),
     Output('metric-cards-section', 'children'), 
     Output('number-of-genes-graph', 'children'),
     Output('cytoscape-genepool', 'stylesheet'),
@@ -100,29 +225,26 @@ def displayTapNodeData(data):
     
     gene = data
     
+    # TODO Fix that no layer type in beginning
     if data is None:
         gene = get_start_gene(run)
-        
-    # Gene dimension
-    gene_dimension = ""
-    if "2D" in gene["layer"]:
-        gene_dimension = "2D Layer Dimension"
-        
-    if "1D" in gene["layer"]:
-        gene_dimension = "1D Layer Dimension"
-        
-    if "STFT" == gene["layer"]:
-        gene_dimension = "Transform 1D to 2D"
     
     # Gene name
     gene_name = gene["f_name"].replace("()", "").replace("2D", "").replace("1D", "").replace("Conv", "Convolution").replace("STFT", "Short Time Fourier Trans.")
     gene_name = ' '.join(re.findall('[A-Z][a-z]*', gene_name)).replace("Re L U", "ReLU")
     
+    # Gene dimension
+    gene_type = ""
+    if "ltype" in gene:
+        gene_type = gene["ltype"]
+    
     # Metric cards
     metric_cards = []
     for key, value in gene.items():
         
-        if str(key) != "id" and str(key) != "label" and str(key) != "f_name" and key != "layer":
+        not_metric = ["id", "label", "f_name", "layer", "ltype", "parent"]
+        
+        if key not in not_metric:
             
             mc = metric_card(key, str(value), "mdi:input", width="282px")
             metric_cards.append(mc)   
@@ -162,9 +284,9 @@ def displayTapNodeData(data):
     cytoscape_stylesheet_copy.append({
         'selector': f'[id = "{gene["layer"]}"]',
         'style': {
-            'background-color': '#CD3B3B',
-            'border-color': '#CD3B3B',
-            'border-width': '3px',
+            'background-color':  '#6173E9',
+            'border-color': '#FFFFFF',
+            'border-width': '2px',
             'content': 'data(label)',
             'color': '#FFFFFF', # Font color
         }})
@@ -172,11 +294,11 @@ def displayTapNodeData(data):
     cytoscape_stylesheet_copy.append({
         'selector': f'.{gene["layer"]}',
         'style': {
-            'line-color': '#CD3B3B',
+            'line-color': '#FFFFFF',
             #'line-fill': 'radial-gradient'
         }})
     
-    return gene_name, gene_amount, gene_dimension , metric_cards, graph, cytoscape_stylesheet_copy
+    return gene_name, gene_amount, gene_type, metric_cards, graph, cytoscape_stylesheet_copy
 
 
 layout = html.Div([ first_col, cytoscape], className="wrapper")

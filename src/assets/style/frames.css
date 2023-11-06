@@ -54,13 +54,12 @@ body {
 }
 
 /* Cytoscape */
-.__________cytoscape_container {
-    background: #FFFFFF;
-    border-radius: 15px; 
-    box-shadow: 3px 3px 10px 1px rgba(0, 0, 0, 0.05);
+#cytoscape-genepool {
+    background: var(--background-color);/*radial-gradient(45% 45% at 50% 50%, rgba(97, 115, 233, 0.5) 0%, rgba(255, 255, 255, 0.00) 100%);*/
+    box-shadow: 3px 3px 10px 1px rgba(0, 0, 0, 0.0);
 }
 
-#cytoscape-genepool {
+#cytoscape-family-tree {
     background: radial-gradient(45% 45% at 50% 50%, rgba(97, 115, 233, 0.5) 0%, rgba(255, 255, 255, 0.00) 100%);
     box-shadow: 3px 3px 10px 1px rgba(0, 0, 0, 0.0);
 }

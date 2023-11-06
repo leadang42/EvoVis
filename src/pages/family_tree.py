@@ -57,7 +57,7 @@ cytoscape_stylesheet = [
 cytoscape = cyto.Cytoscape(
     id='cytoscape-family-tree',
     elements=elements,
-    style={'width': '550px', 'height': '550px'},
+    style={'width': '500px', 'height': '500px'},
     stylesheet=cytoscape_stylesheet,
     layout={
         'name': 'breadthfirst',

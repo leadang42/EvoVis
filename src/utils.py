@@ -15,7 +15,6 @@ def remove_comments(text):
 
     return '\n'.join(cleaned_lines) 
 
-
 def txt_to_eval(filepath):
     """Converts a text file to dictionnairy"""
     json_data = None
@@ -63,7 +62,6 @@ def get_individual_result(run, generation, individual):
     else:
         return None
     
-
 def get_individual_chromosome(run, generation, individual):
     """List or None of individual's genes/ layers dicts"""
 
@@ -73,7 +71,6 @@ def get_individual_chromosome(run, generation, individual):
         return txt_to_eval(path)
     else:
         return None
-
 
 def get_individual_power_measurements(run, generation, individual):
     """List or None of individual's genes/ layers dicts"""
@@ -112,7 +109,6 @@ def get_individuals_of_generation(run, generation, value="name"):
     
     return individual_dict
 
-
 def get_individuals(run, generation_range=None, value="name", as_generation_dict=False):
     """List of individuals' "names", "results", "chromosomes" or "power_measurements" for generation range"""
 
@@ -135,7 +131,6 @@ def get_individuals(run, generation_range=None, value="name", as_generation_dict
 
         return individuals
     
-
 def get_number_of_genes(run, generation, genename):
     """Outputs number of genes in a certain generation"""
     chromosomes = get_individuals(run, range(generation, generation+1), value="chromosomes", as_generation_dict=False)
@@ -152,12 +147,30 @@ def get_number_of_genes(run, generation, genename):
 
 
 ### RUN INFORMATION ###
-# TODO Deprecate crossover dict
 
 def get_hyperparamters(run):
     """Dict of hyperparameters of EvoNAS run"""
     return txt_to_eval(f'../data/{run}/params.json')
 
+
+### GENEPOOL ###
+# TODO Lock classes and start
+
+preprocessing = ['STFT', 'MAG', 'MEL', 'MAG2DEC']
+one_dim_feature = ['C_1D', 'DC_1D', 'MP_1D', 'AP_1D', 'R_1D', 'BN_1D', 'IN_1D']
+two_dim_feature = ['C_2D', 'DC_2D', 'MP_2D', 'AP_2D', 'R_2D', 'BN_2D', 'IN_2D']
+one_dim_global_pooling = ['GAP_1D', 'GMP_1D']
+two_dim_global_pooling = ['GAP_2D', 'GMP_2D']
+dense = ['DO', 'D']
+
+layers_type = {}
+
+for p in preprocessing: layers_type[p] = "Preprocessing Layer"
+for fo in one_dim_feature: layers_type[fo] = "1D Feature Layer"
+for ft in two_dim_feature: layers_type[ft] = "2D Feature Layer"
+for go in one_dim_global_pooling: layers_type[go] = "1D Global Pooling Layer"
+for gt in two_dim_global_pooling: layers_type[gt] = "2D Global Pooling Layer"
+for d in dense: layers_type[d] = "Dense Layer"
 
 def get_genepool(run, get_dict=False):
     """List of genes dicts or dict with layerid as keys"""
@@ -172,43 +185,85 @@ def get_genepool(run, get_dict=False):
 
     return genes_dict
 
-
-def get_ruleset(run, cytoscape_dag=True):
+def get_ruleset(run, cytoscape_dag=True, exclude_unreachable=True):
     """List of nodes and edges for element param in cytoscape"""
 
+    # Read ruleset
     ruleset = txt_to_eval(f'../data/{run}/rule_set.txt')
     genepool = get_genepool(run, get_dict=True)
 
+    # Return list of ruleset
     if not cytoscape_dag:
         return ruleset
     
-    nodes = []
-    edges = []
-
+    # Create cytoscape with layer types
+    nodes = [
+        { 'data': {'id': 'pr', 'label': 'Preprocessing'} },
+        { 'data': {'id': 'fe', 'label': 'Feature Extraction'} },
+        { 'data': {'id': 'gl', 'label': 'Global Pooling'} },
+        { 'data': {'id': 'de', 'label': 'Dense'} },
+        { 'data': {'id': 'end', 'label': 'End', 'f_name': 'End', 'layer': 'End', 'ltype': 'End'} }
+    ]
+    edges = [
+        { 'data': {'id':'feature-globalpooling', 'source': 'fe', 'target': 'gl'}, 'classes': 'class-connect' },
+        { 'data': {'id':'dense-end', 'source': 'de', 'target': 'end'}, 'classes': 'class-connect' },
+    ]
+    
+    # Create cytoscape starting point
+    lallowed = dense
+    
     for rule in ruleset:
-
-        # Start layer
+            
         if rule['layer'] == 'Start':
-            nodes.append({ 'data': {'id': rule['layer'], 'label': rule['layer'], 'selectable': False, 'locked': True}})
+            nodes.append({ 'data': {'id': 'Start', 'label': 'Start', 'f_name': 'Start', 'layer': 'Start', 'ltype': 'Start'} })
 
             for start_with in rule['start_with']:
                 edges.append({
                     'data': {'source': rule['layer'], 'target': start_with}, 
                     'classes': f'{rule["layer"]} {start_with}'
                 })
+                
+                if start_with in preprocessing: 
+                    lallowed += preprocessing + two_dim_feature + two_dim_global_pooling
+                    
+                else: 
+                    lallowed += one_dim_feature + one_dim_global_pooling
 
-        # Not start layers
-        else:
-            genepool[rule['layer']]['id'] = rule['layer']
-            genepool[rule['layer']]['label'] = rule['layer'].replace('_', ' ')
+    # After analysing start continue with rest
+    for rule in ruleset:
+        
+        layer = rule['layer']
+        
+        # Skip Start layer (already processed)
+        if layer == 'Start':
+            continue
+        
+        # Layers that are of the right dimension
+        elif layer in lallowed:
+            
+            genepool[layer]['id'] = layer
+            genepool[layer]['label'] = layer.replace('_', ' ')
+            genepool[layer]['ltype'] = layers_type[layer]
+            
+            # Layer Category
+            if layer in preprocessing: 
+                genepool[layer]['parent'] = 'pr'
+            elif layer in (one_dim_feature + two_dim_feature): 
+                genepool[layer]['parent'] = 'fe'
+            elif layer in (one_dim_global_pooling + two_dim_global_pooling): 
+                genepool[layer]['parent'] = 'gl'
+            elif layer in dense: 
+                genepool[layer]['parent'] = 'de'
             
             nodes.append({ 'data': genepool[rule['layer']] })
 
             for allowed_after in rule['allowed_after']:
-                edges.append({
-                    'data': {'source': rule['layer'], 'target': allowed_after}, 
-                    'classes': f'{rule["layer"]} {allowed_after}'
-                })
+                
+                if allowed_after in lallowed:
+                    edges.append({
+                        'data': {'source': layer, 'target': allowed_after}, 
+                        'classes': f'{layer} {allowed_after}'
+                    })
         
     elements = nodes + edges
     return elements
@@ -222,8 +277,10 @@ def get_start_gene(run):
     for rule in ruleset:
         if rule['layer'] == 'Start':
             return genepool[rule['start_with'][0]]
-            
-
+        
+### INDIVIDUAL CREATION ###
+# TODO Deprecate crossover dict
+       
 def get_best_individuals(run):
     """Dataframe of parents of individuals"""
 
@@ -235,7 +292,6 @@ def get_best_individuals(run):
     df["Generation"] = df["Generation"].astype('int64')
 
     return df
-
 
 def get_crossover_parents(run):
     """Dicitionnairy of parents of individuals with values=["Generation", "New Individual", "Parent 1", "Crossover 1", "Parent 2", "Crossover 2"]"""
@@ -266,7 +322,6 @@ def get_crossover_parents(run):
 
     return crossover_dict
 
-
 def get_crossover_parents_df(run):
     """Dataframe of parents of individuals (not in use)"""
 
@@ -294,7 +349,6 @@ def get_crossover_parents_df(run):
     return df        
 
 ### FAMILY TREE GENERATION ###
-
 # TODO Change node data into individual data
 
 def get_upstream_tree(run, generation, individual, generation_range, x_max=1000, y_max=1000):
@@ -331,7 +385,6 @@ def get_upstream_tree(run, generation, individual, generation_range, x_max=1000,
 
     return (parent1_tree + individual_el + parent2_tree, roots1 + roots2)
 
-
 def get_downstream_tree(run, generation, individual, generation_range, x_max=1000, y_max=1000):
     """Get children of an individual"""
 
@@ -365,7 +418,6 @@ def get_downstream_tree(run, generation, individual, generation_range, x_max=100
 
     return children_tree + individual_el
 
-
 def get_family_tree(run, generation, individual, generation_range=None):
     """List of nodes and edges for element param in cytoscape"""
 
@@ -388,14 +440,16 @@ def get_family_tree(run, generation, individual, generation_range=None):
     
     return (family_tree, unique_roots)
 
+def test():
+    run = "ga_20230116-110958_sc_2d_4classes"
+    generation = 1
+    individual = "abstract_wildebeest"
 
-run = "ga_20230116-110958_sc_2d_4classes"
-generation = 1
-individual = "abstract_wildebeest"
+    ruleset = get_ruleset(run)
 
-ruleset = get_ruleset(run)
-
-for rule in ruleset:
-    if "source" not in str(rule):
-        #print(rule)
-        1+1
+    for rule in ruleset:
+        if "source" not in str(rule):
+            #print(rule)
+            1+1
+            
+test()
