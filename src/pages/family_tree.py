@@ -1,7 +1,10 @@
 import dash
-from dash import html
+from dash import html, callback, Input, Output
 import dash_cytoscape as cyto
-from utils import get_family_tree
+import dash_mantine_components as dmc
+from dash_iconify import DashIconify
+
+from utils import get_family_tree, get_generations, get_individuals
 
 dash.register_page(__name__, path='/family-tree')
 
@@ -12,10 +15,52 @@ col1a = html.Div([ html.H1("Family Tree"), ], className="wrapper-col")
 col1b = html.Div([ ], className="wrapper-col")
 first_row = html.Div([ col1a ], className="wrapper")
 
-# Body
-individual = 'important_chital'
-elements, roots = get_family_tree(run, 5, individual, range(2, 6))
+# Generation Selection
+gen_select = dmc.Select(
+    label="Select Generation",
+    placeholder="Select Generation",
+    icon=DashIconify(icon="material-symbols-light:circle", height=10, width=10, color="#6173E9"),
+    data=[{"value": gen, "label": gen.replace("_", " ")} for gen in get_generations(run)],
+    id="gen-select",
+    className="circle-select",
+)
 
+@callback( output=Output("ind-select", "data"), inputs=Input("gen-select", "value") )
+def get_gen(gen):
+    gen = int(gen.split("_")[1])
+    return [{"value": ind, "label": ind.replace("_", " ")} for ind in get_individuals(run, generation_range=range(gen, gen+1), value="name", as_generation_dict=False)]
+
+# Individual Selection
+ind_select = dmc.Select(
+    label="Select Individual",
+    placeholder="Select Individual",
+    icon=DashIconify(icon="material-symbols-light:circle", height=10, width=10, color="#6173E9"),
+    data=[{"value": ind, "label": ind.replace("_", " ")} for ind in get_individuals(run, generation_range=range(5,6), value="name", as_generation_dict=False)],
+    id="ind-select",
+    className="circle-select",
+)
+
+@callback( 
+    Output("cytoscape-family-tree", "elements"), 
+    Output("cytoscape-family-tree", "layout"), 
+    Input("gen-select", "value"),
+    Input("ind-select", "value") 
+)
+def get_ind(gen, ind):
+    gen = int(gen.split("_")[1])
+    elements, roots = get_family_tree(run, gen, ind, range(gen-3, gen+2))
+    return elements, { 'name': 'breadthfirst', 'roots': roots }
+
+node_select = dmc.Grid(
+    children=[
+        dmc.Col(gen_select, span="auto"),
+        dmc.Col(ind_select, span="auto"),
+    ],
+    justify="center",
+    gutter="sm",
+)
+
+# Cytoscape 
 cytoscape_stylesheet = [
     {
         'selector': 'node',
@@ -43,7 +88,7 @@ cytoscape_stylesheet = [
         }
     },
     {
-        'selector': f'[id = "{individual}"]',
+        'selector': f'[id = ""]',
         'style': {
             'background-color': '#FFFFFF',
             'border-color': '#6173E9',
@@ -56,17 +101,17 @@ cytoscape_stylesheet = [
 
 cytoscape = cyto.Cytoscape(
     id='cytoscape-family-tree',
-    elements=elements,
-    style={'width': '500px', 'height': '500px'},
+    style={'height': '500px'},
     stylesheet=cytoscape_stylesheet,
-    layout={
-        'name': 'breadthfirst',
-        'roots': roots
-    }
 )
 
-#col2a = html.Div([ ], className="wrapper-col")
-#col2b = html.Div([ ], className="wrapper-col")
-#second_row = html.Div([ col2a, col2b ], className="wrapper")
+#layout = html.Div([ first_row, generation_div, individual_div, cytoscape ])
 
-layout = html.Div([ first_row, cytoscape ], className="wrapper")
+layout = dmc.Grid(
+    children=[
+        dmc.Col(html.Div([ first_row, node_select, cytoscape ]), span=5),
+        dmc.Col(html.Div([]), span="auto"),
+    ],
+    gutter="s",
+    justify="space-between",
+)

@@ -126,8 +126,10 @@ def get_individuals(run, generation_range=None, value="name", as_generation_dict
         individuals = []
 
         for generation in generation_range:
-
-            individuals += list(get_individuals_of_generation(run, generation, value).values())
+            if value != "name":
+                individuals += list(get_individuals_of_generation(run, generation, value).values())
+            else:
+                individuals += get_individuals_of_generation(run, generation, value)
 
         return individuals
     
@@ -268,7 +270,6 @@ def get_ruleset(run, cytoscape_dag=True, exclude_unreachable=True):
     elements = nodes + edges
     return elements
 
-
 def get_start_gene(run):
     """Dict of start gene"""
     ruleset = get_ruleset(run, cytoscape_dag=False)
@@ -277,6 +278,7 @@ def get_start_gene(run):
     for rule in ruleset:
         if rule['layer'] == 'Start':
             return genepool[rule['start_with'][0]]
+     
         
 ### INDIVIDUAL CREATION ###
 # TODO Deprecate crossover dict
@@ -347,6 +349,7 @@ def get_crossover_parents_df(run):
         df.loc[idx, "crossover2"] = p2.split(",")[1]
 
     return df        
+
 
 ### FAMILY TREE GENERATION ###
 # TODO Change node data into individual data

@@ -19,7 +19,7 @@ navbar = html.Div(
                     icon=DashIconify(icon="mdi:run", height=20, width=20, color="#6173E9"),
                     data=[{"value":run, "label":run.replace("_", " ")} for run in get_runs()],
                     id="run-select",
-                    className="circle-select",
+                    className="circle-select-nav",
                 ),
             ],
             id="navrun"
