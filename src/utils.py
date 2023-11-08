@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import random
 
 ### READ HELPERS ###
 
@@ -39,7 +40,7 @@ def get_runs():
 
     return runs
 
-def get_generations(run):
+def get_generations(run, as_int=False):
     """List of all generation names (dictionnairies) in run"""
     
     generation_path = f"../data/{run}"
@@ -48,7 +49,10 @@ def get_generations(run):
 
     generations.sort()
 
-    return generations
+    if not as_int:
+        return generations
+    else: 
+        return [int(gen.split("_")[1]) for gen in generations]
 
 
 ### SIGNLE INDIVIDUAL INFORMATION ###
@@ -83,7 +87,7 @@ def get_individual_power_measurements(run, generation, individual):
  
 ### INDIVIDUALS INFORMATION ###
 
-def get_individuals_of_generation(run, generation, value="name"):
+def get_individuals_of_generation(run, generation, value="names"):
     """
     Get the data of all individuals of a specified generation.
     
@@ -107,7 +111,8 @@ def get_individuals_of_generation(run, generation, value="name"):
     items = os.listdir(f"../data/{run}/Generation_{generation}")
     individuals_names = [item for item in items if os.path.isdir(os.path.join(f"../data/{run}/Generation_{generation}", item))]
 
-    if value == "name":
+    if value == "names":
+        individuals_names.sort()
         return individuals_names
     
     # Access individuals data
@@ -126,7 +131,7 @@ def get_individuals_of_generation(run, generation, value="name"):
     
     return individual_dict
 
-def get_individuals(run, generation_range=None, value="name", as_generation_dict=False):
+def get_individuals(run, generation_range=None, value="names", as_generation_dict=False):
     """
     Get data from the indivduals of a generation range or all the generations. 
     
@@ -157,7 +162,7 @@ def get_individuals(run, generation_range=None, value="name", as_generation_dict
         
         individuals = []
         for generation in generation_range:
-            if value != "name":
+            if value != "names":
                 individuals += list(get_individuals_of_generation(run, generation, value).values())
             else:
                 individuals += get_individuals_of_generation(run, generation, value)
@@ -519,17 +524,35 @@ def get_family_tree(run, generation, individual, generation_range=None):
     
     return (family_tree, unique_roots)
 
+
+### OTHER HELPER FUNCTIONS ###
+
+def get_random_individual(run):
+    """Get the first sorted individual from a random generation of specified run."""
+    generations = get_generations(run)
+    generation = random.choice(generations)
+    
+    gen_int = int(generation.split("_")[1])
+    individuals = get_individuals(run, range(gen_int, gen_int+1), value="names", as_generation_dict=False)
+    
+    return generation, individuals[0]
+
 def report():
     run = "ga_20230116-110958_sc_2d_4classes"
     generation = 1
     individual = "abstract_wildebeest"
     
     print("Best Results:")
-    print("---------------")
-    print("Best Accuracy:", get_individuals_best_result(run, None, "val_acc"))
-    print("Best Footprint:", get_individuals_best_result(run, None, "memory_footprint_h5"))
-    print("Best Inference Time:", get_individuals_best_result(run, None, "inference_time"))
-    print("Best Energy Consumption:", get_individuals_best_result(run, None, "energy_consumption"))
-    print("Best Fitness:", get_individuals_best_result(run, None, "fitness"))
+    print("--------------------------------")
+    print("Best Accuracy: ", get_individuals_best_result(run, None, "val_acc"))
+    print("Best Footprint: ", get_individuals_best_result(run, None, "memory_footprint_h5"))
+    print("Best Inference Time: ", get_individuals_best_result(run, None, "inference_time"))
+    print("Best Energy Consumption: ", get_individuals_best_result(run, None, "energy_consumption"))
+    print("Best Fitness: ", get_individuals_best_result(run, None, "fitness"))
+    print()
+    
+    print("Random Individuals:")
+    print("--------------------------------")
+    print("Random Individual: ", get_random_individual(run)[1], "-> Generation: ", get_random_individual(run)[0])
               
 report()
