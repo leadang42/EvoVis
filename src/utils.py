@@ -80,20 +80,37 @@ def get_individual_power_measurements(run, generation, individual):
         return pd.read_csv(path)
     else:
         return None
-    
-
-
+ 
 ### INDIVIDUALS INFORMATION ###
 
 def get_individuals_of_generation(run, generation, value="name"):
-    """List of individuals' "names" or dict or list of "results", "chromosomes" or "power_measurements" for one generation"""
-
+    """
+    Get the data of all individuals of a specified generation.
+    
+    Args:
+        run (str): The directory name of the run data.
+        generation (int): Generation where genes will be counted.
+        value (str): The data of an individual that will be accessed. Available are "names", "results", "chromosomes" or "power_measurements".
+    
+    Returns:
+        individuals_names (list) or individual_dict (dict): Get the list of names if value is set to name or a dictionairy with individual names as keys.
+    """
+    
+    # Assert in case of wrong input values
+    available_values = ["names", "results", "chromosomes", "power_measurements"]
+    generations = [int(gen.split("_")[1]) for gen in get_generations(run)]
+    
+    assert value in available_values, "Unavailable return value"
+    assert generation in generations, "Unavailable generation"
+    
+    # Access individuals names
     items = os.listdir(f"../data/{run}/Generation_{generation}")
     individuals_names = [item for item in items if os.path.isdir(os.path.join(f"../data/{run}/Generation_{generation}", item))]
 
     if value == "name":
         return individuals_names
     
+    # Access individuals data
     individual_dict = {}
 
     for individual in individuals_names:
@@ -110,21 +127,35 @@ def get_individuals_of_generation(run, generation, value="name"):
     return individual_dict
 
 def get_individuals(run, generation_range=None, value="name", as_generation_dict=False):
-    """List of individuals' "names", "results", "chromosomes" or "power_measurements" for generation range"""
+    """
+    Get data from the indivduals of a generation range or all the generations. 
+    
+    Args: 
+        run (str): The directory name of the run data.
+        generation_range (range): A python range of generations from which the individuals will be extracted. 
+        value (str): The return values of the individuals. Choose between the values "names", "results", "chromosomes" or "power_measurements".
+        as_generation_dict (bool): Specify if individuals 
+        
+    Returns:
+        generations (dict) or individuals (list): Outputs a dict with generation kay containing dict with individual key or a list only with the values (no generation, individualname specifications). 
+    """
+    
+    # (No assertion needed bc of helper function)
 
+    # Generation range creation in case of None
     generation_range = range(1, len(get_generations(run)) + 1) if generation_range is None else generation_range
     
     if as_generation_dict:
+        
         generations = {}
-
         for generation in generation_range:
             generations[generation] = get_individuals_of_generation(run, generation, value)
     
         return generations
     
     else: 
+        
         individuals = []
-
         for generation in generation_range:
             if value != "name":
                 individuals += list(get_individuals_of_generation(run, generation, value).values())
@@ -133,20 +164,65 @@ def get_individuals(run, generation_range=None, value="name", as_generation_dict
 
         return individuals
     
+def get_individuals_best_result(run, generation_range=None, measure="val_acc"):
+    """
+    Get the best results of all individuals of a generation range. 
+    
+    Args:
+        run (str): The directory name of the run data.
+        generation_range (range): A python range of generations from which the individuals will be extracted. 
+        measure (str): Choose the measure you want to comapre. Select between "val_acc", "memory_footprint_h5", "memory_footprint_tflite", "memory_footprint_c_array", "inference_time", "energy_consumption", "mean_power_consumption", "fitness".
+        
+    Returns:
+        generation (int): Generation with best result 
+        individual (str): Individual with best result 
+        best_value (float): The best result of all individuals in given generation range
+    """
+    
+    available_measures = ["val_acc", "memory_footprint_h5", "memory_footprint_tflite", "memory_footprint_c_array", "inference_time", "energy_consumption", "mean_power_consumption", "fitness"]
+    assert measure in available_measures, "Unavailable measure value"
+    
+    values = get_individuals(run, generation_range, "results", as_generation_dict=True)
+    
+    best_value = 0 if (measure == "val_acc" or measure == "fitness") else 100000000
+    generation = None
+    individual = None
+    
+    for gen, results in values.items():
+        for ind, result in results.items():
+            
+            if measure in result:
+                val = result[measure]
+
+                if type(val) == int or type(val) == float: 
+                    
+                    if val < best_value and measure != "val_acc" and measure != "fitness": generation, individual, best_value = gen, ind, val
+                    if val > best_value and (measure == "val_acc" or measure == "fitness"): generation, individual, best_value = gen, ind, val
+               
+    return generation, individual, best_value           
+    
 def get_number_of_genes(run, generation, genename):
-    """Outputs number of genes in a certain generation"""
+    """
+    Get the number of genes in a certain generation.
+    
+    Args:
+        run (str): The directory name of the run data.
+        generation (int): Generation where genes will be counted.
+        genename (str): The "layer" identifier of the a gene. 
+        
+    Returns:
+        count (int): Number of genes
+    """
     chromosomes = get_individuals(run, range(generation, generation+1), value="chromosomes", as_generation_dict=False)
 
     count = 0
     for chromosome in chromosomes:
-
         for gene in chromosome:
 
             if gene["layer"] == genename:
                 count += 1
 
     return count
-
 
 ### RUN INFORMATION ###
 
@@ -443,16 +519,17 @@ def get_family_tree(run, generation, individual, generation_range=None):
     
     return (family_tree, unique_roots)
 
-def test():
+def report():
     run = "ga_20230116-110958_sc_2d_4classes"
     generation = 1
     individual = "abstract_wildebeest"
-
-    ruleset = get_ruleset(run)
-
-    for rule in ruleset:
-        if "source" not in str(rule):
-            #print(rule)
-            1+1
-            
-test()
+    
+    print("Best Results:")
+    print("---------------")
+    print("Best Accuracy:", get_individuals_best_result(run, None, "val_acc"))
+    print("Best Footprint:", get_individuals_best_result(run, None, "memory_footprint_h5"))
+    print("Best Inference Time:", get_individuals_best_result(run, None, "inference_time"))
+    print("Best Energy Consumption:", get_individuals_best_result(run, None, "energy_consumption"))
+    print("Best Fitness:", get_individuals_best_result(run, None, "fitness"))
+              
+report()
