@@ -46,11 +46,12 @@ def get_generations(run, as_int=False):
     generation_path = f"../data/{run}"
     items = os.listdir(generation_path)
     generations = [item for item in items if os.path.isdir(os.path.join(generation_path, item))]
+    generations_int = [int(gen.split("_")[1]) for gen in generations]
 
-    generations.sort()
+    generations_int.sort()
 
     if not as_int:
-        return generations
+        return [f"Generation_{gen}" for gen in generations_int]
     else: 
         return [int(gen.split("_")[1]) for gen in generations]
 
@@ -205,7 +206,100 @@ def get_individuals_best_result(run, generation_range=None, measure="val_acc"):
                     if val > best_value and (measure == "val_acc" or measure == "fitness"): generation, individual, best_value = gen, ind, val
                
     return generation, individual, best_value           
+  
+def get_individuals_worst_result(run, generation_range=None, measure="val_acc"):
+    """
+    Get the worst results of all individuals of a generation range. 
     
+    Args:
+        run (str): The directory name of the run data.
+        generation_range (range): A python range of generations from which the individuals will be extracted. 
+        measure (str): Choose the measure you want to comapre. Select between "val_acc", "memory_footprint_h5", "memory_footprint_tflite", "memory_footprint_c_array", "inference_time", "energy_consumption", "mean_power_consumption", "fitness".
+        
+    Returns:
+        generation (int): Generation with best result 
+        individual (str): Individual with best result 
+        worst_value (float): The best result of all individuals in given generation range
+    """
+    
+    available_measures = ["val_acc", "memory_footprint_h5", "memory_footprint_tflite", "memory_footprint_c_array", "inference_time", "energy_consumption", "mean_power_consumption", "fitness"]
+    assert measure in available_measures, "Unavailable measure value"
+    
+    values = get_individuals(run, generation_range, "results", as_generation_dict=True)
+    
+    worst_value = 1 if (measure == "val_acc" or measure == "fitness") else 0
+    generation = None
+    individual = None
+    
+    for gen, results in values.items():
+        for ind, result in results.items():
+            
+            if measure in result:
+                val = result[measure]
+
+                if type(val) == int or type(val) == float: 
+                    
+                    if val > worst_value and measure != "val_acc" and measure != "fitness": generation, individual, worst_value = gen, ind, val
+                    if val < worst_value and (measure == "val_acc" or measure == "fitness"): generation, individual, worst_value = gen, ind, val
+               
+    return generation, individual, worst_value
+  
+def get_individuals_min_max(run, generation_range=None):
+    values = get_individuals(run, generation_range, "results", as_generation_dict=True)
+    
+    measurements = {
+        "val_acc": {
+            'min': {'generation': None, 'individual': None, 'value': 1}, 
+            'max': {'generation': None, 'individual': None, 'value': 0}
+        }, 
+        "memory_footprint_h5": {
+            'min': {'generation': None, 'individual': None, 'value': 1000000000}, 
+            'max': {'generation': None, 'individual': None, 'value': 0}
+        }, 
+        "memory_footprint_tflite": {
+            'min': {'generation': None, 'individual': None, 'value': 1000000000}, 
+            'max': {'generation': None, 'individual': None, 'value': 0}
+        }, 
+        "memory_footprint_c_array":{
+            'min': {'generation': None, 'individual': None, 'value': 1000000000}, 
+            'max': {'generation': None, 'individual': None, 'value': 0}
+        }, 
+        "inference_time": {
+            'min': {'generation': None, 'individual': None, 'value': 1000000000}, 
+            'max': {'generation': None, 'individual': None, 'value': 0}
+        }, 
+        "energy_consumption": {
+            'min': {'generation': None, 'individual': None, 'value': 1000000000}, 
+            'max': {'generation': None, 'individual': None, 'value': 0}
+        }, 
+        "mean_power_consumption": {
+            'min': {'generation': None, 'individual': None, 'value': 1000000000}, 
+            'max': {'generation': None, 'individual': None, 'value': 0}
+        }, 
+        "fitness": {
+            'min': {'generation': None, 'individual': None, 'value': 1}, 
+            'max': {'generation': None, 'individual': None, 'value': 0}
+        }
+    }
+    
+    for gen, results in values.items():
+        for ind, result in results.items():
+            
+            for measure, min_max in measurements.items():
+                if measure in result:
+                    val = result[measure]
+                
+                    if type(val) == int or type(val) == float: 
+                        
+                        if val < min_max['min']['value']: 
+                            measurements[measure]['min'] = {'generation': gen, 'individual': ind, 'value': val}
+                            
+                        if val > min_max['max']['value']: 
+                            measurements[measure]['max'] = {'generation': gen, 'individual': ind, 'value': val}
+                
+    return measurements
+    
+  
 def get_number_of_genes(run, generation, genename):
     """
     Get the number of genes in a certain generation.
@@ -377,7 +471,7 @@ def get_best_individuals(run):
     return df
 
 def get_crossover_parents(run):
-    """Dicitionnairy of parents of individuals with values=["Generation", "New Individual", "Parent 1", "Crossover 1", "Parent 2", "Crossover 2"]"""
+    """Dicitionnairy with key individual and values of parents of individuals with values=["Generation", "New Individual", "Parent 1", "Crossover 1", "Parent 2", "Crossover 2"]"""
 
     df = pd.read_csv(f'../data/{run}/crossover_parents.csv', header=None)
     df = df.rename(columns={0:"Generation", 1:"Parent 1", 2:"Parent 2", 3:"New Individual"})
@@ -527,13 +621,14 @@ def get_family_tree(run, generation, individual, generation_range=None):
 
 ### OTHER HELPER FUNCTIONS ###
 
-def get_random_individual(run):
+def get_random_individual(run, generation=None):
     """Get the first sorted individual from a random generation of specified run."""
-    generations = get_generations(run)
-    generation = random.choice(generations)
+    if generation is None:
+        generations = get_generations(run)
+        generation = random.choice(generations)
+        generation = int(generation.split("_")[1])
     
-    gen_int = int(generation.split("_")[1])
-    individuals = get_individuals(run, range(gen_int, gen_int+1), value="names", as_generation_dict=False)
+    individuals = get_individuals(run, range(generation, generation+1), value="names", as_generation_dict=False)
     
     return generation, individuals[0]
 
@@ -546,13 +641,34 @@ def report():
     print("--------------------------------")
     print("Best Accuracy: ", get_individuals_best_result(run, None, "val_acc"))
     print("Best Footprint: ", get_individuals_best_result(run, None, "memory_footprint_h5"))
+    print("Best Footprint: ", get_individuals_best_result(run, None, "memory_footprint_tflite"))
+    print("Best Footprint: ", get_individuals_best_result(run, None, "memory_footprint_c_array"))
     print("Best Inference Time: ", get_individuals_best_result(run, None, "inference_time"))
     print("Best Energy Consumption: ", get_individuals_best_result(run, None, "energy_consumption"))
     print("Best Fitness: ", get_individuals_best_result(run, None, "fitness"))
     print()
     
+    print("Worst Results:")
+    print("--------------------------------")
+    print("Worst Accuracy: ", get_individuals_worst_result(run, None, "val_acc"))
+    print("Worst Footprint: ", get_individuals_worst_result(run, None, "memory_footprint_h5"))
+    print("Worst Footprint: ", get_individuals_worst_result(run, None, "memory_footprint_tflite"))
+    print("Worst Footprint: ", get_individuals_worst_result(run, None, "memory_footprint_c_array"))
+    print("Worst Inference Time: ", get_individuals_worst_result(run, None, "inference_time"))
+    print("Worst Energy Consumption: ", get_individuals_worst_result(run, None, "energy_consumption"))
+    print("Worst Fitness: ", get_individuals_worst_result(run, None, "fitness"))
+    print()
+    
     print("Random Individuals:")
     print("--------------------------------")
     print("Random Individual: ", get_random_individual(run)[1], "-> Generation: ", get_random_individual(run)[0])
+    
+    measurements = get_individuals_min_max(run, None)
+    print(measurements)
+    
+    for key, value in measurements.values():
+        print(key)
+        print(value)
+        print()
               
-report()
+#report()
