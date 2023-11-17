@@ -1,21 +1,25 @@
+#gen-range-slider {
+    padding: 0px 0px 0px;
+}
+
 .rc-slider-track {
     background-color: var(--accent-color);
     height: 6px;
 }
 
 .rc-slider-handle-1 {
-    border-color: #213CEB;
-    background-color: #213CEB;
+    border-color: var(--accent-color);
+    background-color: #FFFFFF;
 }
 
 .rc-slider-handle-2 {
     border-color: var(--accent-color);
-    background-color: var(--accent-color);
+    background-color: #FFFFFF;
 }
 
 .rc-slider-handle-3 {
-    border-color: #213CEB;
-    background-color: #213CEB;
+    border-color: var(--accent-color);
+    background-color: #FFFFFF;
 }
 
 .rc-slider-rail {

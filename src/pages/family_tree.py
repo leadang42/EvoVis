@@ -6,7 +6,7 @@ from dash_iconify import DashIconify
 import random
 
 from utils import get_family_tree, get_generations, get_individuals, get_random_individual, get_individuals_min_max, get_individual_result
-from components import dot_heading, bullet_chart_card, bullet_chart_basic, warning
+from components import dot_heading, bullet_chart_card, bullet_chart_basic, warning, information
 
 dash.register_page(__name__, path='/family-tree')
 
@@ -53,7 +53,7 @@ cytoscape_stylesheet = [
 cytoscape = cyto.Cytoscape(
     id='cytoscape-family-tree',
     className="wrapper",
-    style={'height': '400px'},
+    style={'height': '300px'},
     stylesheet=cytoscape_stylesheet,
 )
 
@@ -149,13 +149,20 @@ def set_cytoscape(gen_range, gen, ind):
     return elements, { 'name': 'breadthfirst', 'roots': roots }, new_cytoscape_stylesheet
 
 
-@callback( Output("values-col", "children"), Input("ind-select", "value"), Input("gen-select", "value"))
-def set_values(ind, gen):
+@callback( Output("values-col", "children"), Input("cytoscape-family-tree", "tapNodeData"))
+def set_values(ind_clicked):
     
+    print(ind_clicked)
+    
+    ind = ind_clicked["id"]
+    gen = ind_clicked["generation"]
+    
+    if "extinct" in ind_clicked:
+        extinct = ind_clicked["extinct"]
+   
     # Getting inidivdual's values
     meas_keys = ["memory_footprint_h5", "memory_footprint_tflite", "memory_footprint_c_array", "val_acc", "inference_time", "energy_consumption"]
-    ind_meas = get_individual_result(run, int(gen.split("_")[1]), ind)
-    print(f'\n{gen} {ind}: {ind_meas}')
+    ind_meas = get_individual_result(run, gen, ind)
     
     # Adding elements to value div
     vals_components = [dot_heading("Fitness", style={"margin": "10px", "margin-top": "110px", 'flex': '100%'})]
@@ -167,6 +174,10 @@ def set_values(ind, gen):
 
     else: 
         return vals_components + [warning("Measuring energy consumption failed with this individual")]
+    
+    # Adding information values
+    if extinct:
+        vals_components += [information("Individual became extinct.")]
     
     # Adding success values
     if "fitness" in ind_meas:
@@ -187,13 +198,11 @@ def set_values(ind, gen):
         },
             
     ), 
-    
     return values_div
             
 
 
 ### LAYOUT ###
-
 
 layout = dmc.Grid(
     children=[
@@ -202,6 +211,7 @@ layout = dmc.Grid(
                 html.H1("Family Tree", className="wrapper", style = {"margin-bottom": "20px", "margin-top": "20px"}), 
                 node_select, 
                 cytoscape,
+                #html.P("Generation Range", className="input-heading", style={"margin": "10px", "font-weight": "500", "font-size": "15px", 'white-space': 'nowrap'}),
                 slider
             ]), 
             span=5

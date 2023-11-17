@@ -180,9 +180,9 @@ def get_individuals_best_result(run, generation_range=None, measure="val_acc"):
         measure (str): Choose the measure you want to comapre. Select between "val_acc", "memory_footprint_h5", "memory_footprint_tflite", "memory_footprint_c_array", "inference_time", "energy_consumption", "mean_power_consumption", "fitness".
         
     Returns:
-        generation (int): Generation with best result 
-        individual (str): Individual with best result 
-        best_value (float): The best result of all individuals in given generation range
+        generation (int): Generation with best result.
+        individual (str): Individual with best result.
+        best_value (float): The best result of all individuals in given generation rangee.
     """
     
     available_measures = ["val_acc", "memory_footprint_h5", "memory_footprint_tflite", "memory_footprint_c_array", "inference_time", "energy_consumption", "mean_power_consumption", "fitness"]
@@ -529,14 +529,26 @@ def get_crossover_parents_df(run):
 ### FAMILY TREE GENERATION ###
 # TODO Change node data into individual data
 
-def get_upstream_tree(run, generation, individual, generation_range, x_max=1000, y_max=1000):
-    """Get upstream individuals of an individual until stop generation with maybe duplicate nodes"""
-
+def get_upstream_tree(run, generation, individual, generation_range):
+    """
+    Helper funnction for family tree: Create upstream famliy tree with nodes, edges and root elements starting from selected individual.
+    
+    Args:
+        run (str): The directory name of the run data.
+        generation (int): Generation of individual
+        individual (str): Individual from where family tree evolves from. 
+        generation_range (range): A python range of generations from which the individuals will be extracted. 
+        
+    Returns:
+        elements (list): List of nodes and edges for element param in cytoscape.
+        root (list): List of roots nodes to create right tree structure.
+    """
+    
     min_generation = generation_range[0]
 
     # End condition with only one individual
     if min_generation == generation:
-        return ([{'data': {'id': individual, 'label': individual[0:3]}}], [individual])
+        return ([{'data': {'id': individual, 'label': individual[0:3], 'generation': generation}}], [individual])
 
     # Nodes and edges for individual
     crossovers = get_crossover_parents(run)
@@ -544,18 +556,10 @@ def get_upstream_tree(run, generation, individual, generation_range, x_max=1000,
     parent2 = crossovers[individual]["parent2"]
 
     individual_el = [
-        {'data': {'id': individual, 'label': individual[0:3]}},
+        {'data': {'id': individual, 'label': individual[0:3], 'generation': generation}},
         {'data': {'source': parent1, 'target': individual}},
         {'data': {'source': parent2, 'target': individual}}
     ]
-
-    # End condition woith nodes for parents
-    if min_generation == generation-1:
-
-        parent1_el = [{'data': {'id': parent1, 'label': parent1[0:3]}}]
-        parent2_el = [{'data': {'id': parent2, 'label': parent2[0:3]}}]
-
-        return (parent1_el + individual_el + parent2_el, [parent1, parent2])
 
     # Recursion for moving up the tree
     parent1_tree, roots1 = get_upstream_tree(run, generation-1, parent1, generation_range)
@@ -563,31 +567,39 @@ def get_upstream_tree(run, generation, individual, generation_range, x_max=1000,
 
     return (parent1_tree + individual_el + parent2_tree, roots1 + roots2)
 
-def get_downstream_tree(run, generation, individual, generation_range, x_max=1000, y_max=1000):
-    """Get children of an individual"""
+def get_downstream_tree(run, generation, individual, generation_range):
+    """
+    Helper funnction for family tree: Create upstream famliy tree with nodes and edges starting from selected individual.
+    
+    Args:
+        run (str): The directory name of the run data.
+        generation (int): Generation of individual
+        individual (str): Individual from where family tree evolves from. 
+        generation_range (range): A python range of generations from which the individuals will be extracted. 
+        
+    Returns:
+        elements (list): list of nodes and edges for element param in cytoscape.
+    """
 
     max_generation = generation_range[-1]
+    
+    # Get children of individual
+    crossovers = get_crossover_parents_df(run)
+    children = crossovers[crossovers['parent1'].str.contains(individual) | crossovers['parent2'].str.contains(individual)]
+    children = list(children["individual"].values)
+    
+    extinct = False if children else True
 
     # End condition with only one individual
     if max_generation == generation:
-        return [{'data': {'id': individual, 'label': individual[0:3]}}]
+        return [{'data': {'id': individual, 'label': individual[0:3], 'generation': generation, 'extinct': extinct}}]
 
     # Nodes and edges for individual
-    crossovers = get_crossover_parents_df(run)
-    
-    children = crossovers[crossovers['parent1'].str.contains(individual) | crossovers['parent2'].str.contains(individual)]
-    children = list(children["individual"].values)
-
-    individual_el = [{'data': {'id': individual, 'label': individual[0:3]}}]
+    individual_el = [{'data': {'id': individual, 'label': individual[0:3], 'generation': generation, 'extinct': extinct}}]
 
     for child in children:
         individual_el.append({'data': {'source': individual, 'target': child}})
 
-    # End condition with nodes for children
-    if max_generation == generation+1:
-        children_el = [{'data': {'id': child, 'label': child[0:3]}} for child in children]
-        return individual_el + children_el
-    
     # Recursion for moving down the tree
     children_tree = []
 
@@ -597,7 +609,19 @@ def get_downstream_tree(run, generation, individual, generation_range, x_max=100
     return children_tree + individual_el
 
 def get_family_tree(run, generation, individual, generation_range=None):
-    """List of nodes and edges for element param in cytoscape"""
+    """
+    Create famliy tree with nodes, edges and roots elements starting from selected individual.
+    
+    Args:
+        run (str): The directory name of the run data.
+        generation (int): Generation of individual
+        individual (str): Individual from where family tree evolves from. 
+        generation_range (range): A python range of generations from which the individuals will be extracted. 
+        
+    Returns:
+        elements (list): list of nodes and edges for element param in cytoscape.
+        root (list): List of roots nodes to create right tree structure.
+    """
 
     # Set default value
     if generation_range is None:
@@ -610,7 +634,7 @@ def get_family_tree(run, generation, individual, generation_range=None):
     family_tree = []
     unique_roots = []
 
-    for el in upstream_tree + downstream_tree:
+    for el in downstream_tree + upstream_tree:
         if el not in family_tree: family_tree.append(el)
 
     for el in roots:

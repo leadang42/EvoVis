@@ -238,23 +238,16 @@ def bullet_chart_basic(metric, min, max, metric_card_id="bullet-chart-basic"):
 
 def warning(message):
     
-    warning_style = {
-        'border-radius': '10px',
-        'border': '2px solid #0C2CFF',
-        'background': 'rgba(126, 143, 255, 0.30)',
-        'padding': '10px',
-        'display': 'flex',
-        'flex': '100%',
-        'margin': '10px'
-    }
+    children = [DashIconify(icon='mingcute:information-line', height=25, width=25), html.P(message, className='feedback-text')]
+    warning_div = html.Div(children=children, className="feedback feedback-warning")
     
-    warning_div = html.Div(
-        [
-            DashIconify(icon='fluent:warning-16-regular', height=25, width=25, color="#0C2CFF"),
-            html.P(message, style={ "margin": "5px", 'color': '#0C2CFF'}),
-        ],
-        style=warning_style
-    )
+    return warning_div
+
+
+def information(message):
+    
+    children = [DashIconify(icon='mingcute:information-line', height=25, width=25), html.P(message, className='feedback-text')]
+    warning_div = html.Div(children=children, className="feedback feedback-information")
     
     return warning_div
 
