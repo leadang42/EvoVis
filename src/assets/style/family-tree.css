@@ -1,0 +1,26 @@
+.cytoscape-values{
+    margin-left: 50px;
+    padding: 20px;
+    background-color: #E8E8E8;
+    border-radius: 20px;
+}
+
+#individual-genes {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: left;
+    align-items: center;
+}
+
+#individual-results{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mantine-Badge-root {
+    margin: 5px;
+    background: #D2D5EE;
+    color: #6173E9;
+}

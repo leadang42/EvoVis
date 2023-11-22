@@ -5,7 +5,7 @@ import dash_mantine_components as dmc
 from dash_iconify import DashIconify
 import random
 
-from utils import get_family_tree, get_generations, get_individuals, get_random_individual, get_individuals_min_max, get_individual_result
+from utils import get_family_tree, get_generations, get_individuals, get_random_individual, get_individuals_min_max, get_individual_result, get_individual_chromosome, get_hyperparamters
 from components import dot_heading, bullet_chart_card, bullet_chart_basic, warning, information
 
 dash.register_page(__name__, path='/family-tree')
@@ -35,6 +35,7 @@ cytoscape_stylesheet = [
         'selector': 'edge',
         'style': {
             'line-color': '#6173E9',
+            'label': 'data(edgelabel)',
         }
     },
     {
@@ -47,7 +48,20 @@ cytoscape_stylesheet = [
             'text-valign': 'center',
         }
     },
-    
+    {
+        'selector': 'edgelabel',
+        'style': {
+            'font-family': 'sans-serif',
+            'color': '#FFFFFF',
+            'font-size': '12px',
+            'font-weight': 'bold',
+            'text-valign': 'center',
+            'text-background-color': '#6173E9',
+            'text-background-opacity': '0.5',
+            'text-background-shape': 'round-rectangle',
+            'text-background-padding': '5px'
+        }
+    },
 ]
 
 cytoscape = cyto.Cytoscape(
@@ -129,10 +143,11 @@ def set_generation_range(gen_range, gen):
 def set_cytoscape(gen_range, gen, ind):
     
     generation_range = range(gen_range[0], gen_range[2]+1)
-    gen = int(gen.split("_")[1])
+    gen = gen_range[1] #int(gen.split("_")[1])
     
     elements, roots = get_family_tree(run, gen, ind, generation_range)
     
+    # Creating new stylesheet with white selected node
     new_cytoscape_stylesheet = cytoscape_stylesheet.copy()
     
     new_cytoscape_stylesheet.append({
@@ -149,57 +164,81 @@ def set_cytoscape(gen_range, gen, ind):
     return elements, { 'name': 'breadthfirst', 'roots': roots }, new_cytoscape_stylesheet
 
 
-@callback( Output("values-col", "children"), Input("cytoscape-family-tree", "tapNodeData"))
+@callback( Output("individual-heading", "children"),  Output("individual-exceptions", "children"), Output("individual-genes", "children"), Output("individual-results", "children"), Input("cytoscape-family-tree", "tapNodeData"))
 def set_values(ind_clicked):
     
     print(ind_clicked)
     
+    # No node clicked
+    if ind_clicked is None: 
+        return [], [], [], []
+    
+    # Individual information
     ind = ind_clicked["id"]
     gen = ind_clicked["generation"]
+    extinct = ind_clicked["extinct"]
     
-    if "extinct" in ind_clicked:
-        extinct = ind_clicked["extinct"]
-   
-    # Getting inidivdual's values
     meas_keys = ["memory_footprint_h5", "memory_footprint_tflite", "memory_footprint_c_array", "val_acc", "inference_time", "energy_consumption"]
     ind_meas = get_individual_result(run, gen, ind)
+    ind_genome = get_individual_chromosome(run, gen, ind)
+    hyperparameters = get_hyperparamters(run)
     
-    # Adding elements to value div
-    vals_components = [dot_heading("Fitness", style={"margin": "10px", "margin-top": "110px", 'flex': '100%'})]
+    meas_info = {
+        'memory_footprint_h5': ('Byte', hyperparameters['max_memory_footprint']),
+        'memory_footprint_tflite': ('Byte', None),
+        'memory_footprint_c_array': ('Byte', None),
+        'val_acc': ('', None),
+        'inference_time': ('ms', hyperparameters['max_inference_time']),
+        'energy_consumption': ('mJ', hyperparameters['max_energy_consumption']),
+    }
     
-    # Adding error values
+    print("No problem here")
+    
+    # Creating heading div
+    ind_heading = [html.H2(ind.replace('_', ' '), style = {'margin': '10px'})]
+    
+    # Creating exceptions div
+    ind_exceptions = []
+    
+    if extinct:
+        ind_exceptions += [information("Individual became extinct.")]
+        
     if "energy_consumption" in ind_meas and "inference_time" in ind_meas:
         if (type(ind_meas["energy_consumption"]) != int and type(ind_meas["energy_consumption"]) != float) or (type(ind_meas["inference_time"]) != int and type(ind_meas["inference_time"]) != float):            
-            return vals_components + [warning("Measuring energy consumption failed with this individual")]
-
+            return ind_heading, warning("Measuring energy consumption failed with this individual"), [], []
     else: 
-        return vals_components + [warning("Measuring energy consumption failed with this individual")]
+        return ind_heading, warning("Measuring energy consumption failed with this individual"), [], []
     
-    # Adding information values
-    if extinct:
-        vals_components += [information("Individual became extinct.")]
+    # Creating genes values
+    ind_genes = [dot_heading("Genome", style={"margin": "10px",'flex': '100%'})]
     
-    # Adding success values
-    if "fitness" in ind_meas:
-        vals_components += [bullet_chart_basic(ind_meas['fitness'], 0, 1, metric_card_id="bullet-chart-basic")]
+    for gene in ind_genome:
         
+        gene_params = str(gene)
+        gene_params = gene_params.replace('{}', '').replace('}', '').replace("'", '')
+        
+        tooltip = dmc.Tooltip(
+            label=gene_params,
+            position="right",
+            offset=3,
+            transition="slide-up",
+            color='gray',
+            multiline=True,
+            children=[dmc.Badge(gene["layer"].replace('_', ''), variant='light', color='indigo', style={'flex': '1'})]
+        )
+        ind_genes.append(tooltip)
+    
+    # Creating fitness values
+    ind_fitness = [dot_heading("Fitness", style={"margin": "10px",'flex': '100%'})]
+    
+    if "fitness" in ind_meas:
+        ind_fitness += [bullet_chart_basic(ind_meas['fitness'], 0, 1, metric_card_id="bullet-chart-basic")]
+
     for meas_key in meas_keys:
         if meas_key in ind_meas:
-            vals_components += [(bullet_chart_card(meas_key.replace("_", " "), f"{meas_key.replace('_', '-')}-icon", ind_meas[meas_key], border_meas[meas_key]['min']['value'], border_meas[meas_key]['max']['value'], unit="Byte", metric_card_id="bullet-chart-card"))]
-        
-    values_div = html.Div(
-        children=vals_components,
-        style = {
-            'display': 'flex',
-            'flex-wrap': 'wrap',
-            'margin-left': '30px',
-            'justify-content': 'space-between',
-            'align-items': 'center'
-        },
-            
-    ), 
-    return values_div
-            
+            ind_fitness += [(bullet_chart_card(meas_key.replace("_", " "), f"{meas_key.replace('_', '-')}-icon", ind_meas[meas_key], border_meas[meas_key]['min']['value'], border_meas[meas_key]['max']['value'], unit=meas_info[meas_key][0], constraint=meas_info[meas_key][1], metric_card_id="bullet-chart-card"))]
+    
+    return ind_heading, ind_exceptions, ind_genes, ind_fitness
 
 
 ### LAYOUT ###
@@ -216,7 +255,7 @@ layout = dmc.Grid(
             ]), 
             span=5
         ),
-        dmc.Col(span="auto", className='wrapper', id='values-col'),
+        dmc.Col([html.Div([], id='individual-heading'), html.Div([], id='individual-exceptions'), html.Div([], id='individual-genes'), html.Div([], id='individual-results'), ], span="auto", className='cytoscape-values', id='values-col'),
     ],
     gutter="s",
     justify="space-between",

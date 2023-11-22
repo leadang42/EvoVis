@@ -143,7 +143,7 @@ def get_individuals(run, generation_range=None, value="names", as_generation_dic
         as_generation_dict (bool): Specify if individuals 
         
     Returns:
-        generations (dict) or individuals (list): Outputs a dict with generation kay containing dict with individual key or a list only with the values (no generation, individualname specifications). 
+        generations (dict) or individuals (list): Outputs a dict with generation key (in int) containing dict with individual key or a list only with the values (no generation, individualname specifications). 
     """
     
     # (No assertion needed bc of helper function)
@@ -500,7 +500,15 @@ def get_crossover_parents(run):
     return crossover_dict
 
 def get_crossover_parents_df(run):
-    """Dataframe of parents of individuals (not in use)"""
+    """
+    Dataframe of parents of individuals (not in use)
+    
+    Args:
+        run (str): The directory name of the run data.
+        
+    Returns:
+        df (pandas.DataFrame): Dataframe with columns ["generation", "individual", "parent1", "crossover1", "parent2", "crossover2"]
+    """
 
     df = pd.read_csv(f'../data/{run}/crossover_parents.csv', header=None)
     df = df.rename(columns={0:"generation", 1:"parent1", 2:"parent2", 3:"individual"})
@@ -548,17 +556,21 @@ def get_upstream_tree(run, generation, individual, generation_range):
 
     # End condition with only one individual
     if min_generation == generation:
-        return ([{'data': {'id': individual, 'label': individual[0:3], 'generation': generation}}], [individual])
+        return ([{'data': {'id': individual, 'label': individual[0:3], 'generation': generation, 'extinct': False}}], [individual])
 
     # Nodes and edges for individual
     crossovers = get_crossover_parents(run)
+    
     parent1 = crossovers[individual]["parent1"]
+    crossover1 = crossovers[individual]["crossover1"]
+    
     parent2 = crossovers[individual]["parent2"]
+    crossover2 = crossovers[individual]["crossover2"]
 
     individual_el = [
-        {'data': {'id': individual, 'label': individual[0:3], 'generation': generation}},
-        {'data': {'source': parent1, 'target': individual}},
-        {'data': {'source': parent2, 'target': individual}}
+        {'data': {'id': individual, 'label': individual[0:3], 'generation': generation, 'extinct': False}},
+        {'data': {'source': parent1, 'target': individual, 'edgelabel': crossover1}},
+        {'data': {'source': parent2, 'target': individual, 'edgelabel': crossover2}}
     ]
 
     # Recursion for moving up the tree
@@ -585,8 +597,11 @@ def get_downstream_tree(run, generation, individual, generation_range):
     
     # Get children of individual
     crossovers = get_crossover_parents_df(run)
-    children = crossovers[crossovers['parent1'].str.contains(individual) | crossovers['parent2'].str.contains(individual)]
-    children = list(children["individual"].values)
+    children = list(crossovers[crossovers['parent1'].str.contains(individual)]["individual"].values)
+    crossover = list(crossovers[crossovers['parent1'].str.contains(individual)]["crossover1"].values)
+    
+    children += list(crossovers[crossovers['parent2'].str.contains(individual)]["individual"].values)
+    crossover += list(crossovers[crossovers['parent2'].str.contains(individual)]["crossover2"].values)
     
     extinct = False if children else True
 
@@ -597,8 +612,8 @@ def get_downstream_tree(run, generation, individual, generation_range):
     # Nodes and edges for individual
     individual_el = [{'data': {'id': individual, 'label': individual[0:3], 'generation': generation, 'extinct': extinct}}]
 
-    for child in children:
-        individual_el.append({'data': {'source': individual, 'target': child}})
+    for idx, child in enumerate(children):
+        individual_el.append({'data': {'source': individual, 'target': child, 'edgelabel': crossover[idx]}})
 
     # Recursion for moving down the tree
     children_tree = []
