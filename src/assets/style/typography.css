@@ -21,6 +21,7 @@ h1 {
     display: flex;
     align-items: center;
     justify-content: flex-start; /* This aligns items to the left */
+    flex: 100%;
 }
 
 /* Box centered text */

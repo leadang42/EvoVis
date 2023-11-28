@@ -224,7 +224,7 @@ def set_values(ind_clicked):
             transition="slide-up",
             color='gray',
             multiline=True,
-            children=[dmc.Badge(gene["layer"].replace('_', ''), variant='light', color='indigo', style={'flex': '1'})]
+            children=[dmc.Badge(gene["layer"].replace('_', ''), variant='light', color='indigo', style={'flex': '100%'})]
         )
         ind_genes.append(tooltip)
     
@@ -236,7 +236,12 @@ def set_values(ind_clicked):
 
     for meas_key in meas_keys:
         if meas_key in ind_meas:
-            ind_fitness += [(bullet_chart_card(meas_key.replace("_", " "), f"{meas_key.replace('_', '-')}-icon", ind_meas[meas_key], border_meas[meas_key]['min']['value'], border_meas[meas_key]['max']['value'], unit=meas_info[meas_key][0], constraint=meas_info[meas_key][1], metric_card_id="bullet-chart-card"))]
+            if meas_key == 'inference_time':
+                ind_fitness += [(bullet_chart_card(meas_key.replace("_", " "), f"{meas_key.replace('_', '-')}-icon", ind_meas[meas_key], border_meas[meas_key]['min']['value'], 300, unit=meas_info[meas_key][0], constraint=meas_info[meas_key][1], metric_card_id="bullet-chart-card"))]
+            elif meas_key == 'energy_consumption':
+                ind_fitness += [(bullet_chart_card(meas_key.replace("_", " "), f"{meas_key.replace('_', '-')}-icon", ind_meas[meas_key], border_meas[meas_key]['min']['value'], 5, unit=meas_info[meas_key][0], constraint=meas_info[meas_key][1], metric_card_id="bullet-chart-card"))]
+            else:
+                ind_fitness += [(bullet_chart_card(meas_key.replace("_", " "), f"{meas_key.replace('_', '-')}-icon", ind_meas[meas_key], border_meas[meas_key]['min']['value'], border_meas[meas_key]['max']['value'], unit=meas_info[meas_key][0], constraint=meas_info[meas_key][1], metric_card_id="bullet-chart-card"))]
     
     return ind_heading, ind_exceptions, ind_genes, ind_fitness
 
@@ -250,12 +255,21 @@ layout = dmc.Grid(
                 html.H1("Family Tree", className="wrapper", style = {"margin-bottom": "20px", "margin-top": "20px"}), 
                 node_select, 
                 cytoscape,
-                #html.P("Generation Range", className="input-heading", style={"margin": "10px", "font-weight": "500", "font-size": "15px", 'white-space': 'nowrap'}),
                 slider
             ]), 
-            span=5
+            span=4
         ),
-        dmc.Col([html.Div([], id='individual-heading'), html.Div([], id='individual-exceptions'), html.Div([], id='individual-genes'), html.Div([], id='individual-results'), ], span="auto", className='cytoscape-values', id='values-col'),
+        dmc.Col([
+            html.Div([], id='individual-heading'), 
+            html.Div([], id='individual-exceptions'), 
+            dmc.Grid(
+                [dmc.Col([html.Div([], id='individual-genes')], span=2),
+                dmc.Col([html.Div([], id='individual-results')], span='auto')],
+                gutter="xs",
+            )], 
+            span="auto", 
+            className='cytoscape-values', 
+            id='values-col'),
     ],
     gutter="s",
     justify="space-between",

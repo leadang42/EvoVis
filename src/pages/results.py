@@ -93,6 +93,85 @@ def get_result_over_gen_fig(run, meas, generation_range=None, min=None, max=None
     return graph_div
 
 
+def get_pareto_optimality_fig(run, meas, generation_range=None, min=None, max=None):
+    fig = go.Figure()
+    
+    x_data = None
+    y_data = None
+    z_data = None
+    color_data = None
+    timestamps = None
+    
+    scatter = go.Scatter3d(
+        x=x_data,
+        y=y_data,
+        z=z_data,
+        mode='markers',
+        marker=dict(
+            size=8,
+            color=color_data,
+            colorscale='Viridis',
+            opacity=0.8
+        )
+    )
+
+    fig.add_trace(scatter)
+
+    # Add slider for animation
+    fig.update_layout(
+        sliders=[{
+            "steps": [
+                {"args": [[f'{hour:02d}' for hour in range(int(timestamp), int(timestamp)+1)], {"frame": {"duration": 300, "redraw": True}, "mode": "immediate", "transition": {"duration": 300}}],
+                "label": f"{int(timestamp)} hours",
+                "method": "animate"} for timestamp in timestamps
+            ],
+            "active": 0,
+            "yanchor": "top",
+            "xanchor": "left",
+            "currentvalue": {
+                "font": {"size": 12},
+                "prefix": "Timestamp:",
+                "visible": True,
+                "xanchor": "right",
+                "yanchor": "top"
+            },
+            "transition": {"duration": 300, "easing": "cubic-in-out"}
+        }],
+        updatemenus=[{
+            "buttons": [
+            {
+                "args": [None, {"frame": {"duration": 500, "redraw": True}, "fromcurrent": True}],
+                "label": "Play",
+                "method": "animate",
+            },
+            {
+                "args": [[None], {"frame": {"duration": 0, "redraw": True}, "mode": "immediate", "transition": {"duration": 0}}],
+                "label": "Pause",
+                "method": "animate",
+            },
+        ],
+        "direction": "left",
+        "pad": {"r": 10, "t": 87},
+        "showactive": False,
+        "type": "buttons",
+        "x": 0.1,
+        "xanchor": "right",
+        "y": 0,
+        "yanchor": "top",
+        }]
+    )
+
+    # Customize layout
+    fig.update_layout(
+        scene=dict(
+            xaxis=dict(title='X-axis'),
+            yaxis=dict(title='Y-axis'),
+            zaxis=dict(title='Z-axis')
+        ),
+        margin=dict(l=0, r=0, b=0, t=0),
+        scene_aspectmode='cube'
+    )
+    
 grid_gutter = 'xl'
 
 layout = html.Div(
@@ -100,14 +179,14 @@ layout = html.Div(
         html.H1("Results", style={'margin-bottom': '50px', 'margin-top': '30px'}),
         dmc.Grid(),
         dmc.Grid([
-            dmc.Col([dot_heading('Fitness'), get_result_over_gen_fig(run, 'fitness', generation_range=None, min=0, max=1)], span=6), 
-            dmc.Col([dot_heading('Pareto Optimality')], span=6)], 
+            dmc.Col([dot_heading('Fitness', className='dot-heading-results-page'), get_result_over_gen_fig(run, 'fitness', generation_range=None, min=0, max=1)], span=6), 
+            dmc.Col([dot_heading('Pareto Optimality', className='dot-heading-results-page')], span=6)],
             gutter=grid_gutter
         ),
         dmc.Grid([
-            dmc.Col([dot_heading('Accuracy'), get_result_over_gen_fig(run, 'val_acc', generation_range=None, min=0, max=1)], span=4), 
-            dmc.Col([dot_heading('Memory'), get_result_over_gen_fig(run, 'memory_footprint_h5', generation_range=None)], span=4), 
-            dmc.Col([dot_heading('Inference Times'), get_result_over_gen_fig(run, 'inference_time', generation_range=None)], span=4)], 
+            dmc.Col([dot_heading('Accuracy', className='dot-heading-results-page'), get_result_over_gen_fig(run, 'val_acc', generation_range=None, min=0, max=1)], span=4), 
+            dmc.Col([dot_heading('Memory', className='dot-heading-results-page'), get_result_over_gen_fig(run, 'memory_footprint_h5', generation_range=None)], span=4), 
+            dmc.Col([dot_heading('Inference Times', className='dot-heading-results-page'), get_result_over_gen_fig(run, 'inference_time', generation_range=None)], span=4)], 
             gutter=grid_gutter
         ),
     ]

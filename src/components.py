@@ -2,10 +2,11 @@ import dash
 from dash import html, dcc
 from dash_iconify import DashIconify
 import plotly.graph_objects as go
+import dash_mantine_components as dmc
 
 app = dash.Dash(__name__)
 
-def dot_heading(heading, style=None):
+def dot_heading(heading, className='dot-heading', style=None):
     heading_div = html.Div(
         [
             DashIconify(icon="material-symbols:circle", height=12, width=12, color="#6173E9", 
@@ -20,7 +21,7 @@ def dot_heading(heading, style=None):
                     "vertical-align":"center" 
                 })
         ],
-        className="dot-heading",
+        className=className,
         style=style
     )
     return heading_div
@@ -28,7 +29,8 @@ def dot_heading(heading, style=None):
 
 def metric_card(metrictype, metric, icon, width="260px", metric_card_id="metric-card"):
     metric_card_style = {
-        'width': width,
+        'min-width': width,
+        #'widht': '100%',
         'display': 'inline-flex',
         'margin': '5px',
         'vertical-align': 'center',
@@ -37,6 +39,7 @@ def metric_card(metrictype, metric, icon, width="260px", metric_card_id="metric-
         'align-items': 'center',
         'justify-content': 'flex-start',
         'box-shadow': '3px 3px 10px 1px rgba(0, 0, 0, 0.05)',
+        'flex-grow': '1',
     }
 
     text_block_style = {
@@ -50,7 +53,7 @@ def metric_card(metrictype, metric, icon, width="260px", metric_card_id="metric-
         html.Button(children=DashIconify(icon=icon, height=25, width=25, color="#000000"), className="metric-btn"),
 
         html.Div([   
-            html.P(metrictype, style={"margin": "5px", "font-weight": "lighter","font-size": "15px",}, id=f"{metric_card_id}-label"),
+            html.P(metrictype, style={"margin": "5px", "font-weight": "lighter","font-size": "15px", "width":"200px"}, id=f"{metric_card_id}-label"),
             html.H4(metric, style={ "margin": "5px" }, id=f"{metric_card_id}-value")],
             style= text_block_style)   
         ], 
@@ -180,7 +183,7 @@ def bullet_chart_card(metrictype, img, metric, min, max, constraint=None, unit=N
             html.Img(src=f"assets/media/{img}.png", style=img_style, id=img),
             html.Div(
                 [
-                    html.P(metrictype, style={"margin": "5px", "margin-top": "20px", "font-weight": "lighter", "font-size": "15px", 'white-space': 'nowrap'}, id=f"{metric_card_id}-label"),
+                    html.P(metrictype, style={"margin": "5px", "margin-top": "20px", "font-weight": "lighter", "font-size": "15px", 'white-space': 'nowrap', 'min-width':'180px'}, id=f"{metric_card_id}-label"),
                     html.H4(metric_str, style={ "margin": "5px" , 'white-space': 'nowrap'}, id=f"{metric_card_id}-value"),
                     #dcc.Graph(figure=fig, className="bullet_chart"),
                     html.Div( [ html.Div([], style=load_style), html.Div([], style=constraint_style) ] ,style=bar_style)
@@ -251,6 +254,62 @@ def information(message):
     
     return warning_div
 
+
+def fitness_function():
+    
+    style_backrgound = {
+        'border-radius': '20px',
+        'border': '3px solid #FFFFFF',
+        'background': '#FFFFFF',
+        'box-shadow': '3px 3px 10px 1px rgba(0, 0, 0, 0.05)',
+        'margin': '5px',
+        'display': 'inline-flex',
+        'vertical-align': 'center',
+        'width': '100%',
+        'align-items': 'center',
+        'justify-content': 'flex-start',  
+    }
+    
+    img_style = {
+        'max-width': '100%',
+        'max-height': '40px',
+        'margin': '10px'
+    }
+    
+    img_background_style = {
+        'border-radius': '15px',
+        'display': 'flex',
+        'justify-content': 'center',
+        'align-items': 'center',
+        'background': '#EFEFEF',
+        #'width': '100%',
+        'height': '100%',
+        'margin': '2px',
+        'padding': '10px',
+        'flex-grow': '3'
+    }
+    
+    description_style = {
+        'display': 'inline-flex',
+        'flex-grow': '1',
+        'margin': '5px'
+    }
+    
+    fitness_function_div = dmc.Grid(
+        [
+            html.Div(html.Img(src=f"assets/media/fitness-function.png", style=img_style), style=img_background_style),
+            html.Div(
+                [
+                    html.Div([html.P('Weights', style={"margin": "5px", "font-weight": "lighter","font-size": "15px",}), html.H4('a b c', style={ "margin": "5px" })]),
+                    html.Div([html.P('Objectives', style={"margin": "5px", "font-weight": "lighter","font-size": "15px",}), html.H4('M T W', style={ "margin": "5px" })])
+                ],
+                style=description_style
+            )
+        ],
+        style=style_backrgound,
+    )
+    
+    return fitness_function_div
 
 app.layout = html.Div([dot_heading("fitness"), metric_card("max memory footprint", "800000 B", "fluent:memory-16-regular")])
 

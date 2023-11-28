@@ -1,0 +1,17 @@
+.metrics {
+    padding: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: left;
+    align-items: center;
+}
+
+.hyperparameters-header{
+    justify-content: center;
+    display: grid;
+    align-content: start;    
+}
+
+.fitness-function-description{
+    display: flex;
+}

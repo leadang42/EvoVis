@@ -1,7 +1,6 @@
 #evolution-cover {
-    width: 420px;
-    display: inline-block;
-    vertical-align: middle;
+    max-width: 350px;
+    max-height: 100%;
     margin-top: 30px;
 }
 
