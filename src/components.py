@@ -6,6 +6,8 @@ import dash_mantine_components as dmc
 
 app = dash.Dash(__name__)
 
+
+
 def dot_heading(heading, className='dot-heading', style=None):
     heading_div = html.Div(
         [
@@ -27,12 +29,12 @@ def dot_heading(heading, className='dot-heading', style=None):
     return heading_div
 
 
-def metric_card(metrictype, metric, icon, width="260px", metric_card_id="metric-card"):
+def metric_card(metrictype, metric, icon, width="260px", margin='5px', metric_card_id="metric-card"):
     metric_card_style = {
         'min-width': width,
         #'widht': '100%',
         'display': 'inline-flex',
-        'margin': '5px',
+        'margin': margin,
         'vertical-align': 'center',
         'background-color': '#FFFFFF',
         'border-radius': '20px',
@@ -65,18 +67,19 @@ def metric_card(metrictype, metric, icon, width="260px", metric_card_id="metric-
     return metric_card_div
 
 
-def bullet_chart_card(metrictype, img, metric, min, max, constraint=None, unit=None, min_width='200px', metric_card_id="bullet-chart-card"):
+def bullet_chart_card(metrictype, img, metric, min, max, constraint=None, unit=None, min_width='180px', metric_card_id="bullet-chart-card"):
     
     metric = round(metric, 3)
     
     bullet_chart_card_style = {
         'border-radius': '20px',
         'border': '3px solid #FFFFFF',
+        'box-shadow': '3px 3px 10px 1px rgba(0, 0, 0, 0.05)',
         'background': '#EFEFEF',
         'min-width': min_width,
         'margin': '10px',
         'margin-top': '30px',
-        'flex-grow': '1',
+        'flex': 1,
         
         'position': 'relative',
         'display': 'inline-flex',
@@ -199,7 +202,7 @@ def bullet_chart_card(metrictype, img, metric, min, max, constraint=None, unit=N
     return bullet_chart_card_div
 
 
-def bullet_chart_basic(metric, min, max, metric_card_id="bullet-chart-basic"):
+def bullet_chart_basic(metric, min, max, unit='', info='', back_color="#FFFFFF", bar_color='#EFEFEF', load_color='#6173E9', margin='10px', flex='100%', min_width=None,metric_card_id="bullet-chart-basic"):
     
     metric = round(metric, 3)
     range = max - min
@@ -207,30 +210,40 @@ def bullet_chart_basic(metric, min, max, metric_card_id="bullet-chart-basic"):
     
     bullet_chart_basic_style = {
         'border-radius': '20px',
-        'background': '#FFFFFF',
+        'background': back_color,
+        'box-shadow': '3px 3px 10px 1px rgba(0, 0, 0, 0.05)',
         'padding': '10px',
-        'margin': '10px',
+        'margin': margin,
         'display': 'block',
-        'flex': '100%'
+        'flex': flex,
+        'min-width':min_width,
     }
     
     bar_style = {
         'border-radius': '30px',
-        'background': '#EFEFEF',
+        'background': bar_color,
         'position': 'relative',
-        'height': 20,
+        'height': 15,
+        'border': f'3px solid {bar_color}'
     }
     
     load_style = {
         'border-radius': '30px',
-        'background': '#6173E9',
-        'height': 20,
+        'background': load_color,
+        'height': 15,
         'width': f'{load_percent}%',
     }
     
     bullet_chart_basic_div = html.Div(
         [
-            html.H4(str(metric), style={ "margin": "5px", 'width': '100%','white-space': 'nowrap'}, id=f"{metric_card_id}-value"),
+            dmc.Group(
+                [
+                    html.P(str(metric), style={"margin": "5px", "font-weight": "bold", "font-size": "15px", 'color': load_color}, id=f"{metric_card_id}-label"),
+                    html.P(unit, style={"margin": "5px", "font-weight": "lighter", "font-size": "15px", 'color': load_color}, id=f"{metric_card_id}-label"),
+                ],
+                position='left',
+                spacing='s'
+            ),
             html.Div( [ html.Div([], style=load_style)], style=bar_style)
         ],
         style = bullet_chart_basic_style
@@ -310,6 +323,7 @@ def fitness_function():
     )
     
     return fitness_function_div
+
 
 app.layout = html.Div([dot_heading("fitness"), metric_card("max memory footprint", "800000 B", "fluent:memory-16-regular")])
 

@@ -22,7 +22,10 @@ def txt_to_eval(filepath):
 
     with open(filepath, 'r') as file:
         text = file.read()
+        text = text.replace("true", "True").replace("false", "False")
+        
         cleaned_text = remove_comments(text)
+        
         json_data = eval(cleaned_text)
 
     return json_data
@@ -53,7 +56,7 @@ def get_generations(run, as_int=False):
     if not as_int:
         return [f"Generation_{gen}" for gen in generations_int]
     else: 
-        return [int(gen.split("_")[1]) for gen in generations]
+        return generations_int
 
 
 ### SIGNLE INDIVIDUAL INFORMATION ###
@@ -169,7 +172,64 @@ def get_individuals(run, generation_range=None, value="names", as_generation_dic
                 individuals += get_individuals_of_generation(run, generation, value)
 
         return individuals
+      
+def get_healthy_individuals_results(run, generation_range=None, as_generation_dict=False): 
     
+    gen_results = get_individuals(run, generation_range, value="results", as_generation_dict=True)   
+    
+    measurements = [
+        'memory_footprint_h5',
+        'memory_footprint_c_array',
+        'memory_footprint_tflite',
+        'val_acc',
+        'fitness',
+        'inference_time',
+        'energy_consumption',
+        'mean_power_consumption',
+    ]
+    
+    healthy = {}
+    unhealthy = {}
+    
+    for gen, results in gen_results.items():
+        
+        healthy[gen] = {}
+        unhealthy[gen] = {}
+        
+        for ind, result in results.items():
+            healthy_bool = True
+            
+            for meas in measurements:
+                
+                if meas in result:
+                    value = result[meas]
+
+                    if not (type(value) == int or type(value) == float): 
+                        healthy_bool = False  
+                            
+                else:
+                    healthy_bool = False
+                    
+            if healthy_bool:
+                healthy[gen][ind] = result
+            else:
+                unhealthy[gen][ind] = result
+                    
+    if as_generation_dict:
+        return healthy, unhealthy
+        
+    else: 
+        healthy_list = []
+        for gen, results in healthy.items():
+            healthy_list += list(results.values())
+                
+        unhealthy_list = []
+        for gen, results in unhealthy.items():
+            unhealthy_list += list(results.values())
+            
+        return healthy_list, unhealthy_list
+                
+       
 def get_individuals_best_result(run, generation_range=None, measure="val_acc"):
     """
     Get the best results of all individuals of a generation range. 
@@ -299,7 +359,6 @@ def get_individuals_min_max(run, generation_range=None):
                 
     return measurements
     
-  
 def get_number_of_genes(run, generation, genename):
     """
     Get the number of genes in a certain generation.
@@ -329,6 +388,22 @@ def get_hyperparamters(run):
     """Dict of hyperparameters of EvoNAS run"""
     return txt_to_eval(f'../data/{run}/params.json')
 
+def get_meas_info(run):
+    
+    hyperparameters = get_hyperparamters(run)
+
+    meas_info = {
+        'memory_footprint_h5': ('Byte', None),
+        'memory_footprint_tflite': ('Byte', hyperparameters['max_memory_footprint']),
+        'memory_footprint_c_array': ('Byte', None),
+        'val_acc': ('', None),
+        'inference_time': ('ms', hyperparameters['max_inference_time']),
+        'energy_consumption': ('mJ', hyperparameters['max_energy_consumption']),
+        'fitness': ('', None),
+        'mean_power_consumption': ('mJ', None)
+    }
+    
+    return meas_info
 
 ### GENEPOOL ###
 # TODO Lock classes and start

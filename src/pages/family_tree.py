@@ -5,7 +5,7 @@ import dash_mantine_components as dmc
 from dash_iconify import DashIconify
 import random
 
-from utils import get_family_tree, get_generations, get_individuals, get_random_individual, get_individuals_min_max, get_individual_result, get_individual_chromosome, get_hyperparamters
+from utils import get_family_tree, get_generations, get_individuals, get_random_individual, get_individuals_min_max, get_individual_result, get_individual_chromosome, get_meas_info
 from components import dot_heading, bullet_chart_card, bullet_chart_basic, warning, information
 
 dash.register_page(__name__, path='/family-tree')
@@ -14,11 +14,11 @@ dash.register_page(__name__, path='/family-tree')
 run = "ga_20230116-110958_sc_2d_4classes"
 generations = get_generations(run)
 generations_int = get_generations(run, as_int=True)
-
-random_gen, random_ind = get_random_individual(run, generation=5) #ethereal_puma?? #5, "premium_capuchin"
-
+random_gen, _ = get_random_individual(run, 5)
 border_meas = get_individuals_min_max(run, generation_range=None)
-
+meas_info = get_meas_info(run)
+del meas_info['fitness']
+del meas_info['mean_power_consumption']
 
 ### CYTOSCAPE ###
 cytoscape_stylesheet = [
@@ -67,7 +67,7 @@ cytoscape_stylesheet = [
 cytoscape = cyto.Cytoscape(
     id='cytoscape-family-tree',
     className="wrapper",
-    style={'height': '300px'},
+    style={'height': '300px', 'max-width': '100%'},
     stylesheet=cytoscape_stylesheet,
 )
 
@@ -76,7 +76,7 @@ slider = dcc.RangeSlider(
     min(generations_int), 
     max(generations_int), 
     1, 
-    #marks=None, 
+    marks=None, 
     #pushable=1, 
     allowCross=False,
     id='gen-range-slider',
@@ -139,60 +139,109 @@ def set_generation_range(gen_range, gen):
         return gen_range
 
 
-@callback( Output("cytoscape-family-tree", "elements"), Output("cytoscape-family-tree", "layout"), Output("cytoscape-family-tree", "stylesheet"), Input("gen-range-slider", "value"), Input("gen-select", "value"), Input("ind-select", "value"))
-def set_cytoscape(gen_range, gen, ind):
+@callback( Output("cytoscape-family-tree", "elements"), Output("cytoscape-family-tree", "layout"), Output("cytoscape-family-tree", "stylesheet"), Input("gen-range-slider", "value"), Input("gen-select", "value"), Input("ind-select", "value"), Input("cytoscape-family-tree", "tapNodeData"), Input("cytoscape-family-tree", "tapEdgeData"))
+def set_cytoscape(gen_range, gen, ind, ind_clicked, edge_clicked):
     
+    #print()
+    #print('Individual: ', ind)
+    #print('Individual clicked: ', ind_clicked)
+    #print('Edge clicked: ', edge_clicked)
+    
+    # Get Family tree through individual selection
     generation_range = range(gen_range[0], gen_range[2]+1)
-    gen = gen_range[1] #int(gen.split("_")[1])
-    
+    gen = gen_range[1]
     elements, roots = get_family_tree(run, gen, ind, generation_range)
+    
+    cytoscape_layout = {
+        'name': 'breadthfirst', 
+        'roots': roots
+    }
     
     # Creating new stylesheet with white selected node
     new_cytoscape_stylesheet = cytoscape_stylesheet.copy()
+
+    # Add styling for 
+    if ind is not None: 
+        new_cytoscape_stylesheet.append({
+            'selector': f'[id = "{ind}"]',
+            'style': {
+                'background-color': '#6173E9',
+                'border-color': '#FFFFFF',
+                'border-width': '3px',
+                'content': 'data(label)',
+                'color': '#FFFFFF',
+            }, 
+        })
     
-    new_cytoscape_stylesheet.append({
-        'selector': f'[id = "{ind}"]',
-        'style': {
-            'background-color': '#FFFFFF',
-            'border-color': '#6173E9',
-            'border-width': '3px',
-            'content': 'data(label)',
-            'color': '#000000',
-        }
-    })
+    if ind_clicked is not None: 
+        ind_clicked_id = ind_clicked['id']
+        
+        new_cytoscape_stylesheet.append({
+            'selector': f'[id = "{ind_clicked_id}"]',
+            'style': {
+                'background-color': '#FFFFFF',
+                'border-color': '#6173E9',
+                'border-width': '3px',
+                'content': 'data(label)',
+                'color': '#000000',
+            }
+        })   
+        
+    if edge_clicked is not None: 
+        edge_id = edge_clicked['id']
+        source = edge_clicked['source']
+        target = edge_clicked['target']
+
+        new_cytoscape_stylesheet.append({
+            'selector': f'[id = "{source}"]',
+            'style': {
+                'background-color': '#FFFFFF',
+                'border-color': '#6173E9',
+                'border-width': '3px',
+                'content': 'data(label)',
+                'color': '#000000',
+            }
+        }) 
+        
+        new_cytoscape_stylesheet.append({
+            'selector': f'[id = "{target}"]',
+            'style': {
+                'background-color': '#FFFFFF',
+                'border-color': '#6173E9',
+                'border-width': '3px',
+                'content': 'data(label)',
+                'color': '#000000',
+            }
+        }) 
     
-    return elements, { 'name': 'breadthfirst', 'roots': roots }, new_cytoscape_stylesheet
+    return elements, cytoscape_layout, new_cytoscape_stylesheet
 
 
-@callback( Output("individual-heading", "children"),  Output("individual-exceptions", "children"), Output("individual-genes", "children"), Output("individual-results", "children"), Input("cytoscape-family-tree", "tapNodeData"))
-def set_values(ind_clicked):
-    
-    print(ind_clicked)
-    
-    # No node clicked
-    if ind_clicked is None: 
-        return [], [], [], []
+@callback( Output("individual-heading", "children"),  Output("individual-exceptions", "children"), Output("individual-genes", "children"), Output("individual-results", "children"), Input("cytoscape-family-tree", "tapNodeData"), Input("ind-select", "value"), Input("gen-select", "value"))
+def set_values(ind_clicked, ind_select, gen_select):
     
     # Individual information
-    ind = ind_clicked["id"]
-    gen = ind_clicked["generation"]
-    extinct = ind_clicked["extinct"]
+    ind = None
+    gen = None
+    extinct = None # Not know whether really extinct!
     
-    meas_keys = ["memory_footprint_h5", "memory_footprint_tflite", "memory_footprint_c_array", "val_acc", "inference_time", "energy_consumption"]
+    if ind_clicked is None: 
+        
+        # Get informatuon from selects
+        ind = ind_select
+        gen = gen_select.split('_')[1]
+        extinct = False
+    
+    else:
+        
+        # Get informatuon from node
+        ind = ind_clicked["id"]
+        gen = ind_clicked["generation"]
+        extinct = ind_clicked["extinct"]
+    
+    meas_keys = list(meas_info.keys())
     ind_meas = get_individual_result(run, gen, ind)
     ind_genome = get_individual_chromosome(run, gen, ind)
-    hyperparameters = get_hyperparamters(run)
-    
-    meas_info = {
-        'memory_footprint_h5': ('Byte', hyperparameters['max_memory_footprint']),
-        'memory_footprint_tflite': ('Byte', None),
-        'memory_footprint_c_array': ('Byte', None),
-        'val_acc': ('', None),
-        'inference_time': ('ms', hyperparameters['max_inference_time']),
-        'energy_consumption': ('mJ', hyperparameters['max_energy_consumption']),
-    }
-    
-    print("No problem here")
     
     # Creating heading div
     ind_heading = [html.H2(ind.replace('_', ' '), style = {'margin': '10px'})]
@@ -215,7 +264,7 @@ def set_values(ind_clicked):
     for gene in ind_genome:
         
         gene_params = str(gene)
-        gene_params = gene_params.replace('{}', '').replace('}', '').replace("'", '')
+        gene_params = gene_params.replace('{', '').replace('}', '').replace("'", '').replace(",", '\n')
         
         tooltip = dmc.Tooltip(
             label=gene_params,
@@ -228,7 +277,7 @@ def set_values(ind_clicked):
         )
         ind_genes.append(tooltip)
     
-    # Creating fitness values
+    # Metric cards for objectives
     ind_fitness = [dot_heading("Fitness", style={"margin": "10px",'flex': '100%'})]
     
     if "fitness" in ind_meas:
@@ -250,27 +299,36 @@ def set_values(ind_clicked):
 
 layout = dmc.Grid(
     children=[
+        
+        ### FAMILY TREE ###
         dmc.Col(html.Div(
             [ 
-                html.H1("Family Tree", className="wrapper", style = {"margin-bottom": "20px", "margin-top": "20px"}), 
+                html.H1('Family Tree', style = {"margin-bottom": "20px", "margin-top": "20px"}), 
                 node_select, 
                 cytoscape,
                 slider
             ]), 
-            span=4
+            span='auto',
+            style={'max-width': '100%'} # 100% needed for scaling cytoscape to 100%
         ),
+        
+        ### INDIVIDUAL INFORMATION ###
         dmc.Col([
             html.Div([], id='individual-heading'), 
             html.Div([], id='individual-exceptions'), 
             dmc.Grid(
-                [dmc.Col([html.Div([], id='individual-genes')], span=2),
-                dmc.Col([html.Div([], id='individual-results')], span='auto')],
+                [
+                    dmc.Col([html.Div([], id='individual-results')], span=10),
+                    dmc.Col([html.Div([], id='individual-genes')], span='auto')
+                ],
                 gutter="xs",
+                grow=True
             )], 
-            span="auto", 
+            span=4, 
             className='cytoscape-values', 
             id='values-col'),
     ],
     gutter="s",
-    justify="space-between",
+    #justify='',
+    grow=True
 )

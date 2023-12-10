@@ -5,6 +5,7 @@ import json
 import re
 import plotly.express as px
 import pandas as pd
+import dash_mantine_components as dmc
 
 from utils import get_ruleset, get_start_gene, get_number_of_genes, get_generations
 from components import metric_card, dot_heading

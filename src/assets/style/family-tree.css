@@ -1,5 +1,7 @@
+
+
 .cytoscape-values{
-    margin-left: 50px;
+    margin: 20px;
     padding: 20px;
     background-color: #E8E8E8;
     border-radius: 20px;
@@ -8,8 +10,8 @@
 #individual-genes {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    justify-content: left;
+    align-items: left;
 }
 
 #individual-results{
