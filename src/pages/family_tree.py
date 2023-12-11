@@ -12,6 +12,7 @@ dash.register_page(__name__, path='/family-tree')
 
 ### GLOBAL VARIABLES ###
 run = "ga_20230116-110958_sc_2d_4classes"
+#run = "cifar10_diversity_06 2"
 generations = get_generations(run)
 generations_int = get_generations(run, as_int=True)
 random_gen, _ = get_random_individual(run, 5)

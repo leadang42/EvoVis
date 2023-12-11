@@ -53,7 +53,9 @@ fitness = html.Div(
         fitness_function(),
         metric_card("Max memory footprint", f'{hyperparams["max_memory_footprint"]} B', "fluent:memory-16-regular"),
         metric_card("Max inference time", f'{hyperparams["max_inference_time"]} ms', "uiw:time-o"),
-        metric_card("Max energy consumption", f'{hyperparams["max_energy_consumption"]} mJ', "simple-line-icons:energy"),
+        
+        # Special Case for Meteos dataset
+        metric_card("Max energy consumption", f'{hyperparams["max_energy_consumption"]} mJ', "simple-line-icons:energy") if "max_energy_consumption" in hyperparams else None, 
     ],
     className="metrics"
 )

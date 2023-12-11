@@ -11,6 +11,7 @@ from components import dot_heading, bullet_chart_basic, metric_card
 from utils import get_individuals, get_generations, get_meas_info, get_hyperparamters, get_healthy_individuals_results
 
 run = 'ga_20230116-110958_sc_2d_4classes'
+#run = 'cifar10_diversity_06 2'
 healthy, unhealthy = get_healthy_individuals_results(run, as_generation_dict=False)
 
 ### HELPER FUNCTIONS ###

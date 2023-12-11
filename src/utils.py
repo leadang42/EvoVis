@@ -398,7 +398,7 @@ def get_meas_info(run):
         'memory_footprint_c_array': ('Byte', None),
         'val_acc': ('', None),
         'inference_time': ('ms', hyperparameters['max_inference_time']),
-        'energy_consumption': ('mJ', hyperparameters['max_energy_consumption']),
+        'energy_consumption': ('mJ', hyperparameters['max_energy_consumption'] if 'max_energy_consumption' in hyperparameters else None),
         'fitness': ('', None),
         'mean_power_consumption': ('mJ', None)
     }
@@ -407,22 +407,6 @@ def get_meas_info(run):
 
 ### GENEPOOL ###
 # TODO Lock classes and start
-
-preprocessing = ['STFT', 'MAG', 'MEL', 'MAG2DEC']
-one_dim_feature = ['C_1D', 'DC_1D', 'MP_1D', 'AP_1D', 'R_1D', 'BN_1D', 'IN_1D']
-two_dim_feature = ['C_2D', 'DC_2D', 'MP_2D', 'AP_2D', 'R_2D', 'BN_2D', 'IN_2D']
-one_dim_global_pooling = ['GAP_1D', 'GMP_1D']
-two_dim_global_pooling = ['GAP_2D', 'GMP_2D']
-dense = ['DO', 'D']
-
-layers_type = {}
-
-for p in preprocessing: layers_type[p] = "Preprocessing Layer"
-for fo in one_dim_feature: layers_type[fo] = "1D Feature Layer"
-for ft in two_dim_feature: layers_type[ft] = "2D Feature Layer"
-for go in one_dim_global_pooling: layers_type[go] = "1D Global Pooling Layer"
-for gt in two_dim_global_pooling: layers_type[gt] = "2D Global Pooling Layer"
-for d in dense: layers_type[d] = "Dense Layer"
 
 def get_genepool(run, get_dict=False):
     """List of genes dicts or dict with layerid as keys"""
@@ -437,18 +421,46 @@ def get_genepool(run, get_dict=False):
 
     return genes_dict
 
-def get_ruleset(run, cytoscape_dag=True, exclude_unreachable=True):
+def get_ruleset(run, cytoscape_dag=True):
     """List of nodes and edges for element param in cytoscape"""
-
-    # Read ruleset
+    
+    # Read ruleset from file and return directly if not cytoscape DAD should be returned
     ruleset = txt_to_eval(f'../data/{run}/rule_set.txt')
+    
+    if not cytoscape_dag:
+        return ruleset
+    
+    # Read genepool from file
     genepool = get_genepool(run, get_dict=True)
+    
+    # Layer types
+    preprocessing = ['STFT', 'MAG', 'MEL', 'MAG2DEC', 'Rescaling']
+    one_dim_feature = ['C_1D', 'DC_1D', 'MP_1D', 'AP_1D', 'R_1D', 'BN_1D', 'IN_1D']
+    two_dim_feature = ['C_2D', 'DC_2D', 'MP_2D', 'AP_2D', 'R_2D', 'BN_2D', 'IN_2D']
+    one_dim_global_pooling = ['GAP_1D', 'GMP_1D']
+    two_dim_global_pooling = ['GAP_2D', 'GMP_2D']
+    dense = ['DO', 'D']
+    
+    # MATEOS DATA: Exclude preprocessing layers of wrong dataset
+    for rule in ruleset:
+        if (rule['layer'] == 'Start') and ('dataset' in rule) and (rule['dataset'] == get_hyperparamters(run)['dataset']):
+            preprocessing = rule['start_with']
+            
+    # Dictionnairy for layers type name
+    layers_type = {}
+
+    for p in preprocessing: layers_type[p] = "Preprocessing Layer"
+    for fo in one_dim_feature: layers_type[fo] = "1D Feature Layer"
+    for ft in two_dim_feature: layers_type[ft] = "2D Feature Layer"
+    for go in one_dim_global_pooling: layers_type[go] = "1D Global Pooling Layer"
+    for gt in two_dim_global_pooling: layers_type[gt] = "2D Global Pooling Layer"
+    for d in dense: layers_type[d] = "Dense Layer"
 
     # Return list of ruleset
     if not cytoscape_dag:
         return ruleset
     
-    # Create cytoscape with layer types
+    # Create cytoscape classes
     nodes = [
         { 'data': {'id': 'pr', 'label': 'Preprocessing'} },
         { 'data': {'id': 'fe', 'label': 'Feature Extraction'} },
@@ -456,6 +468,8 @@ def get_ruleset(run, cytoscape_dag=True, exclude_unreachable=True):
         { 'data': {'id': 'de', 'label': 'Dense'} },
         { 'data': {'id': 'end', 'label': 'End', 'f_name': 'End', 'layer': 'End', 'ltype': 'End'} }
     ]
+    
+    # Create edges between cytoscape classes
     edges = [
         { 'data': {'id':'feature-globalpooling', 'source': 'fe', 'target': 'gl'}, 'classes': 'class-connect' },
         { 'data': {'id':'dense-end', 'source': 'de', 'target': 'end'}, 'classes': 'class-connect' },
@@ -465,8 +479,10 @@ def get_ruleset(run, cytoscape_dag=True, exclude_unreachable=True):
     lallowed = dense
     
     for rule in ruleset:
+        
+        # MATEOS DATA: Exclude start withs with wrong dataset
+        if (rule['layer'] == 'Start' and 'dataset' not in rule) or (rule['layer'] == 'Start' and 'dataset' in rule and rule['dataset'] == get_hyperparamters(run)['dataset']):
             
-        if rule['layer'] == 'Start':
             nodes.append({ 'data': {'id': 'Start', 'label': 'Start', 'f_name': 'Start', 'layer': 'Start', 'ltype': 'Start'} })
 
             for start_with in rule['start_with']:
@@ -475,6 +491,7 @@ def get_ruleset(run, cytoscape_dag=True, exclude_unreachable=True):
                     'classes': f'{rule["layer"]} {start_with}'
                 })
                 
+                # Specify the allowed layers in 1D/ 2D (if there is a preprocessing layer then 2D)
                 if start_with in preprocessing: 
                     lallowed += preprocessing + two_dim_feature + two_dim_global_pooling
                     
@@ -524,10 +541,19 @@ def get_start_gene(run):
     """Dict of start gene"""
     ruleset = get_ruleset(run, cytoscape_dag=False)
     genepool = get_genepool(run, get_dict=True)
+    dataset = get_hyperparamters(run)['dataset']
 
     for rule in ruleset:
         if rule['layer'] == 'Start':
-            return genepool[rule['start_with'][0]]
+
+            if 'dataset' in rule:
+            
+                # Special case for Mateos data
+                if rule['dataset'] == dataset:
+                    return genepool[rule['start_with'][0]]
+            
+            else:
+                return genepool[rule['start_with'][0]]
      
         
 ### INDIVIDUAL CREATION ###
