@@ -6,7 +6,7 @@ from dash_iconify import DashIconify
 import random
 
 from utils import get_family_tree, get_generations, get_individuals, get_random_individual, get_individuals_min_max, get_individual_result, get_individual_chromosome, get_meas_info
-from components import dot_heading, bullet_chart_card, bullet_chart_basic, warning, information
+from components import dot_heading, bullet_chart_card, bullet_chart_basic, warning, information, genome_overview
 
 dash.register_page(__name__, path='/family-tree')
 
@@ -260,23 +260,7 @@ def set_values(ind_clicked, ind_select, gen_select):
         return ind_heading, warning("Measuring energy consumption failed with this individual"), [], []
     
     # Creating genes values
-    ind_genes = [dot_heading("Genome", style={"margin": "10px",'flex': '100%'})]
-    
-    for gene in ind_genome:
-        
-        gene_params = str(gene)
-        gene_params = gene_params.replace('{', '').replace('}', '').replace("'", '').replace(",", '\n')
-        
-        tooltip = dmc.Tooltip(
-            label=gene_params,
-            position="right",
-            offset=3,
-            transition="slide-up",
-            color='gray',
-            multiline=True,
-            children=[dmc.Badge(gene["layer"].replace('_', ''), variant='light', color='indigo', style={'flex': '100%'})]
-        )
-        ind_genes.append(tooltip)
+    ind_genes = [dot_heading("Genome", style={"margin": "10px",'flex': '100%'}), genome_overview(chromosome=ind_genome)]
     
     # Metric cards for objectives
     ind_fitness = [dot_heading("Fitness", style={"margin": "10px",'flex': '100%'})]

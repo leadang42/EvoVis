@@ -7,9 +7,14 @@
     flex: 1;
 }
 
-.results-overview{
+.general-overview{
     margin: 5px;
     padding: 20px;
+    background-color: #E8E8E8;
+    border-radius: 20px;
+}
+
+.best-individual{
     background-color: #E8E8E8;
     border-radius: 20px;
 }

@@ -325,6 +325,30 @@ def fitness_function():
     return fitness_function_div
 
 
+def genome_overview(chromosome, justify="flex-start", align="flex-start"):
+    
+    genome_overview = []
+    
+    for gene in chromosome:
+        
+        gene_params = str(gene)
+        gene_params = gene_params.replace('{', '').replace('}', '').replace("'", '').replace(",", '\n')
+        
+        tooltip = dmc.Tooltip(
+            label=gene_params,
+            position="right",
+            offset=3,
+            transition="slide-up",
+            color='gray',
+            multiline=True,
+            children=[dmc.Badge(gene["layer"].replace('_', ''), variant='light', color='indigo', style={'flex': '100%'})]
+        )
+        
+        genome_overview.append(tooltip)
+        
+    return dmc.Stack(genome_overview, justify=justify, align=align, spacing="0px")
+
+
 app.layout = html.Div([dot_heading("fitness"), metric_card("max memory footprint", "800000 B", "fluent:memory-16-regular")])
 
 if __name__ == "__main__":

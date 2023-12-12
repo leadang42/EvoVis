@@ -98,14 +98,14 @@ def get_individuals_of_generation(run, generation, value="names"):
     Args:
         run (str): The directory name of the run data.
         generation (int): Generation where genes will be counted.
-        value (str): The data of an individual that will be accessed. Available are "names", "results", "chromosomes" or "power_measurements".
+        value (str): The data of an individual that will be accessed. Available are "names", "results", "chromosome" or "power_measurements".
     
     Returns:
         individuals_names (list) or individual_dict (dict): Get the list of names if value is set to name or a dictionairy with individual names as keys.
     """
     
     # Assert in case of wrong input values
-    available_values = ["names", "results", "chromosomes", "power_measurements"]
+    available_values = ["names", "results", "chromosome", "power_measurements"]
     generations = [int(gen.split("_")[1]) for gen in get_generations(run)]
     
     assert value in available_values, "Unavailable return value"
@@ -127,7 +127,7 @@ def get_individuals_of_generation(run, generation, value="names"):
         if value == "results":
             individual_dict[individual] = get_individual_result(run, generation, individual)
         
-        elif value == "chromosomes":
+        elif value == "chromosome":
             individual_dict[individual] = get_individual_chromosome(run, generation, individual)
 
         elif value == "power_measurements":
@@ -142,7 +142,7 @@ def get_individuals(run, generation_range=None, value="names", as_generation_dic
     Args: 
         run (str): The directory name of the run data.
         generation_range (range): A python range of generations from which the individuals will be extracted. 
-        value (str): The return values of the individuals. Choose between the values "names", "results", "chromosomes" or "power_measurements".
+        value (str): The return values of the individuals. Choose between the values "names", "results", "chromosome" or "power_measurements".
         as_generation_dict (bool): Specify if individuals 
         
     Returns:
@@ -229,7 +229,6 @@ def get_healthy_individuals_results(run, generation_range=None, as_generation_di
             
         return healthy_list, unhealthy_list
                 
-       
 def get_individuals_best_result(run, generation_range=None, measure="val_acc"):
     """
     Get the best results of all individuals of a generation range. 
@@ -371,7 +370,7 @@ def get_number_of_genes(run, generation, genename):
     Returns:
         count (int): Number of genes
     """
-    chromosomes = get_individuals(run, range(generation, generation+1), value="chromosomes", as_generation_dict=False)
+    chromosomes = get_individuals(run, range(generation, generation+1), value="chromosome", as_generation_dict=False)
 
     count = 0
     for chromosome in chromosomes:
@@ -381,6 +380,46 @@ def get_number_of_genes(run, generation, genename):
                 count += 1
 
     return count
+
+def get_best_individuals(run):
+    """Get the individuals with the highest fitness value per generation.
+
+    Args:
+        run (str): The directory name of the run data.
+
+    Returns:
+        dict: Generation dictionnairy with dictionnairy of "individual", its "results" and "chromosome"
+    """
+    
+    results = get_individuals(run, generation_range=None, value="results", as_generation_dict=True)
+    chromosomes = get_individuals(run, generation_range=None, value="chromosome", as_generation_dict=True)
+    
+    best_individuals = {}
+    
+    for gen, individuals in results.items():
+        
+        best_fitness = 0
+        best_ind = None
+        best_result = None
+        best_chromosome = None
+        
+        for ind, results in individuals.items():
+            ind_fitness = results["fitness"]
+            
+            if ind_fitness > best_fitness:
+                best_fitness = ind_fitness
+                best_ind = ind
+                best_result = results
+                best_chromosome = chromosomes[gen][ind]
+        
+        best_individuals[gen] = {
+            "individual": best_ind,
+            "results": best_result,
+            "chromosome": best_chromosome,
+        }
+        
+    return best_individuals
+
 
 ### RUN INFORMATION ###
 
@@ -559,7 +598,7 @@ def get_start_gene(run):
 ### INDIVIDUAL CREATION ###
 # TODO Deprecate crossover dict
        
-def get_best_individuals(run):
+def get_best_individuals_file(run):
     """Dataframe of parents of individuals"""
 
     df = pd.read_csv(f'../data/{run}/best_individual_each_generation.csv', header=None)

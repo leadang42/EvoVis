@@ -4,17 +4,28 @@ import dash_mantine_components as dmc
 import plotly.graph_objects as go
 import numpy as np
 from alphashape import alphashape
+from components import dot_heading, bullet_chart_basic, metric_card, genome_overview
+from utils import get_individuals, get_generations, get_meas_info, get_hyperparamters, get_healthy_individuals_results, get_best_individuals
 
 dash.register_page(__name__, path='/results')
 
-from components import dot_heading, bullet_chart_basic, metric_card
-from utils import get_individuals, get_generations, get_meas_info, get_hyperparamters, get_healthy_individuals_results
 
+### GLOBAL VARIABLES
 run = 'ga_20230116-110958_sc_2d_4classes'
-#run = 'cifar10_diversity_06 2'
-healthy, unhealthy = get_healthy_individuals_results(run, as_generation_dict=False)
 
-### HELPER FUNCTIONS ###
+grid_gutter = 'xl'
+fitn_obj_height = 150
+
+healthy, unhealthy = get_healthy_individuals_results(run, as_generation_dict=False)
+tot_gen = get_hyperparamters(run)['generations']
+processed_gen = len(get_generations(run))
+
+best_individuals = get_best_individuals(run)
+
+
+### HELPER FUNCTIONS FOR PLOTS ###
+# TODO Exclude all unhealthy individuals
+
 def add_meas_trace(fig, run, meas, generation_range=None, min=None, max=None, show_std=True, linecolor='#6173E9'):
     
     # Defining borders to exclude and include invalid values
@@ -256,29 +267,61 @@ def get_pareto_optimality_fig(run, generation_range=None, max_width=430, height=
     )
     
     return graph_div
-    
 
-### PLOTS ###
-grid_gutter = 'xl'
-fitn_obj_height = 150
+
+### GENERAL RUN OVERVIEW ###
+
+def general_overview():
+    gen_processed = bullet_chart_basic(processed_gen, 1, tot_gen, unit='Generations processed', info='Generations', back_color='#6173E9', bar_color='#A4B0FE', load_color='#FFFFFF', margin='0px', min_width='260px', flex='1')
+    ind_healthy = metric_card("Healthy Individuals", len(healthy), icon='icon-park-outline:health', margin='0px', width='100%')
+    ind_unhealthy = metric_card("Unhealthy Individuals", len(unhealthy), icon='mdi:robot-dead-outline', margin='0px', width='100%')
+    fitness_plot = graph_meas_over_gen(run, 'fitness', generation_range=None, min=0, max=1, height=222.5, title="Fitness over generations", xaxis_title="", yaxis_title="")
+    pareto_optimality_plot = get_pareto_optimality_fig(run, height=222.5)
+
+    general_overview = dmc.Grid(
+        [
+            dmc.Col(dmc.Stack([gen_processed, ind_healthy, ind_unhealthy], ), span='auto'),
+            dmc.Col(fitness_plot, span=5, className="col-results-page"), 
+            dmc.Col(pareto_optimality_plot, span=5, className="col-results-page"),
+        ],
+        gutter=grid_gutter,
+        grow=True,
+        justify='flex-start',
+        className='general-overview'
+    )
+    
+    return general_overview
+
 
 ### MEMORY PLOT ###
-mem_chips = dmc.ChipGroup(
-    [
-        dmc.Chip(
-            x,
-            value=x,
-            variant="filled",
-            color="indigo",
-            size='xs',
-        )
-        for x in ["H5", "TFLite", "C Array"]
-    ],
-    id="mem-chips",
-    value=["H5", "TFLite", "C Array"],
-    multiple=True,
-    style={'padding': '5px'}
-)
+def memory_plot():
+    mem_chips = dmc.ChipGroup(
+        [
+            dmc.Chip(
+                x,
+                value=x,
+                variant="filled",
+                color="indigo",
+                size='xs',
+            )
+            for x in ["H5", "TFLite", "C Array"]
+        ],
+        id="mem-chips",
+        value=["H5", "TFLite", "C Array"],
+        multiple=True,
+        style={'padding': '5px'}
+    )
+    
+    memory = dmc.Col(
+        [
+            dot_heading('Memory', className='dot-heading-results-page', style={'width': '100px'}),     
+            graph_meas_over_gen(run, ['memory_footprint_h5', 'memory_footprint_tflite', 'memory_footprint_c_array'], height=fitn_obj_height, id="mem-graph"),
+            mem_chips
+        ], 
+        className="col-results-page"
+    )
+    
+    return memory
 
 @callback(
     Output("mem-graph", "figure"),
@@ -294,82 +337,78 @@ def chips_values(mems):
     
     return figure_meas_over_gen(run, [mems_key[mem] for mem in mems])
 
-memory = dmc.Col(
-    [
-        html.Div(
-            [
-                dot_heading('Memory', className='dot-heading-results-page', style={'width': '100px'}), 
-                
-            ],
-            style={'display':'flex', 'justify-content': 'left', 'align-content': 'center'}
-        ),
-        graph_meas_over_gen(run, ['memory_footprint_h5', 'memory_footprint_tflite', 'memory_footprint_c_array'], height=fitn_obj_height, id="mem-graph"),
-        mem_chips
-        
-    ], 
-    className="col-results-page"
-)
 
-tot_gen = get_hyperparamters(run)['generations']
-processed_gen = len(get_generations(run))
+### INDIVIDUAL RUN RESULTS PLOT ###
+
+def objectives_overview():
+    objectives_overview = dmc.Grid(
+        [
+            dmc.Col([dot_heading('Accuracy', className='dot-heading-results-page'), graph_meas_over_gen(run, 'val_acc', generation_range=None, min=0, max=1, height=fitn_obj_height)], className="col-results-page"), 
+            memory_plot(),
+            dmc.Col([dot_heading('Inference Times', className='dot-heading-results-page'), graph_meas_over_gen(run, 'inference_time', generation_range=None, height=fitn_obj_height)], className="col-results-page"), 
+            dmc.Col([dot_heading('Mean Power Consumption', className='dot-heading-results-page'), graph_meas_over_gen(run, 'mean_power_consumption', generation_range=None, height=fitn_obj_height)], className="col-results-page"), 
+            dmc.Col([dot_heading('Power Measurement', className='dot-heading-results-page'), graph_meas_over_gen(run, 'energy_consumption', generation_range=None, height=fitn_obj_height)], className="col-results-page")     
+        ], 
+        gutter=grid_gutter,
+        grow=True,
+        justify='flex-start'
+    )
+    
+    return objectives_overview
+
+
+### BEST INDIVIDUALS PLOT ###
+
+def best_individuals_overview():
+    
+    genomes = []
+    
+    for gen, ind in best_individuals.items():
+        
+        ind_overview = html.Div(
+            [
+                #html.P(gen, style={"margin": "5px", "font-weight": "lighter","font-size": "15px", "width":"200px"}),
+                #html.H4(ind["individual"].replace("_", "\n"), style={ "margin": "5px" }),
+                genome_overview(ind["chromosome"], justify="flex-start", align="center"),
+            ],
+            className="best-individual"
+        )
+        genomes.append(ind_overview)
+
+    genomes_div = dmc.Group(genomes, align='start')
+    
+    return genomes_div
 
 ### PAGE LAYOUT ###
-layout = html.Div(
+
+plots_div = html.Div(
     children=[
-        html.H1("Results", style={'margin-bottom': '50px', 'margin-top': '30px'}),
-        dmc.Grid(
-            [
-                dmc.Col(
-                    dmc.Stack(
-                        [
-                            bullet_chart_basic(processed_gen, 1, tot_gen, unit='Generations processed', info='Generations', back_color='#6173E9', bar_color='#A4B0FE', load_color='#FFFFFF', margin='0px', min_width='260px', flex='1'),
-                            metric_card("Healthy Individuals", len(healthy), icon='icon-park-outline:health', margin='0px', width='100%'),
-                            metric_card("Unhealthy Individuals", len(unhealthy), icon='mdi:robot-dead-outline', margin='0px', width='100%'),
-                        ],
-                    ),
-                    span='auto'
-                ),
-                dmc.Col(
-                    [
-                        #dot_heading('Fitness', className='dot-heading-results-page'), 
-                        graph_meas_over_gen(run, 'fitness', generation_range=None, min=0, max=1, height=222.5, title="Fitness over generations", xaxis_title="", yaxis_title="")
-                    ], 
-                    span=5, 
-                    className="col-results-page"
-                ), 
-                dmc.Col(
-                    [
-                        #dot_heading('Pareto Optimality', className='dot-heading-results-page'), 
-                        get_pareto_optimality_fig(run, height=222.5)
-                    ], 
-                    span=5, 
-                    className="col-results-page"
-                ),
-            ],
-            gutter=grid_gutter,
-            grow=True,
-            justify='flex-start',
-            className='results-overview'
-        ),
-        dmc.Grid(
-            [
-                dmc.Col([dot_heading('Accuracy', className='dot-heading-results-page'), graph_meas_over_gen(run, 'val_acc', generation_range=None, min=0, max=1, height=fitn_obj_height)], className="col-results-page"), 
-                memory,
-                dmc.Col([dot_heading('Inference Times', className='dot-heading-results-page'), graph_meas_over_gen(run, 'inference_time', generation_range=None, height=fitn_obj_height)], className="col-results-page"), 
-                #dmc.Col([dot_heading('Mean Power Consumption', className='dot-heading-results-page'), graph_meas_over_gen(run, 'mean_power_consumption', generation_range=None, height=fitn_obj_height)], className="col-results-page"), 
-                dmc.Col([dot_heading('Power Measurement', className='dot-heading-results-page'), graph_meas_over_gen(run, 'energy_consumption', generation_range=None, height=fitn_obj_height)], className="col-results-page")
-            
-            ], 
-            gutter=grid_gutter,
-            grow=True,
-            justify='flex-start'
-        ),
-        dmc.Grid(
-            [
-                ], 
-            gutter=grid_gutter,
-            grow=True,
-            justify='flex-start'
-        ),
+        html.H1("Run Result Plots", style={'margin-bottom': '25px', 'margin-top': '25px'}),
+        general_overview(),
+        objectives_overview(),
     ]
+)
+
+best_individuals_div = html.Div(
+    children=[
+        html.H1("Best Individuals", style={'margin-bottom': '25px', 'margin-top': '25px'}),
+        best_individuals_overview()
+    ]
+)
+
+layout = dmc.Tabs(
+    [
+        dmc.TabsList(
+            [
+                dmc.Tab("Run results plots", value="plots"),
+                dmc.Tab("Best individuals", value="best-individuals"),
+            ]
+        ),
+        dmc.TabsPanel(plots_div, value="plots"),
+        dmc.TabsPanel(best_individuals_div, value="best-individuals"),
+    ],
+    color="indigo",
+    orientation="horizontal",
+    variant="default",
+    value="plots"
 )
