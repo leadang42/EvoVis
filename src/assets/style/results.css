@@ -17,6 +17,8 @@
 .best-individual{
     background-color: #E8E8E8;
     border-radius: 20px;
+    display: grid;
+    justify-items: center;
 }
 
 .mantine-Chip-iconWrapper{

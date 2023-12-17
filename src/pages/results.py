@@ -3,9 +3,8 @@ from dash import html, dcc, Input, Output, callback
 import dash_mantine_components as dmc
 import plotly.graph_objects as go
 import numpy as np
-from alphashape import alphashape
 from components import dot_heading, bullet_chart_basic, metric_card, genome_overview
-from utils import get_individuals, get_generations, get_meas_info, get_hyperparamters, get_healthy_individuals_results, get_best_individuals
+from utils import get_individuals, get_generations, get_meas_info, get_hyperparamters, get_healthy_individuals_results, get_best_individuals, get_unique_genes
 
 dash.register_page(__name__, path='/results')
 
@@ -21,6 +20,7 @@ tot_gen = get_hyperparamters(run)['generations']
 processed_gen = len(get_generations(run))
 
 best_individuals = get_best_individuals(run)
+unique_genes = get_unique_genes(run)
 
 
 ### HELPER FUNCTIONS FOR PLOTS ###
@@ -365,19 +365,41 @@ def best_individuals_overview():
     
     for gen, ind in best_individuals.items():
         
+        splits = ind["individual"].split("_")
+        
+        ind_abbrev = ""
+        for split in splits:
+            ind_abbrev += split[0].upper()
+        
+        ind_results = ind.copy()
+        del ind_results["chromosome"]
+        ind_results = str(ind_results)
+        ind_results = ind_results.replace('{', '').replace('}', '').replace("'", '')
+        
         ind_overview = html.Div(
             [
-                #html.P(gen, style={"margin": "5px", "font-weight": "lighter","font-size": "15px", "width":"200px"}),
-                #html.H4(ind["individual"].replace("_", "\n"), style={ "margin": "5px" }),
-                genome_overview(ind["chromosome"], justify="flex-start", align="center"),
+                dmc.Tooltip(
+                    label=ind_results,
+                    position="right",
+                    offset=3,
+                    transition="slide-up",
+                    color='gray',
+                    multiline=True,
+                    width="300px",
+                    children=[dmc.Avatar(ind_abbrev, radius="xl", style={"color": "#000000", "background-color": "#FFFFFF", "margin": "5px"})]
+                ),
+                html.P(f"GEN {gen}", style={"margin": "5px", "font-weight": "bold", "font-size": "11px"}),
+                
+                genome_overview(ind["chromosome"], justify="flex-start", align="center", compromised=True, unique_genes=unique_genes),
             ],
             className="best-individual"
         )
         genomes.append(ind_overview)
 
-    genomes_div = dmc.Group(genomes, align='start')
+    genomes_div = dmc.Group(genomes, position='apart', align='start', style={"gap":"5px"})
     
     return genomes_div
+
 
 ### PAGE LAYOUT ###
 

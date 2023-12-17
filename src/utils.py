@@ -1,6 +1,8 @@
 import pandas as pd
+import numpy as np
 import os
 import random
+from matplotlib.colors import hex2color, rgb2hex
 
 ### READ HELPERS ###
 
@@ -88,6 +90,7 @@ def get_individual_power_measurements(run, generation, individual):
         return pd.read_csv(path)
     else:
         return None
+ 
  
 ### INDIVIDUALS INFORMATION ###
 
@@ -228,80 +231,6 @@ def get_healthy_individuals_results(run, generation_range=None, as_generation_di
             unhealthy_list += list(results.values())
             
         return healthy_list, unhealthy_list
-                
-def get_individuals_best_result(run, generation_range=None, measure="val_acc"):
-    """
-    Get the best results of all individuals of a generation range. 
-    
-    Args:
-        run (str): The directory name of the run data.
-        generation_range (range): A python range of generations from which the individuals will be extracted. 
-        measure (str): Choose the measure you want to comapre. Select between "val_acc", "memory_footprint_h5", "memory_footprint_tflite", "memory_footprint_c_array", "inference_time", "energy_consumption", "mean_power_consumption", "fitness".
-        
-    Returns:
-        generation (int): Generation with best result.
-        individual (str): Individual with best result.
-        best_value (float): The best result of all individuals in given generation rangee.
-    """
-    
-    available_measures = ["val_acc", "memory_footprint_h5", "memory_footprint_tflite", "memory_footprint_c_array", "inference_time", "energy_consumption", "mean_power_consumption", "fitness"]
-    assert measure in available_measures, "Unavailable measure value"
-    
-    values = get_individuals(run, generation_range, "results", as_generation_dict=True)
-    
-    best_value = 0 if (measure == "val_acc" or measure == "fitness") else 100000000
-    generation = None
-    individual = None
-    
-    for gen, results in values.items():
-        for ind, result in results.items():
-            
-            if measure in result:
-                val = result[measure]
-
-                if type(val) == int or type(val) == float: 
-                    
-                    if val < best_value and measure != "val_acc" and measure != "fitness": generation, individual, best_value = gen, ind, val
-                    if val > best_value and (measure == "val_acc" or measure == "fitness"): generation, individual, best_value = gen, ind, val
-               
-    return generation, individual, best_value           
-  
-def get_individuals_worst_result(run, generation_range=None, measure="val_acc"):
-    """
-    Get the worst results of all individuals of a generation range. 
-    
-    Args:
-        run (str): The directory name of the run data.
-        generation_range (range): A python range of generations from which the individuals will be extracted. 
-        measure (str): Choose the measure you want to comapre. Select between "val_acc", "memory_footprint_h5", "memory_footprint_tflite", "memory_footprint_c_array", "inference_time", "energy_consumption", "mean_power_consumption", "fitness".
-        
-    Returns:
-        generation (int): Generation with best result 
-        individual (str): Individual with best result 
-        worst_value (float): The best result of all individuals in given generation range
-    """
-    
-    available_measures = ["val_acc", "memory_footprint_h5", "memory_footprint_tflite", "memory_footprint_c_array", "inference_time", "energy_consumption", "mean_power_consumption", "fitness"]
-    assert measure in available_measures, "Unavailable measure value"
-    
-    values = get_individuals(run, generation_range, "results", as_generation_dict=True)
-    
-    worst_value = 1 if (measure == "val_acc" or measure == "fitness") else 0
-    generation = None
-    individual = None
-    
-    for gen, results in values.items():
-        for ind, result in results.items():
-            
-            if measure in result:
-                val = result[measure]
-
-                if type(val) == int or type(val) == float: 
-                    
-                    if val > worst_value and measure != "val_acc" and measure != "fitness": generation, individual, worst_value = gen, ind, val
-                    if val < worst_value and (measure == "val_acc" or measure == "fitness"): generation, individual, worst_value = gen, ind, val
-               
-    return generation, individual, worst_value
   
 def get_individuals_min_max(run, generation_range=None):
     values = get_individuals(run, generation_range, "results", as_generation_dict=True)
@@ -358,29 +287,6 @@ def get_individuals_min_max(run, generation_range=None):
                 
     return measurements
     
-def get_number_of_genes(run, generation, genename):
-    """
-    Get the number of genes in a certain generation.
-    
-    Args:
-        run (str): The directory name of the run data.
-        generation (int): Generation where genes will be counted.
-        genename (str): The "layer" identifier of the a gene. 
-        
-    Returns:
-        count (int): Number of genes
-    """
-    chromosomes = get_individuals(run, range(generation, generation+1), value="chromosome", as_generation_dict=False)
-
-    count = 0
-    for chromosome in chromosomes:
-        for gene in chromosome:
-
-            if gene["layer"] == genename:
-                count += 1
-
-    return count
-
 def get_best_individuals(run):
     """Get the individuals with the highest fitness value per generation.
 
@@ -420,6 +326,75 @@ def get_best_individuals(run):
         
     return best_individuals
 
+
+### GENES ###
+
+def get_number_of_genes(run, generation, genename):
+    """
+    Get the number of genes in a certain generation.
+    
+    Args:
+        run (str): The directory name of the run data.
+        generation (int): Generation where genes will be counted.
+        genename (str): The "layer" identifier of the a gene. 
+        
+    Returns:
+        count (int): Number of genes
+    """
+    chromosomes = get_individuals(run, range(generation, generation+1), value="chromosome", as_generation_dict=False)
+
+    count = 0
+    for chromosome in chromosomes:
+        for gene in chromosome:
+
+            if gene["layer"] == genename:
+                count += 1
+
+    return count
+
+def generate_color_scale(start_color, end_color, num_colors):
+    start_rgb = hex2color(start_color)
+    end_rgb = hex2color(end_color)
+
+    r = np.linspace(start_rgb[0], end_rgb[0], num_colors)
+    g = np.linspace(start_rgb[1], end_rgb[1], num_colors)
+    b = np.linspace(start_rgb[2], end_rgb[2], num_colors)
+
+    color_scale = [rgb2hex((r[i], g[i], b[i])) for i in range(num_colors)]
+    return color_scale
+
+def get_unique_genes(run):
+    
+    unique_genes = {}
+    chromosomes = get_individuals(run, generation_range=None, value="chromosome", as_generation_dict=False)
+    
+    
+    for chromosome in chromosomes:
+        for gene in chromosome:
+            if gene["layer"] not in list(unique_genes.keys()):
+                unique_genes[gene["layer"]] = {
+                    
+                    "layer": gene["layer"],
+                    "f_name": gene["f_name"],
+                }
+            
+    opacity_step = 1 / len(unique_genes)
+    
+    # Create a colormap using LinearSegmentedColormap
+    start_color = '#6173E9'
+    end_color = '#B70202'
+    
+    num_colors = len(unique_genes)
+    color_scale = generate_color_scale(start_color, end_color, num_colors)
+    
+    print(color_scale)
+
+    for idx, gene in enumerate(unique_genes):
+        
+        opacity = 1 - idx * opacity_step
+        unique_genes[gene]["color"] = color_scale[idx]
+
+    return unique_genes
 
 ### RUN INFORMATION ###
 
@@ -851,3 +826,80 @@ def report():
         print()
               
 #report()
+
+
+### NOT IN USE ###
+
+def get_individuals_best_result(run, generation_range=None, measure="val_acc"):
+    """
+    Get the best results of all individuals of a generation range. 
+    
+    Args:
+        run (str): The directory name of the run data.
+        generation_range (range): A python range of generations from which the individuals will be extracted. 
+        measure (str): Choose the measure you want to comapre. Select between "val_acc", "memory_footprint_h5", "memory_footprint_tflite", "memory_footprint_c_array", "inference_time", "energy_consumption", "mean_power_consumption", "fitness".
+        
+    Returns:
+        generation (int): Generation with best result.
+        individual (str): Individual with best result.
+        best_value (float): The best result of all individuals in given generation rangee.
+    """
+    
+    available_measures = ["val_acc", "memory_footprint_h5", "memory_footprint_tflite", "memory_footprint_c_array", "inference_time", "energy_consumption", "mean_power_consumption", "fitness"]
+    assert measure in available_measures, "Unavailable measure value"
+    
+    values = get_individuals(run, generation_range, "results", as_generation_dict=True)
+    
+    best_value = 0 if (measure == "val_acc" or measure == "fitness") else 100000000
+    generation = None
+    individual = None
+    
+    for gen, results in values.items():
+        for ind, result in results.items():
+            
+            if measure in result:
+                val = result[measure]
+
+                if type(val) == int or type(val) == float: 
+                    
+                    if val < best_value and measure != "val_acc" and measure != "fitness": generation, individual, best_value = gen, ind, val
+                    if val > best_value and (measure == "val_acc" or measure == "fitness"): generation, individual, best_value = gen, ind, val
+               
+    return generation, individual, best_value           
+  
+def get_individuals_worst_result(run, generation_range=None, measure="val_acc"):
+    """
+    Get the worst results of all individuals of a generation range. 
+    
+    Args:
+        run (str): The directory name of the run data.
+        generation_range (range): A python range of generations from which the individuals will be extracted. 
+        measure (str): Choose the measure you want to comapre. Select between "val_acc", "memory_footprint_h5", "memory_footprint_tflite", "memory_footprint_c_array", "inference_time", "energy_consumption", "mean_power_consumption", "fitness".
+        
+    Returns:
+        generation (int): Generation with best result 
+        individual (str): Individual with best result 
+        worst_value (float): The best result of all individuals in given generation range
+    """
+    
+    available_measures = ["val_acc", "memory_footprint_h5", "memory_footprint_tflite", "memory_footprint_c_array", "inference_time", "energy_consumption", "mean_power_consumption", "fitness"]
+    assert measure in available_measures, "Unavailable measure value"
+    
+    values = get_individuals(run, generation_range, "results", as_generation_dict=True)
+    
+    worst_value = 1 if (measure == "val_acc" or measure == "fitness") else 0
+    generation = None
+    individual = None
+    
+    for gen, results in values.items():
+        for ind, result in results.items():
+            
+            if measure in result:
+                val = result[measure]
+
+                if type(val) == int or type(val) == float: 
+                    
+                    if val > worst_value and measure != "val_acc" and measure != "fitness": generation, individual, worst_value = gen, ind, val
+                    if val < worst_value and (measure == "val_acc" or measure == "fitness"): generation, individual, worst_value = gen, ind, val
+               
+    return generation, individual, worst_value

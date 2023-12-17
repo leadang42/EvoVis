@@ -1,7 +1,8 @@
 import dash
 from dash import html
+import dash_latex as dl
 import dash_mantine_components as dmc
-from components import dot_heading, metric_card, fitness_function
+from components import dot_heading, metric_card, fitness_function, fitnes_function_latex
 from utils import get_hyperparamters
 
 dash.register_page(__name__, path='/hyperparameters')
@@ -47,10 +48,17 @@ training = html.Div(
     className="metrics",
 )
 
+latex_formula = dl.DashLatex(
+    r"""
+    \(F = \alpha A + \beta \frac{M}{Mmax} + \gamma \frac{T}{Tmax} + \delta \frac{W}{Wmax} \\ \\
+    \alpha, \beta, \gamma, \delta : weights \)
+    """,
+)
+
 fitness = html.Div(
     [
         dot_heading("Fitness parameters"),
-        fitness_function(),
+        fitnes_function_latex(latex_formula), 
         metric_card("Max memory footprint", f'{hyperparams["max_memory_footprint"]} B', "fluent:memory-16-regular"),
         metric_card("Max inference time", f'{hyperparams["max_inference_time"]} ms', "uiw:time-o"),
         

@@ -325,14 +325,40 @@ def fitness_function():
     return fitness_function_div
 
 
-def genome_overview(chromosome, justify="flex-start", align="flex-start"):
+def fitnes_function_latex(dashlatex):
+    
+    style_backrgound = {
+        'border-radius': '15px',
+        'border': '5px solid white',
+        'margin': '5px',
+        'display': 'flex',
+        'justify-content': 'center',
+        'align-items': 'center',
+        'background': '#EFEFEF',
+        'width': '100%',
+        'height': '100%',
+        'padding': '10px',
+        'flex-grow': '3'
+    }
+    
+    fitness_function_div = html.Div(dashlatex, style=style_backrgound)
+    
+    return fitness_function_div
+    
+
+def genome_overview(chromosome, justify="flex-start", align="flex-start", compromised=False, unique_genes=None):
     
     genome_overview = []
     
     for gene in chromosome:
         
+        color = '#6173E9'
+        if unique_genes is not None:
+            color = unique_genes[gene["layer"]]["color"]
+        
         gene_params = str(gene)
         gene_params = gene_params.replace('{', '').replace('}', '').replace("'", '').replace(",", '\n')
+        gene_name = gene["layer"][0] if compromised else gene["layer"].replace('_', '')
         
         tooltip = dmc.Tooltip(
             label=gene_params,
@@ -341,14 +367,14 @@ def genome_overview(chromosome, justify="flex-start", align="flex-start"):
             transition="slide-up",
             color='gray',
             multiline=True,
-            children=[dmc.Badge(gene["layer"].replace('_', ''), variant='light', color='indigo', style={'flex': '100%'})]
+            children=[dmc.Badge(gene_name, variant='light', color='indigo', style={'flex': '100%', 'background-color': f"{color}33", 'color': color})]
         )
         
         genome_overview.append(tooltip)
         
     return dmc.Stack(genome_overview, justify=justify, align=align, spacing="0px")
 
-
+    
 app.layout = html.Div([dot_heading("fitness"), metric_card("max memory footprint", "800000 B", "fluent:memory-16-regular")])
 
 if __name__ == "__main__":
