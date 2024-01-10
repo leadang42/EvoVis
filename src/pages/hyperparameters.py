@@ -1,5 +1,5 @@
 import dash
-from dash import html
+from dash import html, dcc
 import dash_latex as dl
 import dash_mantine_components as dmc
 from components import dot_heading, metric_card, fitness_function, fitnes_function_latex
@@ -50,10 +50,17 @@ training = html.Div(
 
 latex_formula = dl.DashLatex(
     r"""
-    \(F = \alpha A + \beta \frac{M}{Mmax} + \gamma \frac{T}{Tmax} + \delta \frac{W}{Wmax} \\ \\
-    \alpha, \beta, \gamma, \delta : weights \)
+    \(F = \alpha A + \beta \frac{M}{Mmax} + \gamma \frac{T}{Tmax} + \delta \frac{W}{Wmax}\)
     """,
+    
 )
+
+latex_formula = html.Div([
+        # Your math formula goes here
+        html.Div("$$\\frac{a}{b} = c$$", id="math-formula"),
+    ])
+
+latex_formula = dcc.Markdown('$$F = \\alpha Accuracy + \\beta \\frac{Memory Footprint}{Max Memory Footprint} + \\gamma \\frac{Inference Time}{Max Inference Time} + \\delta \\frac{Energy Consumption}{Max Energy Consumption}$$', mathjax=True)
 
 fitness = html.Div(
     [
