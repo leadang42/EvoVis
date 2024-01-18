@@ -8,7 +8,7 @@ import random
 from utils import get_family_tree, get_generations, get_individuals, get_random_individual, get_individuals_min_max, get_individual_result, get_individual_chromosome, get_meas_info
 from components import dot_heading, bullet_chart_card, bullet_chart_basic, warning, information, genome_overview
 
-dash.register_page(__name__, path='/family-tree')
+# dash.register_page(__name__, path='/family-tree')
 
 ### GLOBAL VARIABLES ###
 run = "ga_20230116-110958_sc_2d_4classes"

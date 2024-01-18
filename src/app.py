@@ -13,14 +13,9 @@ navbar = html.Div(
         html.Div(
             [   
                 html.A(children=html.Img(src="assets/media/evonas-logo.png", height="50px"), href=dash.page_registry['pages.hyperparameters']['relative_path']),
-                dmc.Select(
-                    label="Select run",
-                    placeholder="Select run",
-                    icon=DashIconify(icon="mdi:run", height=20, width=20, color="#6173E9"),
-                    data=[{"value":run, "label":run.replace("_", " ")} for run in get_runs()],
-                    id="run-select",
-                    className="circle-select-nav",
-                ),
+                
+                # TODO Replace with just the pathname
+                dmc.Select( label="Select run", placeholder="Select run", icon=DashIconify(icon="mdi:run", height=20, width=20, color="#6173E9"), data=[{"value":run, "label":run.replace("_", " ")} for run in get_runs()], id="run-select", className="circle-select-nav",),
             ],
             id="navrun"
         ),
@@ -29,8 +24,8 @@ navbar = html.Div(
                 html.A(html.Button(children=DashIconify(icon="bi:github", height=25, width=25, color="#000000"), className="circle-btn", id="github-link"), href="https://github.com/leadang42/EvoNAS-Dashboard.git", target="_blank"),
                 html.A(html.Button(children=DashIconify(icon="tabler:math-function", height=25, width=25, color="#000000"), className="circle-btn", id="hyperparameter-link"), href=dash.page_registry['pages.hyperparameters']['relative_path']),
                 html.A(html.Button(children=DashIconify(icon="tabler:dna", height=25, width=25, color="#000000"), className="circle-btn", id="genepool-link"), href=dash.page_registry['pages.genepool']['relative_path']),
-                html.A(html.Button(children=DashIconify(icon="simple-line-icons:graph", height=25, width=25,color="#000000"), className="circle-btn", id="results-link"), href=dash.page_registry['pages.results']['relative_path']),
-                html.A(html.Button(children=DashIconify(icon="grommet-icons:graph-ql", height=25, width=25, color="#000000"), className="circle-btn", id="family-tree-link"), href=dash.page_registry['pages.family_tree']['relative_path']),
+                html.A(html.Button(children=DashIconify(icon="simple-line-icons:graph", height=25, width=25,color="#000000"), className="circle-btn", id="results-link"), href=dash.page_registry['pages.hyperparameters']['relative_path']),
+                html.A(html.Button(children=DashIconify(icon="grommet-icons:graph-ql", height=25, width=25, color="#000000"), className="circle-btn", id="family-tree-link"), href=dash.page_registry['pages.hyperparameters']['relative_path']),
             ],
             id="navlinks",
         )    

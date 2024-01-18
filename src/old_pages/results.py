@@ -4,9 +4,9 @@ import dash_mantine_components as dmc
 import plotly.graph_objects as go
 import numpy as np
 from components import dot_heading, bullet_chart_basic, metric_card, genome_overview
-from utils import get_individuals, get_generations, get_meas_info, get_hyperparamters, get_healthy_individuals_results, get_best_individuals, get_unique_genes
+from utils import get_individuals, get_generations, get_meas_info, get_healthy_individuals_results, get_best_individuals, get_unique_genes
 
-dash.register_page(__name__, path='/results')
+# dash.register_page(__name__, path='/results')
 
 
 ### GLOBAL VARIABLES
@@ -16,7 +16,7 @@ grid_gutter = 'xl'
 fitn_obj_height = 150
 
 healthy, unhealthy = get_healthy_individuals_results(run, as_generation_dict=False)
-tot_gen = get_hyperparamters(run)['generations']
+tot_gen = len(get_generations(run))
 processed_gen = len(get_generations(run))
 
 best_individuals = get_best_individuals(run)

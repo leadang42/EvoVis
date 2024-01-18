@@ -1,11 +1,8 @@
 import dash
-from dash import html, dcc
+from dash import html, callback, Output, Input
 from dash_iconify import DashIconify
 import plotly.graph_objects as go
 import dash_mantine_components as dmc
-
-app = dash.Dash(__name__)
-
 
 
 def dot_heading(heading, className='dot-heading', style=None):
@@ -29,10 +26,13 @@ def dot_heading(heading, className='dot-heading', style=None):
     return heading_div
 
 
-def metric_card(metrictype, metric, icon, width="260px", margin='5px', metric_card_id="metric-card"):
+def metric_card(metrictype, metric, icon=None, unit=None, description=None, width=280, margin='5px', metric_card_id="metric-card"):
+    
+    # Styles
     metric_card_style = {
-        'min-width': width,
-        #'widht': '100%',
+        'max-width': f"{width}px",
+        'width': f"{width}px",
+        'min-width': f"{width}px",
         'display': 'inline-flex',
         'margin': margin,
         'vertical-align': 'center',
@@ -49,14 +49,50 @@ def metric_card(metrictype, metric, icon, width="260px", margin='5px', metric_ca
         "vertical-align":"center",
         "background-color": "#FFFFFF",
     }
+    
+    metric_type_style = {
+        "margin": "5px", 
+        "font-weight": "lighter",
+        "font-size": "15px", 
+        "overflow": "scroll", 
+        "width":f"{width - 80}px"
+    }
+    
+    metric_style = { 
+        "margin": "5px", 
+        "overflow": "scroll", 
+        "width":f"{width - 80}px", 
+        "height":"18px"
+    }
+    
+    # Button with and withoout tooltip depending if description is given
+    button = html.Button(
+        children=DashIconify(icon=icon, height=25, width=25, color="#000000"), 
+        className="metric-btn",
+        id=f"metric-btn-{metrictype}"
+    )
+    
+    tooltip_button = dmc.Tooltip(
+        label=description,
+        position="left",
+        offset=5,
+        radius=15,
+        transition="pop-top-left",
+        color="#6173E9",
+        multiline=True,
+        width=280,
+        children=[button]
+    ) 
+    
+    button = button if description is None else tooltip_button
 
+    # Metric card div of button, metrictype and metric
     metric_card_div = html.Div([
-
-        html.Button(children=DashIconify(icon=icon, height=25, width=25, color="#000000"), className="metric-btn"),
-
+        
+        button,
         html.Div([   
-            html.P(metrictype, style={"margin": "5px", "font-weight": "lighter","font-size": "15px", "width":"200px"}, id=f"{metric_card_id}-label"),
-            html.H4(metric, style={ "margin": "5px" }, id=f"{metric_card_id}-value")],
+            html.P(metrictype, style=metric_type_style, id=f"{metric_card_id}-label"),
+            html.H4(metric if unit is None else f"{metric} {unit}", style=metric_style, id=f"{metric_card_id}-value")], 
             style= text_block_style)   
         ], 
         
@@ -373,9 +409,3 @@ def genome_overview(chromosome, justify="flex-start", align="flex-start", compro
         genome_overview.append(tooltip)
         
     return dmc.Stack(genome_overview, justify=justify, align=align, spacing="0px")
-
-    
-app.layout = html.Div([dot_heading("fitness"), metric_card("max memory footprint", "800000 B", "fluent:memory-16-regular")])
-
-if __name__ == "__main__":
-    app.run(debug=True)

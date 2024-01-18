@@ -3,9 +3,12 @@ import numpy as np
 import os
 import random
 from matplotlib.colors import hex2color, rgb2hex
+import json
+
 
 ### READ HELPERS ###
 
+# TODO deprecate
 def remove_comments(text):
     """Removes comments from a string"""
 
@@ -18,6 +21,7 @@ def remove_comments(text):
 
     return '\n'.join(cleaned_lines) 
 
+# TODO deprecate
 def txt_to_eval(filepath):
     """Converts a text file to dictionnairy"""
     json_data = None
@@ -32,9 +36,17 @@ def txt_to_eval(filepath):
 
     return json_data
 
+def json_to_dict(filepath):
+    """Converts a json file to dictionnairy"""
+    with open(filepath, 'r') as file:
+        dc = json.load(file)
+        
+    return dc
+
 
 ### NAMES OF DIRECTORIES ###
 
+# TODO deprecate
 def get_runs():
     """Get all available runs"""
     run_path = f"../data"
@@ -82,6 +94,7 @@ def get_individual_chromosome(run, generation, individual):
     else:
         return None
 
+# TODO deprecate
 def get_individual_power_measurements(run, generation, individual):
     """List or None of individual's genes/ layers dicts"""
     path = f'../data/{run}/Generation_{generation}/{individual}/power_measurements.csv'
@@ -396,11 +409,18 @@ def get_unique_genes(run):
 
     return unique_genes
 
+
 ### RUN INFORMATION ###
+
+def get_configurations(run):
+    """dict of configuration of EvoNAS run"""
+    return json_to_dict(f'../data/{run}/config.json')
 
 def get_hyperparamters(run):
     """Dict of hyperparameters of EvoNAS run"""
-    return txt_to_eval(f'../data/{run}/params.json')
+    
+    configs = get_configurations(run)
+    return configs["hyperparameters"]
 
 def get_meas_info(run):
     
@@ -419,11 +439,53 @@ def get_meas_info(run):
     
     return meas_info
 
+
+### SEARCH SPACE ###
+
+def get_search_space(run):
+    json_file_path = f"../data/{run}/search_space.json"
+    return json_to_dict(json_file_path)
+
+def dfs_layer(graph, layer, visited, result):
+    """
+    Perform depth-first search (DFS) on a graph starting from the given layer.
+
+    Parameters:
+        graph (dict): The graph representing relationships between layers.
+                      Keys are layers, and values are lists of layers that can follow the key layer.
+        layer (str): The current layer being visited in the DFS.
+        visited (set): A set containing layers that have already been visited to avoid duplicates.
+        result (list): A list to store the order of layers visited during the DFS.
+
+    Returns:
+        None: The function operates on the 'visited' and 'result' parameters in place.
+
+    This function recursively explores layers in the graph using DFS, starting from the specified layer.
+    It adds each visited layer to the 'visited' set and appends it to the 'result' list.
+
+    The DFS continues for each neighbor of the current layer, ensuring that each layer is visited only once.
+    """
+    
+    # Check if the layer has not been visited to avoid duplicate processing
+    if layer not in visited:
+        
+        # Mark the current layer as visited
+        visited.add(layer)
+        
+        # Append the current layer to the result list
+        result.append(layer)
+
+        # Explore neighbors of the current layer using DFS
+        for neighbor in graph.get(layer, []):
+            dfs_layer(graph, neighbor, visited, result)
+
+
 ### GENEPOOL ###
 # TODO Lock classes and start
 
 def get_genepool(run, get_dict=False):
     """List of genes dicts or dict with layerid as keys"""
+    
     genes = txt_to_eval(f'../data/{run}/gene_pool.txt')
     genes_dict = {}
 
@@ -434,6 +496,61 @@ def get_genepool(run, get_dict=False):
         genes_dict[gene['layer']] = gene
 
     return genes_dict
+
+def search_space_helper(run, type, key, get_dict=False):
+    
+    rules = json_to_dict(f"../data/{run}/search_space.json")[type]
+    
+    # Return a list 
+    if not get_dict:
+        return rules
+
+    # Return a dictionairy
+    else: 
+        rules_dict = {}
+        
+        for rule in rules:
+            
+            # Add gene to dictionairy in case it is not excluded
+            if ("exclude" in rule) and (not rule["exclude"]):
+                rules_dict[rule[key]] = rule
+
+        return rules_dict
+    
+def new_get_genepool(run, get_dict=False):
+    return search_space_helper(run, "gene_pool", "layer", get_dict=get_dict)
+    
+def new_get_ruleset(run, get_dict=False):
+    return search_space_helper(run, "rule_set", "layer", get_dict=get_dict)
+    
+def get_ruleset_groups(run, get_dict=False):
+    return search_space_helper(run, "rule_set_groups", "group", get_dict=get_dict)
+        
+def get_rulset_elements(run):
+    
+    # Get ruleset as dictionairy
+    rules = new_get_ruleset(run, get_dict=True)
+    group_rules = get_ruleset_groups(run, get_dict=True)
+    
+    # Identify all the layers that are connected to start layer
+    checkout_layers = ["Start"]
+    checkout_groups = []
+    
+    for layer, rule in rules.items():
+        print(layer)
+        print(rule)
+        
+    for layer, rule in group_rules.items():
+        print(layer)
+        print(rule)
+    
+    search_space = get_search_space(run)
+    gene_pool = search_space["gene_pool"]
+    connected_layers = get_connected_layers(search_space, gene_pool)
+
+    for layer in gene_pool:
+        if layer["layer"] in connected_layers:
+            print(layer["layer"])
 
 def get_ruleset(run, cytoscape_dag=True):
     """List of nodes and edges for element param in cytoscape"""
@@ -559,15 +676,17 @@ def get_start_gene(run):
 
     for rule in ruleset:
         if rule['layer'] == 'Start':
+            
+            return genepool[rule['start_with'][0]]
 
-            if 'dataset' in rule:
+            # Special case for Mateos data
+            #if 'dataset' in rule:
             
-                # Special case for Mateos data
-                if rule['dataset'] == dataset:
-                    return genepool[rule['start_with'][0]]
+            #   if rule['dataset'] == dataset:
+            #        return genepool[rule['start_with'][0]]
             
-            else:
-                return genepool[rule['start_with'][0]]
+            #else:
+            #    return genepool[rule['start_with'][0]]
      
         
 ### INDIVIDUAL CREATION ###
@@ -824,8 +943,6 @@ def report():
         print(key)
         print(value)
         print()
-              
-#report()
 
 
 ### NOT IN USE ###
