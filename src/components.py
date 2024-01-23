@@ -50,10 +50,8 @@ def metric_card(metrictype, metric, icon=None, unit=None, description=None, widt
         "background-color": "#FFFFFF",
     }
     
-    print(width)
     if width != "100%":
-        width = f"{width - 80}px"
-    print(width)    
+        width = f"{width - 80}px"   
     
     metric_type_style = {
         "margin": "5px", 
