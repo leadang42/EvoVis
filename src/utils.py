@@ -6,60 +6,69 @@ from matplotlib.colors import hex2color, rgb2hex
 import json
 
 
-### READ HELPERS ###
-
-# TODO deprecate
-def remove_comments(text):
-    """Removes comments from a string"""
-
-    lines = text.split('\n')
-    cleaned_lines = []
-
-    for line in lines:
-        line = line.split('#', 1)[0].strip()
-        if line: cleaned_lines.append(line)
-
-    return '\n'.join(cleaned_lines) 
-
-# TODO deprecate
-def txt_to_eval(filepath):
-    """Converts a text file to dictionnairy"""
-    json_data = None
-
-    with open(filepath, 'r') as file:
-        text = file.read()
-        text = text.replace("true", "True").replace("false", "False")
-        
-        cleaned_text = remove_comments(text)
-        
-        json_data = eval(cleaned_text)
-
-    return json_data
+### READ HELPER ###
 
 def json_to_dict(filepath):
-    """Converts a json file to dictionnairy"""
-    with open(filepath, 'r') as file:
-        dc = json.load(file)
-        
-    return dc
+    """
+    Convert JSON data from a file to a Python dictionary.
+
+    Parameters:
+        filepath (str): The path to the JSON file.
+
+    Returns:
+        dict: A Python dictionary representing the JSON data.
+
+    Raises:
+        FileNotFoundError: If the specified file is not found.
+        json.JSONDecodeError: If there is an issue decoding the JSON data.
+
+    Example:
+    >>> data = json_to_dict('example.json')
+    """
+    try:
+        with open(filepath, 'r') as file:
+            data = json.load(file)
+        return data
+    except FileNotFoundError:
+        raise FileNotFoundError(f"File not found: {filepath}")
+    except json.JSONDecodeError as e:
+        raise json.JSONDecodeError(f"Error decoding JSON data in file {filepath}: {e}")
 
 
 ### NAMES OF DIRECTORIES ###
 
-# TODO deprecate
-def get_runs():
-    """Get all available runs"""
-    run_path = f"../data"
-    items = os.listdir(run_path)
-    runs = [item for item in items if os.path.isdir(os.path.join(run_path, item))]
-
-    runs.sort()
-
-    return runs
-
 def get_generations(run, as_int=False):
-    """List of all generation names (dictionnairies) in run"""
-    
+    """
+    Get a list of all generation names (directories) in the specified run.
+
+    Args:
+        run (str): The directory name representing the run.
+        as_int (bool, optional): If True, returns a list of generation numbers as integers. Default is False.
+
+    Returns:
+        list: A list of generation names or numbers, sorted in ascending order.
+
+    Raises:
+        FileNotFoundError: If the specified run directory does not exist.
+        ValueError: If 'as_int' is not a boolean.
+
+    Example:
+        >>> generation_names = get_generations('my_run')
+        >>> print(generation_names)
+        ['Generation_1', 'Generation_2', ...]
+
+        >>> generation_numbers = get_generations('my_run', as_int=True)
+        >>> print(generation_numbers)
+        [1, 2, ...]
+    """
+    # Validate input values
+    if not os.path.exists(f"../data/{run}"):
+        raise FileNotFoundError(f"Run directory not found: {run}")
+
+    if not isinstance(as_int, bool):
+        raise ValueError("'as_int' must be a boolean.")
+
+    # Retrieve generation names and numbers
     generation_path = f"../data/{run}"
     items = os.listdir(generation_path)
     generations = [item for item in items if os.path.isdir(os.path.join(generation_path, item))]
@@ -69,42 +78,93 @@ def get_generations(run, as_int=False):
 
     if not as_int:
         return [f"Generation_{gen}" for gen in generations_int]
-    else: 
+    else:
         return generations_int
 
 
 ### SIGNLE INDIVIDUAL INFORMATION ###
 
 def get_individual_result(run, generation, individual):
-    """Dict or None of individual's objective measurements"""
+    """
+    Retrieve individual's objective measurements from a JSON file.
+
+    Parameters:
+        run (str): The identifier for the run.
+        generation (int): The generation number.
+        individual (str): The individual's identifier.
+
+    Returns:
+        dict or None: A dictionary containing individual's objective measurements, or None if the file doesn't exist.
+
+    Raises:
+        FileNotFoundError: If the specified file path does not exist.
+        Exception: If an error occurs during the processing of the JSON file.
+
+    """
+    # Construct the file path
     path = f'../data/{run}/Generation_{generation}/{individual}/results.json'
 
+    # Check if the file exists
     if os.path.isfile(path):
-        return txt_to_eval(path)
+        try:
+            # Load JSON data from file
+            results = json_to_dict(path)
+
+            # Process nested dictionaries
+            for key, val in results.items():
+                if isinstance(val, dict):
+                    numeric_values = [value for value in val.values() if isinstance(value, (int, float))]
+
+                    if numeric_values:
+                        # Calculate the average of numeric values
+                        val = sum(numeric_values) / len(numeric_values)
+                        results[key] = val
+
+            return results
+
+        except Exception as e:
+            
+            return {"error": str(e)}
+
     else:
+        # File not found, return None
         return None
     
 def get_individual_chromosome(run, generation, individual):
-    """List or None of individual's genes/ layers dicts"""
+    """
+    Retrieve individual's genes/layers from a JSON file representing the chromosome.
 
+    Parameters:
+        run (str): The identifier for the run.
+        generation (int): The generation number.
+        individual (str): The individual's identifier.
+
+    Returns:
+        list or None: A list containing individual's genes/layers represented as dictionaries, or None if the file doesn't exist.
+
+    Raises:
+        FileNotFoundError: If the specified file path does not exist.
+        Exception: If an error occurs during the processing of the JSON file.
+
+    """
+    # Construct the file path
     path = f'../data/{run}/Generation_{generation}/{individual}/chromosome.json'
 
+    # Check if the file exists
     if os.path.isfile(path):
-        return txt_to_eval(path)
+        try:
+            # Load JSON data from file
+            chromosome = json_to_dict(path)
+            return chromosome
+
+        except Exception as e:
+            return {"error": str(e)}
+
     else:
+        # File not found, return None
         return None
 
-# TODO deprecate
-def get_individual_power_measurements(run, generation, individual):
-    """List or None of individual's genes/ layers dicts"""
-    path = f'../data/{run}/Generation_{generation}/{individual}/power_measurements.csv'
-
-    if os.path.isfile(path):
-        return pd.read_csv(path)
-    else:
-        return None
- 
- 
+    
 ### INDIVIDUALS INFORMATION ###
 
 def get_individuals_of_generation(run, generation, value="names"):
@@ -112,20 +172,31 @@ def get_individuals_of_generation(run, generation, value="names"):
     Get the data of all individuals of a specified generation.
     
     Args:
-        run (str): The directory name of the run data.
-        generation (int): Generation where genes will be counted.
-        value (str): The data of an individual that will be accessed. Available are "names", "results", "chromosome" or "power_measurements".
+        run (str): The identifier for the run.
+        generation (int): The generation number.
+        value (str): The data of an individual that will be accessed. Available are "names", "results" or "chromosome".
     
     Returns:
-        individuals_names (list) or individual_dict (dict): Get the list of names if value is set to name or a dictionairy with individual names as keys.
+        individuals_names (list) or individual_dict (dict): Get the list of names if value is set to name or a dictionary with individual names as keys.
+        
+    Raises:
+        ValueError: If value is not one of the allowed values ("names", "results", "chromosome").
+                   If the specified generation is not present in the run data.
+
+    Example:
+        >>> names = get_individuals_of_generation('my_run', 3, 'names')
+        >>> results_dict = get_individuals_of_generation('my_run', 3, 'results')
     """
     
-    # Assert in case of wrong input values
-    available_values = ["names", "results", "chromosome", "power_measurements"]
+    # Validate input values
+    available_values = ["names", "results", "chromosome"]
     generations = [int(gen.split("_")[1]) for gen in get_generations(run)]
     
-    assert value in available_values, "Unavailable return value"
-    assert generation in generations, "Unavailable generation"
+    if value not in available_values:
+        raise ValueError(f"Invalid value. Allowed values are {available_values}.")
+    
+    if generation not in generations:
+        raise ValueError(f"Invalid generation. Available generations are {generations}.")
     
     # Access individuals names
     items = os.listdir(f"../data/{run}/Generation_{generation}")
@@ -145,41 +216,54 @@ def get_individuals_of_generation(run, generation, value="names"):
         
         elif value == "chromosome":
             individual_dict[individual] = get_individual_chromosome(run, generation, individual)
-
-        elif value == "power_measurements":
-            individual_dict[individual] = get_individual_power_measurements(run, generation, individual)
     
     return individual_dict
 
 def get_individuals(run, generation_range=None, value="names", as_generation_dict=False):
     """
-    Get data from the indivduals of a generation range or all the generations. 
+    Get data from the individuals of a generation range or all the generations. 
     
     Args: 
-        run (str): The directory name of the run data.
+        run (str): The identifier for the run.
         generation_range (range): A python range of generations from which the individuals will be extracted. 
-        value (str): The return values of the individuals. Choose between the values "names", "results", "chromosome" or "power_measurements".
-        as_generation_dict (bool): Specify if individuals 
+        value (str): The return values of the individuals. Choose between the values "names", "results" or "chromosome".
+        as_generation_dict (bool): Specify if individuals values should be returned as generation and individual name dictionairies.
         
     Returns:
-        generations (dict) or individuals (list): Outputs a dict with generation key (in int) containing dict with individual key or a list only with the values (no generation, individualname specifications). 
+        generations (dict) or individuals (list): Outputs a dict with generation key (in int) containing dict with individual key or a list only with the values (no generation, individual name specifications). 
+
+    Raises:
+        ValueError: If the specified generation range is not a valid range.
+                   If the specified value is not one of the allowed values ("names", "results", "chromosome").
+
+    Example:
+        >>> generations_dict = get_individuals('my_run', range(1, 5), 'results', as_generation_dict=True)
+        >>> individuals_list = get_individuals('my_run', generation_range=range(1, 5), value='names')
     """
     
-    # (No assertion needed bc of helper function)
-
+    # Validate input values
+    available_values = ["names", "results", "chromosome"]
+    if value not in available_values:
+        raise ValueError(f"Invalid value. Allowed values are {available_values}.")
+    
     # Generation range creation in case of None
-    generation_range = range(1, len(get_generations(run)) + 1) if generation_range is None else generation_range
+    all_generations = get_generations(run)
+    generation_range = range(1, len(all_generations) + 1) if generation_range is None else generation_range
+    
+    # Validate generation_range
+    if not isinstance(generation_range, range) or len(generation_range) == 0:
+        raise ValueError("Invalid generation range.")
+    
+    if any(g not in range(1, len(all_generations) + 1) for g in generation_range):
+        raise ValueError(f"Invalid generation in range. Available generations are {all_generations}.")
     
     if as_generation_dict:
-        
         generations = {}
         for generation in generation_range:
             generations[generation] = get_individuals_of_generation(run, generation, value)
-    
         return generations
     
     else: 
-        
         individuals = []
         for generation in generation_range:
             if value != "names":
@@ -189,6 +273,95 @@ def get_individuals(run, generation_range=None, value="names", as_generation_dic
 
         return individuals
       
+def get_minmax_result_by_key(results, key, min_boundary=None, max_boundary=None):
+    """
+    Finds the minimum and maximum values in a list of dictionaries based on a specified key,
+    while respecting optional minimum and maximum boundaries.
+
+    Parameters:
+        results (list): A list of dictionaries containing key-value pairs.
+        key (str): The key to be used for comparison in dictionaries.
+        min_boundary (int or float, optional): The minimum boundary for the values. Default is None.
+        max_boundary (int or float, optional): The maximum boundary for the values. Default is None.
+
+    Returns:
+        tuple: A tuple containing the adjusted minimum and maximum values respecting the boundaries.
+
+    Raises:
+        ValueError: If 'key' is not present in a dictionary or if the corresponding value is not an int or float.
+
+    Example:
+    >>> my_list_of_dicts = [{'value': 3}, {'value': 'invalid'}, {'value': 5}]
+    >>> min_val, max_val = get_minmax_result_by_key(my_list_of_dicts, 'value', min_boundary=2, max_boundary=4)
+    >>> print(min_val, max_val)
+    (3, 4)
+    """
+    if not results:
+        return None, None  # Return None for both min and max if the list is empty
+
+    min_val = float('inf')
+    max_val = float('-inf')
+
+    for result in results:
+        if result is not None and key in result and isinstance(result[key], (int, float)):
+            
+            val = result[key]
+
+            if min_boundary is not None:
+                val = max(val, min_boundary)
+
+            if max_boundary is not None:
+                val = min(val, max_boundary)
+
+            min_val = min(min_val, val)
+            max_val = max(max_val, val)
+            
+    return min_val, max_val
+
+def get_individuals_min_max(run, generation_range=None):
+    """
+    Get the minimum and maximum values for various measurements across generations and individuals.
+
+    Parameters:
+        run (str): The data structure representing the run.
+        generation_range (tuple, optional): A tuple specifying the range of generations to consider (start, end).
+
+    Returns:
+        measurements (dict): A dictionary containing the minimum and maximum values for each measurement.
+
+    Raises:
+        TypeError: If 'generation_range' is not a tuple.
+        ValueError: If 'generation_range' is not a valid tuple of two integers.
+
+    Example:
+    >>> measurements = get_individuals_min_max('my_run', generation_range=(1, 3))
+    >>> print(measurements)
+    {'measurement_1': (min_val_1, max_val_1), 'measurement_2': (min_val_2, max_val_2), ...}
+    """
+    if generation_range is not None and not isinstance(generation_range, tuple):
+        raise TypeError("Invalid type for 'generation_range'. Must be a tuple.")
+
+    if generation_range is not None and (len(generation_range) != 2 or not all(isinstance(g, int) for g in generation_range)):
+        raise ValueError("Invalid 'generation_range'. Must be a tuple of two integers.")
+
+    values = get_individuals(run, generation_range, "results", as_generation_dict=False)
+    meas_infos = get_meas_info(run)
+    measurements = {}
+
+    for measure, meas_info in meas_infos.items():
+        min_boundary = meas_info.get('min_boundary', None)
+        max_boundary = meas_info.get('max_boundary', None)
+        
+        measurements[measure] = get_minmax_result_by_key(
+            values,
+            measure,
+            min_boundary=min_boundary,
+            max_boundary=max_boundary
+        )
+
+    return measurements
+  
+# TODO Make generic  
 def get_healthy_individuals_results(run, generation_range=None, as_generation_dict=False): 
     
     gen_results = get_individuals(run, generation_range, value="results", as_generation_dict=True)   
@@ -217,7 +390,8 @@ def get_healthy_individuals_results(run, generation_range=None, as_generation_di
             
             for meas in measurements:
                 
-                if meas in result:
+                # TODO Why result None
+                if result is not None and meas in result:
                     value = result[meas]
 
                     if not (type(value) == int or type(value) == float): 
@@ -244,62 +418,8 @@ def get_healthy_individuals_results(run, generation_range=None, as_generation_di
             unhealthy_list += list(results.values())
             
         return healthy_list, unhealthy_list
-  
-def get_individuals_min_max(run, generation_range=None):
-    values = get_individuals(run, generation_range, "results", as_generation_dict=True)
-    
-    measurements = {
-        "val_acc": {
-            'min': {'generation': None, 'individual': None, 'value': 1}, 
-            'max': {'generation': None, 'individual': None, 'value': 0}
-        }, 
-        "memory_footprint_h5": {
-            'min': {'generation': None, 'individual': None, 'value': 1000000000}, 
-            'max': {'generation': None, 'individual': None, 'value': 0}
-        }, 
-        "memory_footprint_tflite": {
-            'min': {'generation': None, 'individual': None, 'value': 1000000000}, 
-            'max': {'generation': None, 'individual': None, 'value': 0}
-        }, 
-        "memory_footprint_c_array":{
-            'min': {'generation': None, 'individual': None, 'value': 1000000000}, 
-            'max': {'generation': None, 'individual': None, 'value': 0}
-        }, 
-        "inference_time": {
-            'min': {'generation': None, 'individual': None, 'value': 1000000000}, 
-            'max': {'generation': None, 'individual': None, 'value': 0}
-        }, 
-        "energy_consumption": {
-            'min': {'generation': None, 'individual': None, 'value': 1000000000}, 
-            'max': {'generation': None, 'individual': None, 'value': 0}
-        }, 
-        "mean_power_consumption": {
-            'min': {'generation': None, 'individual': None, 'value': 1000000000}, 
-            'max': {'generation': None, 'individual': None, 'value': 0}
-        }, 
-        "fitness": {
-            'min': {'generation': None, 'individual': None, 'value': 1}, 
-            'max': {'generation': None, 'individual': None, 'value': 0}
-        }
-    }
-    
-    for gen, results in values.items():
-        for ind, result in results.items():
-            
-            for measure, min_max in measurements.items():
-                if measure in result:
-                    val = result[measure]
-                
-                    if type(val) == int or type(val) == float: 
-                        
-                        if val < min_max['min']['value']: 
-                            measurements[measure]['min'] = {'generation': gen, 'individual': ind, 'value': val}
-                            
-                        if val > min_max['max']['value']: 
-                            measurements[measure]['max'] = {'generation': gen, 'individual': ind, 'value': val}
-                
-    return measurements
-    
+   
+# TODO Make generic 
 def get_best_individuals(run):
     """Get the individuals with the highest fitness value per generation.
 
@@ -323,13 +443,16 @@ def get_best_individuals(run):
         best_chromosome = None
         
         for ind, results in individuals.items():
-            ind_fitness = results["fitness"]
             
-            if ind_fitness > best_fitness:
-                best_fitness = ind_fitness
-                best_ind = ind
-                best_result = results
-                best_chromosome = chromosomes[gen][ind]
+            # TODO Why None
+            if results is not None:
+                ind_fitness = results["fitness"]
+            
+                if ind_fitness > best_fitness:
+                    best_fitness = ind_fitness
+                    best_ind = ind
+                    best_result = results
+                    best_chromosome = chromosomes[gen][ind]
         
         best_individuals[gen] = {
             "individual": best_ind,
@@ -358,10 +481,11 @@ def get_number_of_genes(run, generation, genename):
 
     count = 0
     for chromosome in chromosomes:
-        for gene in chromosome:
+        if chromosome is not None:
+            for gene in chromosome:
 
-            if gene["layer"] == genename:
-                count += 1
+                if gene["layer"] == genename:
+                    count += 1
 
     return count
 
@@ -379,17 +503,19 @@ def generate_color_scale(start_color, end_color, num_colors):
 def get_unique_genes(run):
     
     unique_genes = {}
-    chromosomes = get_individuals(run, generation_range=None, value="chromosome", as_generation_dict=False)
-    
+    chromosomes = get_individuals(run, generation_range=None, value="chromosome", as_generation_dict=False)    
     
     for chromosome in chromosomes:
-        for gene in chromosome:
-            if gene["layer"] not in list(unique_genes.keys()):
-                unique_genes[gene["layer"]] = {
+        
+        # TODO Why chromosome None
+        if chromosome is not None: 
+            for gene in chromosome:
+                if gene["layer"] not in list(unique_genes.keys()):
+                    unique_genes[gene["layer"]] = {
                     
-                    "layer": gene["layer"],
-                    "f_name": gene["f_name"],
-                }
+                        "layer": gene["layer"],
+                        "f_name": gene["f_name"],
+                    }
             
     opacity_step = 1 / len(unique_genes)
     
@@ -423,271 +549,24 @@ def get_hyperparamters(run):
     return configs["hyperparameters"]
 
 def get_meas_info(run):
+    """Dict of meas info of EvoNAS run"""
     
-    hyperparameters = get_hyperparamters(run)
+    configs = get_configurations(run)
+    return configs["results"]
 
     meas_info = {
         'memory_footprint_h5': ('Byte', None),
-        'memory_footprint_tflite': ('Byte', hyperparameters['max_memory_footprint']),
+        'memory_footprint_tflite': ('Byte', None),
         'memory_footprint_c_array': ('Byte', None),
         'val_acc': ('', None),
-        'inference_time': ('ms', hyperparameters['max_inference_time']),
-        'energy_consumption': ('mJ', hyperparameters['max_energy_consumption'] if 'max_energy_consumption' in hyperparameters else None),
+        'inference_time': ('ms', None),
+        'energy_consumption': ('mJ', None),
         'fitness': ('', None),
         'mean_power_consumption': ('mJ', None)
     }
     
     return meas_info
 
-
-### SEARCH SPACE ###
-
-def get_search_space(run):
-    json_file_path = f"../data/{run}/search_space.json"
-    return json_to_dict(json_file_path)
-
-def dfs_layer(graph, layer, visited, result):
-    """
-    Perform depth-first search (DFS) on a graph starting from the given layer.
-
-    Parameters:
-        graph (dict): The graph representing relationships between layers.
-                      Keys are layers, and values are lists of layers that can follow the key layer.
-        layer (str): The current layer being visited in the DFS.
-        visited (set): A set containing layers that have already been visited to avoid duplicates.
-        result (list): A list to store the order of layers visited during the DFS.
-
-    Returns:
-        None: The function operates on the 'visited' and 'result' parameters in place.
-
-    This function recursively explores layers in the graph using DFS, starting from the specified layer.
-    It adds each visited layer to the 'visited' set and appends it to the 'result' list.
-
-    The DFS continues for each neighbor of the current layer, ensuring that each layer is visited only once.
-    """
-    
-    # Check if the layer has not been visited to avoid duplicate processing
-    if layer not in visited:
-        
-        # Mark the current layer as visited
-        visited.add(layer)
-        
-        # Append the current layer to the result list
-        result.append(layer)
-
-        # Explore neighbors of the current layer using DFS
-        for neighbor in graph.get(layer, []):
-            dfs_layer(graph, neighbor, visited, result)
-
-
-### GENEPOOL ###
-# TODO Lock classes and start
-
-def get_genepool(run, get_dict=False):
-    """List of genes dicts or dict with layerid as keys"""
-    
-    genes = txt_to_eval(f'../data/{run}/gene_pool.txt')
-    genes_dict = {}
-
-    if not get_dict:
-        return genes
-
-    for gene in genes:
-        genes_dict[gene['layer']] = gene
-
-    return genes_dict
-
-def search_space_helper(run, type, key, get_dict=False):
-    
-    rules = json_to_dict(f"../data/{run}/search_space.json")[type]
-    
-    # Return a list 
-    if not get_dict:
-        return rules
-
-    # Return a dictionairy
-    else: 
-        rules_dict = {}
-        
-        for rule in rules:
-            
-            # Add gene to dictionairy in case it is not excluded
-            if ("exclude" in rule) and (not rule["exclude"]):
-                rules_dict[rule[key]] = rule
-
-        return rules_dict
-    
-def new_get_genepool(run, get_dict=False):
-    return search_space_helper(run, "gene_pool", "layer", get_dict=get_dict)
-    
-def new_get_ruleset(run, get_dict=False):
-    return search_space_helper(run, "rule_set", "layer", get_dict=get_dict)
-    
-def get_ruleset_groups(run, get_dict=False):
-    return search_space_helper(run, "rule_set_groups", "group", get_dict=get_dict)
-        
-def get_rulset_elements(run):
-    
-    # Get ruleset as dictionairy
-    rules = new_get_ruleset(run, get_dict=True)
-    group_rules = get_ruleset_groups(run, get_dict=True)
-    
-    # Identify all the layers that are connected to start layer
-    checkout_layers = ["Start"]
-    checkout_groups = []
-    
-    for layer, rule in rules.items():
-        print(layer)
-        print(rule)
-        
-    for layer, rule in group_rules.items():
-        print(layer)
-        print(rule)
-    
-    search_space = get_search_space(run)
-    gene_pool = search_space["gene_pool"]
-    connected_layers = get_connected_layers(search_space, gene_pool)
-
-    for layer in gene_pool:
-        if layer["layer"] in connected_layers:
-            print(layer["layer"])
-
-def get_ruleset(run, cytoscape_dag=True):
-    """List of nodes and edges for element param in cytoscape"""
-    
-    # Read ruleset from file and return directly if not cytoscape DAD should be returned
-    ruleset = txt_to_eval(f'../data/{run}/rule_set.txt')
-    
-    if not cytoscape_dag:
-        return ruleset
-    
-    # Read genepool from file
-    genepool = get_genepool(run, get_dict=True)
-    
-    # Layer types
-    preprocessing = ['STFT', 'MAG', 'MEL', 'MAG2DEC', 'Rescaling']
-    one_dim_feature = ['C_1D', 'DC_1D', 'MP_1D', 'AP_1D', 'R_1D', 'BN_1D', 'IN_1D']
-    two_dim_feature = ['C_2D', 'DC_2D', 'MP_2D', 'AP_2D', 'R_2D', 'BN_2D', 'IN_2D']
-    one_dim_global_pooling = ['GAP_1D', 'GMP_1D']
-    two_dim_global_pooling = ['GAP_2D', 'GMP_2D']
-    dense = ['DO', 'D']
-    
-    # MATEOS DATA: Exclude preprocessing layers of wrong dataset
-    for rule in ruleset:
-        if (rule['layer'] == 'Start') and ('dataset' in rule) and (rule['dataset'] == get_hyperparamters(run)['dataset']):
-            preprocessing = rule['start_with']
-            
-    # Dictionnairy for layers type name
-    layers_type = {}
-
-    for p in preprocessing: layers_type[p] = "Preprocessing Layer"
-    for fo in one_dim_feature: layers_type[fo] = "1D Feature Layer"
-    for ft in two_dim_feature: layers_type[ft] = "2D Feature Layer"
-    for go in one_dim_global_pooling: layers_type[go] = "1D Global Pooling Layer"
-    for gt in two_dim_global_pooling: layers_type[gt] = "2D Global Pooling Layer"
-    for d in dense: layers_type[d] = "Dense Layer"
-
-    # Return list of ruleset
-    if not cytoscape_dag:
-        return ruleset
-    
-    # Create cytoscape classes
-    nodes = [
-        { 'data': {'id': 'pr', 'label': 'Preprocessing'} },
-        { 'data': {'id': 'fe', 'label': 'Feature Extraction'} },
-        { 'data': {'id': 'gl', 'label': 'Global Pooling'} },
-        { 'data': {'id': 'de', 'label': 'Dense'} },
-        { 'data': {'id': 'end', 'label': 'End', 'f_name': 'End', 'layer': 'End', 'ltype': 'End'} }
-    ]
-    
-    # Create edges between cytoscape classes
-    edges = [
-        { 'data': {'id':'feature-globalpooling', 'source': 'fe', 'target': 'gl'}, 'classes': 'class-connect' },
-        { 'data': {'id':'dense-end', 'source': 'de', 'target': 'end'}, 'classes': 'class-connect' },
-    ]
-    
-    # Create cytoscape starting point
-    lallowed = dense
-    
-    for rule in ruleset:
-        
-        # MATEOS DATA: Exclude start withs with wrong dataset
-        if (rule['layer'] == 'Start' and 'dataset' not in rule) or (rule['layer'] == 'Start' and 'dataset' in rule and rule['dataset'] == get_hyperparamters(run)['dataset']):
-            
-            nodes.append({ 'data': {'id': 'Start', 'label': 'Start', 'f_name': 'Start', 'layer': 'Start', 'ltype': 'Start'} })
-
-            for start_with in rule['start_with']:
-                edges.append({
-                    'data': {'source': rule['layer'], 'target': start_with}, 
-                    'classes': f'{rule["layer"]} {start_with}'
-                })
-                
-                # Specify the allowed layers in 1D/ 2D (if there is a preprocessing layer then 2D)
-                if start_with in preprocessing: 
-                    lallowed += preprocessing + two_dim_feature + two_dim_global_pooling
-                    
-                else: 
-                    lallowed += one_dim_feature + one_dim_global_pooling
-
-    # After analysing start continue with rest
-    for rule in ruleset:
-        
-        layer = rule['layer']
-        
-        # Skip Start layer (already processed)
-        if layer == 'Start':
-            continue
-        
-        # Layers that are of the right dimension
-        elif layer in lallowed:
-            
-            genepool[layer]['id'] = layer
-            genepool[layer]['label'] = layer.replace('_', ' ')
-            genepool[layer]['ltype'] = layers_type[layer]
-            
-            # Layer Category
-            if layer in preprocessing: 
-                genepool[layer]['parent'] = 'pr'
-            elif layer in (one_dim_feature + two_dim_feature): 
-                genepool[layer]['parent'] = 'fe'
-            elif layer in (one_dim_global_pooling + two_dim_global_pooling): 
-                genepool[layer]['parent'] = 'gl'
-            elif layer in dense: 
-                genepool[layer]['parent'] = 'de'
-            
-            nodes.append({ 'data': genepool[rule['layer']] })
-
-            for allowed_after in rule['allowed_after']:
-                
-                if allowed_after in lallowed:
-                    edges.append({
-                        'data': {'source': layer, 'target': allowed_after}, 
-                        'classes': f'{layer} {allowed_after}'
-                    })
-        
-    elements = nodes + edges
-    return elements
-
-def get_start_gene(run):
-    """Dict of start gene"""
-    ruleset = get_ruleset(run, cytoscape_dag=False)
-    genepool = get_genepool(run, get_dict=True)
-    dataset = get_hyperparamters(run)['dataset']
-
-    for rule in ruleset:
-        if rule['layer'] == 'Start':
-            
-            return genepool[rule['start_with'][0]]
-
-            # Special case for Mateos data
-            #if 'dataset' in rule:
-            
-            #   if rule['dataset'] == dataset:
-            #        return genepool[rule['start_with'][0]]
-            
-            #else:
-            #    return genepool[rule['start_with'][0]]
-     
         
 ### INDIVIDUAL CREATION ###
 # TODO Deprecate crossover dict

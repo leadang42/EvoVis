@@ -8,7 +8,7 @@ from utils import get_number_of_genes, get_generations
 from search_space import get_cytoscape_elements
 from components import metric_card
 
-run = "ga_20230116-110958_sc_2d_4classes"
+run = "ga_20240108-231402_spoken_languages"
 
 dash.register_page(__name__, path='/genepool')
 

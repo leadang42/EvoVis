@@ -3,23 +3,23 @@ from dash import html, callback, Input, Output, dcc
 import dash_cytoscape as cyto
 import dash_mantine_components as dmc
 from dash_iconify import DashIconify
-import random
 
 from utils import get_family_tree, get_generations, get_individuals, get_random_individual, get_individuals_min_max, get_individual_result, get_individual_chromosome, get_meas_info
 from components import dot_heading, bullet_chart_card, bullet_chart_basic, warning, information, genome_overview
 
-# dash.register_page(__name__, path='/family-tree')
+dash.register_page(__name__, path='/family-tree')
 
 ### GLOBAL VARIABLES ###
-run = "ga_20230116-110958_sc_2d_4classes"
-#run = "cifar10_diversity_06 2"
+run = "ga_20240108-231402_spoken_languages"
+
 generations = get_generations(run)
 generations_int = get_generations(run, as_int=True)
 random_gen, _ = get_random_individual(run, 5)
 border_meas = get_individuals_min_max(run, generation_range=None)
+
+# TODO Meas infor from config
 meas_info = get_meas_info(run)
 del meas_info['fitness']
-del meas_info['mean_power_consumption']
 
 ### CYTOSCAPE ###
 cytoscape_stylesheet = [
@@ -143,11 +143,6 @@ def set_generation_range(gen_range, gen):
 @callback( Output("cytoscape-family-tree", "elements"), Output("cytoscape-family-tree", "layout"), Output("cytoscape-family-tree", "stylesheet"), Input("gen-range-slider", "value"), Input("gen-select", "value"), Input("ind-select", "value"), Input("cytoscape-family-tree", "tapNodeData"), Input("cytoscape-family-tree", "tapEdgeData"))
 def set_cytoscape(gen_range, gen, ind, ind_clicked, edge_clicked):
     
-    #print()
-    #print('Individual: ', ind)
-    #print('Individual clicked: ', ind_clicked)
-    #print('Edge clicked: ', edge_clicked)
-    
     # Get Family tree through individual selection
     generation_range = range(gen_range[0], gen_range[2]+1)
     gen = gen_range[1]
@@ -224,7 +219,7 @@ def set_values(ind_clicked, ind_select, gen_select):
     # Individual information
     ind = None
     gen = None
-    extinct = None # Not know whether really extinct!
+    extinct = None
     
     if ind_clicked is None: 
         
@@ -245,19 +240,19 @@ def set_values(ind_clicked, ind_select, gen_select):
     ind_genome = get_individual_chromosome(run, gen, ind)
     
     # Creating heading div
-    ind_heading = [html.H2(ind.replace('_', ' '), style = {'margin': '10px'})]
+    ind_heading = [html.H2(ind, style = {'margin': '10px'})]
     
     # Creating exceptions div
     ind_exceptions = []
     
-    if extinct:
-        ind_exceptions += [information("Individual became extinct.")]
+    #if extinct:
+    #    ind_exceptions += [information("Individual became extinct.")]
         
-    if "energy_consumption" in ind_meas and "inference_time" in ind_meas:
-        if (type(ind_meas["energy_consumption"]) != int and type(ind_meas["energy_consumption"]) != float) or (type(ind_meas["inference_time"]) != int and type(ind_meas["inference_time"]) != float):            
-            return ind_heading, warning("Measuring energy consumption failed with this individual"), [], []
-    else: 
-        return ind_heading, warning("Measuring energy consumption failed with this individual"), [], []
+    #if "energy_consumption" in ind_meas and "inference_time" in ind_meas:
+    #    if (type(ind_meas["energy_consumption"]) != int and type(ind_meas["energy_consumption"]) != float) or (type(ind_meas["inference_time"]) != int and type(ind_meas["inference_time"]) != float):            
+    #        return ind_heading, warning("Measuring energy consumption failed with this individual"), [], []
+    #else: 
+    #    return ind_heading, warning("Measuring energy consumption failed with this individual"), [], []
     
     # Creating genes values
     ind_genes = [dot_heading("Genome", style={"margin": "10px",'flex': '100%'}), genome_overview(chromosome=ind_genome)]
@@ -266,16 +261,26 @@ def set_values(ind_clicked, ind_select, gen_select):
     ind_fitness = [dot_heading("Fitness", style={"margin": "10px",'flex': '100%'})]
     
     if "fitness" in ind_meas:
-        ind_fitness += [bullet_chart_basic(ind_meas['fitness'], 0, 1, metric_card_id="bullet-chart-basic")]
+        ind_fitness += [bullet_chart_basic(ind_meas['fitness'], 0, 3, metric_card_id="bullet-chart-basic")]
 
     for meas_key in meas_keys:
         if meas_key in ind_meas:
-            if meas_key == 'inference_time':
-                ind_fitness += [(bullet_chart_card(meas_key.replace("_", " "), f"{meas_key.replace('_', '-')}-icon", ind_meas[meas_key], border_meas[meas_key]['min']['value'], 300, unit=meas_info[meas_key][0], constraint=meas_info[meas_key][1], metric_card_id="bullet-chart-card"))]
-            elif meas_key == 'energy_consumption':
-                ind_fitness += [(bullet_chart_card(meas_key.replace("_", " "), f"{meas_key.replace('_', '-')}-icon", ind_meas[meas_key], border_meas[meas_key]['min']['value'], 5, unit=meas_info[meas_key][0], constraint=meas_info[meas_key][1], metric_card_id="bullet-chart-card"))]
-            else:
-                ind_fitness += [(bullet_chart_card(meas_key.replace("_", " "), f"{meas_key.replace('_', '-')}-icon", ind_meas[meas_key], border_meas[meas_key]['min']['value'], border_meas[meas_key]['max']['value'], unit=meas_info[meas_key][0], constraint=meas_info[meas_key][1], metric_card_id="bullet-chart-card"))]
+            
+            #print(meas_key, ": ", meas_info[meas_key]["displayname"], " | ", meas_info[meas_key]["individual-info-img"], " | ", ind_meas[meas_key], " | ", border_meas[meas_key]['min']['value'], " | ", border_meas[meas_key]['max']['value'],  " | ")
+            
+            ind_fitness += [(
+                bullet_chart_card(
+                    meas_info[meas_key]["displayname"], 
+                    meas_info[meas_key]["individual-info-img"], 
+                    ind_meas[meas_key], 
+                    border_meas[meas_key][0], 
+                    border_meas[meas_key][1], 
+                    unit=meas_info[meas_key]["unit"], 
+                    constraint=None, 
+                    metric_card_id="bullet-chart-card"
+                )
+            )]
+            
     
     return ind_heading, ind_exceptions, ind_genes, ind_fitness
 

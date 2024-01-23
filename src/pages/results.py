@@ -6,11 +6,11 @@ import numpy as np
 from components import dot_heading, bullet_chart_basic, metric_card, genome_overview
 from utils import get_individuals, get_generations, get_meas_info, get_healthy_individuals_results, get_best_individuals, get_unique_genes
 
-# dash.register_page(__name__, path='/results')
+dash.register_page(__name__, path='/results')
 
 
 ### GLOBAL VARIABLES
-run = 'ga_20230116-110958_sc_2d_4classes'
+run = 'ga_20240108-231402_spoken_languages'
 
 grid_gutter = 'xl'
 fitn_obj_height = 150
@@ -47,7 +47,8 @@ def add_meas_trace(fig, run, meas, generation_range=None, min=None, max=None, sh
         
         for ind, result in results.items():
             
-            if meas in result:
+            # TODO Why result None
+            if result is not None and meas in result:
                 value = result[meas]
 
                 if (type(value) == int or type(value) == float) and (value <= max) and (value >= min): 
@@ -143,8 +144,8 @@ def figure_meas_over_gen(run, measures, generation_range=None, min=None, max=Non
             add_meas_trace(fig, run, meas, generation_range, min, max, show_std, linecolor)
     
             # Constraint trace
-            if show_constraint:
-                constraint = get_meas_info(run)[meas][1]
+            #if show_constraint:
+            #    constraint = get_meas_info(run)[meas][1]
                 
                 #if constraint != None:
                 #    add_constraint_trace(fig, constraint)

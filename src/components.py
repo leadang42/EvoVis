@@ -50,18 +50,23 @@ def metric_card(metrictype, metric, icon=None, unit=None, description=None, widt
         "background-color": "#FFFFFF",
     }
     
+    print(width)
+    if width != "100%":
+        width = f"{width - 80}px"
+    print(width)    
+    
     metric_type_style = {
         "margin": "5px", 
         "font-weight": "lighter",
         "font-size": "15px", 
         "overflow": "scroll", 
-        "width":f"{width - 80}px"
+        "width": width
     }
     
     metric_style = { 
         "margin": "5px", 
         "overflow": "scroll", 
-        "width":f"{width - 80}px", 
+        "width": width, 
         "height":"18px"
     }
     
@@ -153,7 +158,6 @@ def bullet_chart_card(metrictype, img, metric, min, max, constraint=None, unit=N
     }
     
     range = max - min
-    
     load_percent = ((metric - min) / range * 100) if range != 0 else 0
     
     load_style = {
@@ -168,6 +172,7 @@ def bullet_chart_card(metrictype, img, metric, min, max, constraint=None, unit=N
     }
     
     constraint_style = None
+    
     if constraint is not None:
         constraint_percent = ((constraint - min) / range * 100) if range != 0 else 0
         if constraint_percent > 100: constraint_percent = 100
@@ -214,12 +219,11 @@ def bullet_chart_card(metrictype, img, metric, min, max, constraint=None, unit=N
         paper_bgcolor='rgba(0,0,0,0)'
     )
     
-    
     metric_str = f'{metric} {unit}' if unit is not None else str(metric)
     
     bullet_chart_card_div = html.Div(
         [
-            html.Img(src=f"assets/media/{img}.png", style=img_style, id=img),
+            html.Img(src=f"assets/media/{img}", style=img_style, id=img),
             html.Div(
                 [
                     html.P(metrictype, style={"margin": "5px", "margin-top": "20px", "font-weight": "lighter", "font-size": "15px", 'white-space': 'nowrap', 'min-width':'180px'}, id=f"{metric_card_id}-label"),
