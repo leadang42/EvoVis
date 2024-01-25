@@ -29,8 +29,9 @@ navbar = html.Div(
                 html.A(html.Button(children=DashIconify(icon="bi:github", height=25, width=25, color="#000000"), className="circle-btn", id="github-link"), href="https://github.com/leadang42/EvoNAS-Dashboard.git", target="_blank"),
                 html.A(html.Button(children=DashIconify(icon="tabler:math-function", height=25, width=25, color="#000000"), className="circle-btn", id="hyperparameter-link"), href=dash.page_registry['pages.hyperparameters']['relative_path']),
                 html.A(html.Button(children=DashIconify(icon="tabler:dna", height=25, width=25, color="#000000"), className="circle-btn", id="genepool-link"), href=dash.page_registry['pages.genepool']['relative_path']),
-                html.A(html.Button(children=DashIconify(icon="simple-line-icons:graph", height=25, width=25,color="#000000"), className="circle-btn", id="results-link"), href=dash.page_registry['pages.results']['relative_path']),
                 html.A(html.Button(children=DashIconify(icon="grommet-icons:graph-ql", height=25, width=25, color="#000000"), className="circle-btn", id="family-tree-link"), href=dash.page_registry['pages.family_tree']['relative_path']),
+                html.A(html.Button(children=DashIconify(icon="simple-line-icons:graph", height=25, width=25,color="#000000"), className="circle-btn", id="results-link"), href=dash.page_registry['pages.results']['relative_path']),
+                
             ],
             id="navlinks",
         )    
@@ -53,4 +54,4 @@ page = html.Div([ dash.page_container], id="page-content")
 app.layout = html.Div([dcc.Location(id="url"), dcc.Store(id="run-value"), navbar, page])
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()

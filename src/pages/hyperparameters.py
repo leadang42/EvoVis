@@ -5,7 +5,7 @@ import dash_mantine_components as dmc
 from components import dot_heading, metric_card, fitness_function, fitnes_function_latex
 from utils import get_hyperparamters
 
-dash.register_page(__name__, path='/hyperparameters')
+dash.register_page(__name__, path='/')
 
 run = "ga_20230116-110958_sc_2d_4classes"
 #run = "cifar10_diversity_06 2"

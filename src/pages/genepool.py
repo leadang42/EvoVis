@@ -11,7 +11,7 @@ from utils import get_ruleset, get_start_gene, get_number_of_genes, get_generati
 from components import metric_card, dot_heading
 
 run = "ga_20230116-110958_sc_2d_4classes"
-run = "cifar10_diversity_06 2"
+
 
 dash.register_page(__name__, path='/genepool')
 
