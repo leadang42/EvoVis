@@ -8,7 +8,7 @@ from utils import get_number_of_genes, get_generations
 from search_space import get_cytoscape_elements
 from components import metric_card
 
-run = "ga_20240108-231402_spoken_languages"
+run = "nRF52840"
 
 dash.register_page(__name__, path='/genepool')
 
@@ -33,7 +33,7 @@ first_col = html.Div([row1a, row1b, row1c, row1d], className="wrapper-col")
 
 # Body
 
-elements, groups = get_cytoscape_elements("ga_20240108-231402_spoken_languages")
+elements, groups = get_cytoscape_elements("nRF52840")
     
 def cytoscape_stylesheet(groups):
     
@@ -164,8 +164,7 @@ def display_node_data(data):
         gene = {'id': 'Start', 'label': 'Start', 'f_name': 'Start', 'layer': 'Start', 'parent': 'Starting point'}
     
     # Gene name
-    gene_name = gene["f_name"].replace("()", "").replace("2D", "").replace("1D", "").replace("Conv", "Convolution").replace("STFT", "Short Time Fourier Trans.")
-    gene_name = ' '.join(re.findall('[A-Z][a-z]*', gene_name)).replace("Re L U", "ReLU")
+    gene_name = gene["f_name"]
     
     # Gene dimension
     gene_type = ""

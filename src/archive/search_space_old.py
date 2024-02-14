@@ -11,8 +11,6 @@ import json
 
 ###########################################################################################
 
-# Changes: rule_set_group, grouping of genepool
-
 
 ### READ DATA FROM SEARCH SPACE JSON ###
 
@@ -63,50 +61,38 @@ def get_search_space(run):
 
 def get_groups(run):
     """
-    Extract layer identifiers from the 'gene_pool' section of the search space.
+    Extract and organize layer groups from the search space configuration for a specific run.
 
-    Args:
+    Parameters:
         run (str): The identifier for the run. This is used to construct the path to the search_space.json file.
 
     Returns:
-        dict: A dictionary mapping group types to lists of layer identifiers.
+        dict: A dictionary where keys are group types, and values are lists of layer identifiers belonging to each group.
+
+    Raises:
+        KeyError: If the expected keys ('gene_pool', 'layer', 'group') are not present in the search space data.
+        TypeError: If the data structure of the search space is not as expected.
+
+    Example:
+    >>> layer_groups = get_groups('evonas_run')
     """
     search_space = get_search_space(run)
-    
     layer_dict = {}
-    
-    for key, values in search_space.get("gene_pool", []).items():
-        
-        layer_identifiers = [val['layer'] for val in values]
-        layer_dict[key] = layer_identifiers
-        
+
+    for layer_info in search_space.get("gene_pool", []):
+        layer_id = layer_info.get("layer")
+        group_type = layer_info.get("group")
+
+        if layer_id is not None and group_type is not None:
+            if group_type not in layer_dict:
+                layer_dict[group_type] = []
+
+            layer_dict[group_type].append(layer_id)
+        else:
+            raise KeyError("Expected keys ('gene_pool', 'layer', 'group') not found or have None values.")
+    print("\nGet groups: ", layer_dict)
     return layer_dict
-
-def genes_flattened(run):
-    """
-    Flatten the genes in the search space by adding the group information to each gene.
-
-    Args:
-        run (str): The identifier for the run. This is used to construct the path to the search_space.json file.
-
-    Returns:
-        list: A list of dictionaries representing flattened genes with group information.
-    """
     
-    search_space = get_search_space(run)
-    groups = search_space.get("gene_pool", [])
-    
-    layers = []
-    
-    for group, group_layers in groups.items():
-        
-        for layer in group_layers:
-            layer_with_group = layer.copy()
-            layer_with_group['group'] = group
-            layers.append(layer_with_group)
-            
-    return layers
-  
     
 ### GRAPH CREATED FROM RULESETS ### 
             
@@ -124,7 +110,7 @@ def get_layer_graph(run, group_connections=True):
               and values are lists of target layers connected to the source layer.
 
     Raises:
-        KeyError: If the expected keys ('rule_set', 'rule', 'layer', 'rule_set_groups', 'group') are not present in the search space data.
+        KeyError: If the expected keys ('rule_set', 'allowed_after', 'layer', 'rule_set_groups', 'group') are not present in the search space data.
         TypeError: If the data structure of the search space is not as expected.
 
     Example:
@@ -144,18 +130,20 @@ def get_layer_graph(run, group_connections=True):
                 
                 # Identify source and target layers
                 src_layer = layer_rule["layer"]
-                target_layers = layer_rule["rule"]
+                target_layers = layer_rule["allowed_after"]
                 graph[src_layer] = target_layers
+
+        print("\nBefore groups: ", graph)
         
         # Return graph without group connections
         if not group_connections:
             return graph       
 
         # Process group connections
-        for group_rule in search_space.get("rule_set_group", []):
+        for group_rule in search_space.get("rule_set_groups", []):
             
             # Identify source and target group
-            for target_group in group_rule.get("rule", []):
+            for target_group in group_rule.get("allowed_after", []):
                 source_groups = group_rule.get("group", [])
 
                 # Identify source and target layers in source and target groups
@@ -168,7 +156,8 @@ def get_layer_graph(run, group_connections=True):
                         graph[src_layer] += target_layers
                     else:
                         graph[src_layer] = target_layers
-        
+
+        print("\nAfter groups: ",graph)
         return graph
 
     except KeyError as key_error:
@@ -189,7 +178,7 @@ def get_group_graph(run):
               and values are lists of target groups connected to the source group.
 
     Raises:
-        KeyError: If the expected keys ('rule_set_groups', 'rule', 'group') are not present in the search space data.
+        KeyError: If the expected keys ('rule_set_groups', 'allowed_after', 'group') are not present in the search space data.
         TypeError: If the data structure of the search space is not as expected.
 
     Example:
@@ -204,15 +193,15 @@ def get_group_graph(run):
         group_graph = {}
 
         # Process group connections
-        for group_rule in search_space.get("rule_set_group", []):
+        for group_rule in search_space.get("rule_set_groups", []):
             excluded = group_rule.get("exclude", False)
 
             if not excluded:
                 # Identify source and target group
                 source_group = group_rule["group"]
-                target_groups = group_rule.get("rule", [])
+                target_groups = group_rule.get("allowed_after", [])
                 group_graph[source_group] = target_groups
-
+        
         return group_graph
 
     except KeyError as key_error:
@@ -344,6 +333,9 @@ def get_cytoscape_elements(run):
          ['Feature Extraction 2D', ...])
     """
     try:
+        # Retrieve search space data
+        search_space = get_search_space(run)
+
         # Initialize elements with a start node
         elements = [{'data': {'id': 'Start', 'label': 'Start', 'f_name': 'Start', 'layer': 'Start'}}]
         group_elements = []
@@ -352,14 +344,13 @@ def get_cytoscape_elements(run):
         # Use connected layers to create nodes of layers and groups
         start_layer = "Start"
         connected_layers = get_connected_layers(run, start_layer)
-        genes = genes_flattened(run)
+        genes = search_space.get("gene_pool", [])
 
         for gene in genes:
             layer = gene.get("layer")
-            excluded = gene.get("exclude", False)
+            excluded = gene.get("exclude", True)
 
             if not excluded and layer in connected_layers:
-                
                 # Add layer node
                 layer_data = get_node_element(gene)
                 element = {"data": layer_data}
@@ -407,3 +398,8 @@ def get_cytoscape_elements(run):
 
     except TypeError as type_error:
         raise TypeError(f"Unexpected data structure in search space data: {type_error}")
+
+run = "ga_20240108-231402_spoken_languages"
+
+get_layer_graph(run, group_connections=True)
+print(get_groups(run))

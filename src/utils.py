@@ -82,8 +82,9 @@ def get_generations(run, as_int=False):
         return generations_int
 
 
-### SIGNLE INDIVIDUAL INFORMATION ###
+### SINGLE INDIVIDUAL INFORMATION ###
 
+# TODO: Take first element of json not mean
 def get_individual_result(run, generation, individual):
     """
     Retrieve individual's objective measurements from a JSON file.
@@ -361,21 +362,9 @@ def get_individuals_min_max(run, generation_range=None):
 
     return measurements
   
-# TODO Make generic  
 def get_healthy_individuals_results(run, generation_range=None, as_generation_dict=False): 
     
     gen_results = get_individuals(run, generation_range, value="results", as_generation_dict=True)   
-    
-    measurements = [
-        'memory_footprint_h5',
-        'memory_footprint_c_array',
-        'memory_footprint_tflite',
-        'val_acc',
-        'fitness',
-        'inference_time',
-        'energy_consumption',
-        'mean_power_consumption',
-    ]
     
     healthy = {}
     unhealthy = {}
@@ -386,25 +375,17 @@ def get_healthy_individuals_results(run, generation_range=None, as_generation_di
         unhealthy[gen] = {}
         
         for ind, result in results.items():
-            healthy_bool = True
             
-            for meas in measurements:
-                
-                # TODO Why result None
-                if result is not None and meas in result:
-                    value = result[meas]
-
-                    if not (type(value) == int or type(value) == float): 
-                        healthy_bool = False  
-                            
-                else:
-                    healthy_bool = False
-                    
-            if healthy_bool:
-                healthy[gen][ind] = result
-            else:
+            ### LOGIC FOR INDIVIDUAL HEALTH ###
+            
+            if result["error"] == "False":
                 unhealthy[gen][ind] = result
-                    
+                
+            if result["error"] == "True":
+                healthy[gen][ind] = result
+            
+            ###################################
+                  
     if as_generation_dict:
         return healthy, unhealthy
         
@@ -419,7 +400,6 @@ def get_healthy_individuals_results(run, generation_range=None, as_generation_di
             
         return healthy_list, unhealthy_list
    
-# TODO Make generic 
 def get_best_individuals(run):
     """Get the individuals with the highest fitness value per generation.
 
@@ -525,8 +505,6 @@ def get_unique_genes(run):
     
     num_colors = len(unique_genes)
     color_scale = generate_color_scale(start_color, end_color, num_colors)
-    
-    print(color_scale)
 
     for idx, gene in enumerate(unique_genes):
         
@@ -542,7 +520,7 @@ def get_configurations(run):
     """dict of configuration of EvoNAS run"""
     return json_to_dict(f'../data/{run}/config.json')
 
-def get_hyperparamters(run):
+def get_hyperparameters(run):
     """Dict of hyperparameters of EvoNAS run"""
     
     configs = get_configurations(run)

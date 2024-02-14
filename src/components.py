@@ -57,15 +57,16 @@ def metric_card(metrictype, metric, icon=None, unit=None, description=None, widt
         "margin": "5px", 
         "font-weight": "lighter",
         "font-size": "15px", 
-        "overflow": "scroll", 
-        "width": width
+        "overflow": "auto", 
+        "width": width,
+        "height":"18px"
     }
     
     metric_style = { 
         "margin": "5px", 
-        "overflow": "scroll", 
+        "overflow": "auto", 
         "width": width, 
-        "height":"18px"
+        "height":"19px"
     }
     
     # Button with and withoout tooltip depending if description is given

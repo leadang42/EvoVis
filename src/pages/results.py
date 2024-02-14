@@ -10,7 +10,7 @@ dash.register_page(__name__, path='/results')
 
 
 ### GLOBAL VARIABLES
-run = 'ga_20240108-231402_spoken_languages'
+run = "nRF52840" 
 
 grid_gutter = 'xl'
 fitn_obj_height = 150
@@ -24,7 +24,6 @@ unique_genes = get_unique_genes(run)
 
 
 ### HELPER FUNCTIONS FOR PLOTS ###
-# TODO Exclude all unhealthy individuals
 
 def add_meas_trace(fig, run, meas, generation_range=None, min=None, max=None, show_std=True, linecolor='#6173E9'):
     
@@ -77,15 +76,16 @@ def add_meas_trace(fig, run, meas, generation_range=None, min=None, max=None, sh
         ))
     
     # Add mean in foreground
+    # TODO Make generic
     names = {
         'memory_footprint_h5': 'H5',
         'memory_footprint_c_array': 'C Array',
         'memory_footprint_tflite': 'TFLite',
         'val_acc': 'Accuracy',
         'fitness': 'Fitness',
-        'inference_time': 'Inference time',
-        'energy_consumption': 'Energy consumption',
-        'mean_power_consumption': 'Mean power consumption'
+        'inference_information': 'Inference time',
+        'energy_information': 'Energy consumption',
+        'mean_power_information': 'Mean power consumption'
     }
     
     fig.add_trace(go.Scatter(
@@ -188,7 +188,7 @@ def get_pareto_optimality_fig(run, generation_range=None, max_width=430, height=
     results, _ = get_healthy_individuals_results(run, as_generation_dict=False)
     
     mems = [result["memory_footprint_tflite"] for result in results]
-    enes = [result["energy_consumption"] for result in results]
+    enes = [result["energy_information"] for result in results]
     vals = [result["val_acc"] for result in results]
     
     # Font of axis
@@ -346,9 +346,9 @@ def objectives_overview():
         [
             dmc.Col([dot_heading('Accuracy', className='dot-heading-results-page'), graph_meas_over_gen(run, 'val_acc', generation_range=None, min=0, max=1, height=fitn_obj_height)], className="col-results-page"), 
             memory_plot(),
-            dmc.Col([dot_heading('Inference Times', className='dot-heading-results-page'), graph_meas_over_gen(run, 'inference_time', generation_range=None, height=fitn_obj_height)], className="col-results-page"), 
-            dmc.Col([dot_heading('Mean Power Consumption', className='dot-heading-results-page'), graph_meas_over_gen(run, 'mean_power_consumption', generation_range=None, height=fitn_obj_height)], className="col-results-page"), 
-            dmc.Col([dot_heading('Power Measurement', className='dot-heading-results-page'), graph_meas_over_gen(run, 'energy_consumption', generation_range=None, height=fitn_obj_height)], className="col-results-page")     
+            dmc.Col([dot_heading('Inference Times', className='dot-heading-results-page'), graph_meas_over_gen(run, 'inference_information', generation_range=None, height=fitn_obj_height)], className="col-results-page"), 
+            dmc.Col([dot_heading('Mean Power Consumption', className='dot-heading-results-page'), graph_meas_over_gen(run, 'mean_power_information', generation_range=None, height=fitn_obj_height)], className="col-results-page"), 
+            dmc.Col([dot_heading('Power Measurement', className='dot-heading-results-page'), graph_meas_over_gen(run, 'energy_information', generation_range=None, height=fitn_obj_height)], className="col-results-page")     
         ], 
         gutter=grid_gutter,
         grow=True,

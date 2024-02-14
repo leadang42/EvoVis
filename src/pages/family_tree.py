@@ -11,6 +11,7 @@ dash.register_page(__name__, path='/family-tree')
 
 ### GLOBAL VARIABLES ###
 run = "ga_20240108-231402_spoken_languages"
+run = "nRF52840"
 
 generations = get_generations(run)
 generations_int = get_generations(run, as_int=True)
@@ -268,6 +269,7 @@ def set_values(ind_clicked, ind_select, gen_select):
             
             #print(meas_key, ": ", meas_info[meas_key]["displayname"], " | ", meas_info[meas_key]["individual-info-img"], " | ", ind_meas[meas_key], " | ", border_meas[meas_key]['min']['value'], " | ", border_meas[meas_key]['max']['value'],  " | ")
             
+            # TODO check whether keys in config
             ind_fitness += [(
                 bullet_chart_card(
                     meas_info[meas_key]["displayname"], 

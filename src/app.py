@@ -48,4 +48,4 @@ page = html.Div([ dash.page_container], id="page-content")
 app.layout = html.Div([dcc.Location(id="url"), dcc.Store(id="run-value"), navbar, page])
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
