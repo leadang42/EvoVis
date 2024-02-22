@@ -3,8 +3,8 @@ from dash import html
 import dash_mantine_components as dmc
 
 from components import dot_heading, metric_card, warning
-from utils import get_hyperparameters
-from enas_data_check import validate_hyperparameters
+from evolution import get_hyperparameters
+from dataval import validate_hyperparameters
 
 dash.register_page(__name__, path='/')
 run = "nRF52840"     

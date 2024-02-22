@@ -4,7 +4,8 @@ import dash_cytoscape as cyto
 import dash_mantine_components as dmc
 from dash_iconify import DashIconify
 
-from utils import get_family_tree, get_generations, get_individuals, get_random_individual, get_individuals_min_max, get_individual_result, get_individual_chromosome, get_meas_info
+from evolution import get_generations, get_individuals, get_random_individual, get_individuals_min_max, get_individual_result, get_individual_chromosome, get_meas_info
+from family_tree import get_family_tree
 from components import dot_heading, bullet_chart_card, bullet_chart_basic, warning, information, genome_overview
 
 dash.register_page(__name__, path='/family-tree')
@@ -217,73 +218,64 @@ def set_cytoscape(gen_range, gen, ind, ind_clicked, edge_clicked):
 @callback( Output("individual-heading", "children"),  Output("individual-exceptions", "children"), Output("individual-genes", "children"), Output("individual-results", "children"), Input("cytoscape-family-tree", "tapNodeData"), Input("ind-select", "value"), Input("gen-select", "value"))
 def set_values(ind_clicked, ind_select, gen_select):
     
-    # Individual information
+    # Individual selected in cytoscape
     ind = None
     gen = None
     extinct = None
     
     if ind_clicked is None: 
-        
-        # Get informatuon from selects
         ind = ind_select
         gen = gen_select.split('_')[1]
         extinct = False
     
     else:
-        
-        # Get informatuon from node
         ind = ind_clicked["id"]
         gen = ind_clicked["generation"]
         extinct = ind_clicked["extinct"]
-    
-    meas_keys = list(meas_info.keys())
+        
+    # Get individual information from selected node
     ind_meas = get_individual_result(run, gen, ind)
     ind_genome = get_individual_chromosome(run, gen, ind)
-    
-    # Creating heading div
+        
+    ### 1 HEADING ###
     ind_heading = [html.H2(ind, style = {'margin': '10px'})]
     
-    # Creating exceptions div
+    ### 2 EXCEPTIONS ###
     ind_exceptions = []
-    
-    #if extinct:
-    #    ind_exceptions += [information("Individual became extinct.")]
-        
-    #if "energy_consumption" in ind_meas and "inference_time" in ind_meas:
-    #    if (type(ind_meas["energy_consumption"]) != int and type(ind_meas["energy_consumption"]) != float) or (type(ind_meas["inference_time"]) != int and type(ind_meas["inference_time"]) != float):            
-    #        return ind_heading, warning("Measuring energy consumption failed with this individual"), [], []
-    #else: 
-    #    return ind_heading, warning("Measuring energy consumption failed with this individual"), [], []
-    
-    # Creating genes values
+
+    if extinct:
+        ind_exceptions.append(information("Individual became extinct."))
+
+    if ind_meas["error"] == "True":
+        ind_exceptions.append(warning("Individual errored."))
+
+    ### 3 CHROMOSOME ###
     ind_genes = [dot_heading("Genome", style={"margin": "10px",'flex': '100%'}), genome_overview(chromosome=ind_genome)]
     
-    # Metric cards for objectives
+    ### 4 RESULTS ###
     ind_fitness = [dot_heading("Fitness", style={"margin": "10px",'flex': '100%'})]
     
     if "fitness" in ind_meas:
         ind_fitness += [bullet_chart_basic(ind_meas['fitness'], 0, 3, metric_card_id="bullet-chart-basic")]
 
-    for meas_key in meas_keys:
+    for meas_key in list(meas_info.keys()):
         if meas_key in ind_meas:
             
-            #print(meas_key, ": ", meas_info[meas_key]["displayname"], " | ", meas_info[meas_key]["individual-info-img"], " | ", ind_meas[meas_key], " | ", border_meas[meas_key]['min']['value'], " | ", border_meas[meas_key]['max']['value'],  " | ")
+            if isinstance(ind_meas[meas_key], (float, int)):
+                
+                ind_fitness += [(
+                    bullet_chart_card(
+                        meas_info[meas_key]["displayname"], 
+                        meas_info[meas_key]["individual-info-img"], 
+                        ind_meas[meas_key], 
+                        border_meas[meas_key][0], 
+                        border_meas[meas_key][1], 
+                        unit=meas_info[meas_key]["unit"], 
+                        constraint=None, 
+                        metric_card_id="bullet-chart-card"
+                    )
+                )]
             
-            # TODO check whether keys in config
-            ind_fitness += [(
-                bullet_chart_card(
-                    meas_info[meas_key]["displayname"], 
-                    meas_info[meas_key]["individual-info-img"], 
-                    ind_meas[meas_key], 
-                    border_meas[meas_key][0], 
-                    border_meas[meas_key][1], 
-                    unit=meas_info[meas_key]["unit"], 
-                    constraint=None, 
-                    metric_card_id="bullet-chart-card"
-                )
-            )]
-            
-    
     return ind_heading, ind_exceptions, ind_genes, ind_fitness
 
 

@@ -4,8 +4,8 @@ import dash_cytoscape as cyto
 import re
 import plotly.express as px
 import pandas as pd
-from utils import get_number_of_genes, get_generations
-from search_space import get_cytoscape_elements
+from evolution import get_number_of_genes, get_generations
+from genepool import get_cytoscape_elements
 from components import metric_card
 
 run = "nRF52840"

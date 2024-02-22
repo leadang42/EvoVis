@@ -4,7 +4,7 @@ import dash_mantine_components as dmc
 import plotly.graph_objects as go
 import numpy as np
 from components import dot_heading, bullet_chart_basic, metric_card, genome_overview
-from utils import get_individuals, get_generations, get_meas_info, get_healthy_individuals_results, get_best_individuals, get_unique_genes
+from evolution import get_individuals, get_generations, get_meas_info, get_healthy_individuals_results, get_best_individuals, get_unique_genes
 
 dash.register_page(__name__, path='/results')
 
@@ -281,8 +281,8 @@ def general_overview():
 
     general_overview = dmc.Grid(
         [
-            dmc.Col(dmc.Stack([gen_processed, ind_healthy, ind_unhealthy], ), span='auto'),
-            dmc.Col(fitness_plot, span=5, className="col-results-page"), 
+            dmc.Col(dmc.Stack([gen_processed, ind_healthy, ind_unhealthy]), span='auto'),
+            dmc.Col(fitness_plot, span=3, className="col-results-page"), 
             dmc.Col(pareto_optimality_plot, span=5, className="col-results-page"),
         ],
         gutter=grid_gutter,
@@ -414,7 +414,7 @@ plots_div = html.Div(
 
 best_individuals_div = html.Div(
     children=[
-        html.H1("Best Individuals", style={'margin-bottom': '25px', 'margin-top': '25px'}),
+        html.H1("Fittest Individuals", style={'margin-bottom': '25px', 'margin-top': '25px'}),
         best_individuals_overview()
     ]
 )
@@ -424,7 +424,7 @@ layout = dmc.Tabs(
         dmc.TabsList(
             [
                 dmc.Tab("Run results plots", value="plots"),
-                dmc.Tab("Best individuals", value="best-individuals"),
+                dmc.Tab("Fittest individuals", value="best-individuals"),
             ]
         ),
         dmc.TabsPanel(plots_div, value="plots"),
