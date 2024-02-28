@@ -3,17 +3,16 @@ from dash import html, callback, Input, Output, dcc
 import dash_cytoscape as cyto
 import dash_mantine_components as dmc
 from dash_iconify import DashIconify
+from dotenv import load_dotenv
+import os
+from evolution import get_family_tree, get_generations, get_individuals, get_random_individual, get_individuals_min_max, get_individual_result, get_individual_chromosome, get_meas_info
+from components import dot_heading, bullet_chart_card, bullet_chart_card_basic, warning, information, chromosome_sequence
 
-from evolution import get_generations, get_individuals, get_random_individual, get_individuals_min_max, get_individual_result, get_individual_chromosome, get_meas_info
-from family_tree import get_family_tree
-from components import dot_heading, bullet_chart_card, bullet_chart_basic, warning, information, genome_overview
-
+load_dotenv()
+run = os.getenv("RUN_RESULTS_PATH")
 dash.register_page(__name__, path='/family-tree')
 
 ### GLOBAL VARIABLES ###
-run = "ga_20240108-231402_spoken_languages"
-run = "nRF52840"
-
 generations = get_generations(run)
 generations_int = get_generations(run, as_int=True)
 random_gen, _ = get_random_individual(run, 5)
@@ -246,17 +245,17 @@ def set_values(ind_clicked, ind_select, gen_select):
     if extinct:
         ind_exceptions.append(information("Individual became extinct."))
 
-    if ind_meas["error"] == "True":
+    if "error" in ind_meas and (ind_meas["error"] == "True" or ind_meas["error"] == True):
         ind_exceptions.append(warning("Individual errored."))
 
     ### 3 CHROMOSOME ###
-    ind_genes = [dot_heading("Genome", style={"margin": "10px",'flex': '100%'}), genome_overview(chromosome=ind_genome)]
+    ind_genes = [dot_heading("Genome", style={"margin": "10px",'flex': '100%'}), chromosome_sequence(chromosome=ind_genome)]
     
     ### 4 RESULTS ###
     ind_fitness = [dot_heading("Fitness", style={"margin": "10px",'flex': '100%'})]
     
     if "fitness" in ind_meas:
-        ind_fitness += [bullet_chart_basic(ind_meas['fitness'], 0, 3, metric_card_id="bullet-chart-basic")]
+        ind_fitness += [bullet_chart_card_basic(ind_meas['fitness'], 0, 1, metric_card_id="bullet-chart-basic")]
 
     for meas_key in list(meas_info.keys()):
         if meas_key in ind_meas:
@@ -281,23 +280,22 @@ def set_values(ind_clicked, ind_select, gen_select):
 
 ### LAYOUT ###
 
-layout = dmc.Grid(
-    children=[
-        
-        ### FAMILY TREE ###
-        dmc.Col(html.Div(
-            [ 
-                html.H1('Family Tree', style = {"margin-bottom": "20px", "margin-top": "20px"}), 
-                node_select, 
-                cytoscape,
-                slider
-            ]), 
-            span='auto',
-            style={'max-width': '100%'} # 100% needed for scaling cytoscape to 100%
-        ),
-        
-        ### INDIVIDUAL INFORMATION ###
-        dmc.Col([
+def family_tree():
+    
+    return dmc.Col(html.Div(
+        [ 
+            html.H1('Family Tree', style = {"margin-bottom": "20px", "margin-top": "20px"}), 
+            node_select, 
+            cytoscape,
+            slider
+        ]), 
+        span='auto',
+        style={'max-width': '100%'} # 100% needed for scaling cytoscape to 100%
+    )
+    
+def individual_information():
+    return dmc.Col(
+        [
             html.Div([], id='individual-heading'), 
             html.Div([], id='individual-exceptions'), 
             dmc.Grid(
@@ -307,12 +305,23 @@ layout = dmc.Grid(
                 ],
                 gutter="xs",
                 grow=True
-            )], 
-            span=4, 
-            className='cytoscape-values', 
-            id='values-col'),
+            )
+        ], 
+        span=4, 
+        className='cytoscape-values', 
+        id='values-col'
+    )
+
+def family_tree_layout():
+    return dmc.Grid(
+        children=[
+        
+            family_tree(),
+            individual_information()
     ],
     gutter="s",
     #justify='',
     grow=True
 )
+
+layout = family_tree_layout

@@ -5,10 +5,18 @@ import random
 from matplotlib.colors import hex2color, rgb2hex
 import json
 
+# get_hyperparameters
+
+# get_number_of_genes, get_generations
+
+# get_family_tree, get_generations, get_individuals, get_random_individual, get_individuals_min_max, 
+# get_individual_result, get_individual_chromosome, get_meas_info
+
+# get_individuals, get_generations, get_meas_info, get_healthy_individuals_results, get_best_individuals, get_unique_genes
 
 ### READ HELPER ###
 
-def json_to_dict(filepath):
+def _json_to_dict(filepath):
     """
     Convert JSON data from a file to a Python dictionary.
 
@@ -23,7 +31,7 @@ def json_to_dict(filepath):
         json.JSONDecodeError: If there is an issue decoding the JSON data.
 
     Example:
-    >>> data = json_to_dict('example.json')
+    >>> data = _json_to_dict('example.json')
     """
     try:
         with open(filepath, 'r') as file:
@@ -33,6 +41,27 @@ def json_to_dict(filepath):
         raise FileNotFoundError(f"File not found: {filepath}")
     except json.JSONDecodeError as e:
         raise json.JSONDecodeError(f"Error decoding JSON data in file {filepath}: {e}")
+
+
+### RUN INFORMATION ###
+
+def _get_configurations(run):
+    """dict of configuration of EvoNAS run"""
+    return _json_to_dict(f'../data/{run}/config.json')
+
+# TODO Include default values
+def get_hyperparameters(run):
+    """Dict of hyperparameters of EvoNAS run"""
+    
+    configs = _get_configurations(run)
+    return configs["hyperparameters"]
+
+# TODO Include default values!!!
+def get_meas_info(run):
+    """Dict of meas info of EvoNAS run"""
+    
+    configs = _get_configurations(run)
+    return configs["results"]
 
 
 ### NAMES OF DIRECTORIES ###
@@ -109,7 +138,7 @@ def get_individual_result(run, generation, individual):
     if os.path.isfile(path):
         try:
             # Load JSON data from file
-            results = json_to_dict(path)
+            results = _json_to_dict(path)
 
             # Process nested dictionaries
             for key, val in results.items():
@@ -155,7 +184,7 @@ def get_individual_chromosome(run, generation, individual):
     if os.path.isfile(path):
         try:
             # Load JSON data from file
-            chromosome = json_to_dict(path)
+            chromosome = _json_to_dict(path)
             return chromosome
 
         except Exception as e:
@@ -168,7 +197,7 @@ def get_individual_chromosome(run, generation, individual):
     
 ### INDIVIDUALS INFORMATION ###
 
-def get_individuals_of_generation(run, generation, value="names"):
+def _get_individuals_of_generation(run, generation, value="names"):
     """
     Get the data of all individuals of a specified generation.
     
@@ -185,8 +214,8 @@ def get_individuals_of_generation(run, generation, value="names"):
                    If the specified generation is not present in the run data.
 
     Example:
-        >>> names = get_individuals_of_generation('my_run', 3, 'names')
-        >>> results_dict = get_individuals_of_generation('my_run', 3, 'results')
+        >>> names = _get_individuals_of_generation('my_run', 3, 'names')
+        >>> results_dict = _get_individuals_of_generation('my_run', 3, 'results')
     """
     
     # Validate input values
@@ -261,20 +290,20 @@ def get_individuals(run, generation_range=None, value="names", as_generation_dic
     if as_generation_dict:
         generations = {}
         for generation in generation_range:
-            generations[generation] = get_individuals_of_generation(run, generation, value)
+            generations[generation] = _get_individuals_of_generation(run, generation, value)
         return generations
     
     else: 
         individuals = []
         for generation in generation_range:
             if value != "names":
-                individuals += list(get_individuals_of_generation(run, generation, value).values())
+                individuals += list(_get_individuals_of_generation(run, generation, value).values())
             else:
-                individuals += get_individuals_of_generation(run, generation, value)
+                individuals += _get_individuals_of_generation(run, generation, value)
 
         return individuals
       
-def get_minmax_result_by_key(results, key, min_boundary=None, max_boundary=None):
+def _get_minmax_result_by_key(results, key, min_boundary=None, max_boundary=None):
     """
     Finds the minimum and maximum values in a list of dictionaries based on a specified key,
     while respecting optional minimum and maximum boundaries.
@@ -293,7 +322,7 @@ def get_minmax_result_by_key(results, key, min_boundary=None, max_boundary=None)
 
     Example:
     >>> my_list_of_dicts = [{'value': 3}, {'value': 'invalid'}, {'value': 5}]
-    >>> min_val, max_val = get_minmax_result_by_key(my_list_of_dicts, 'value', min_boundary=2, max_boundary=4)
+    >>> min_val, max_val = _get_minmax_result_by_key(my_list_of_dicts, 'value', min_boundary=2, max_boundary=4)
     >>> print(min_val, max_val)
     (3, 4)
     """
@@ -353,7 +382,7 @@ def get_individuals_min_max(run, generation_range=None):
         min_boundary = meas_info.get('min_boundary', None)
         max_boundary = meas_info.get('max_boundary', None)
         
-        measurements[measure] = get_minmax_result_by_key(
+        measurements[measure] = _get_minmax_result_by_key(
             values,
             measure,
             min_boundary=min_boundary,
@@ -378,11 +407,11 @@ def get_healthy_individuals_results(run, generation_range=None, as_generation_di
             
             ### LOGIC FOR INDIVIDUAL HEALTH ###
             
-            if result["error"] == "False":
-                unhealthy[gen][ind] = result
-                
-            if result["error"] == "True":
+            if "error" not in result or result["error"] == "False" or result["error"] == False:
                 healthy[gen][ind] = result
+                
+            elif result["error"] == "True" or result["error"] == True:
+                unhealthy[gen][ind] = result
             
             ###################################
                   
@@ -469,81 +498,191 @@ def get_number_of_genes(run, generation, genename):
 
     return count
 
-def generate_color_scale(start_color, end_color, num_colors):
-    start_rgb = hex2color(start_color)
-    end_rgb = hex2color(end_color)
 
-    r = np.linspace(start_rgb[0], end_rgb[0], num_colors)
-    g = np.linspace(start_rgb[1], end_rgb[1], num_colors)
-    b = np.linspace(start_rgb[2], end_rgb[2], num_colors)
+### FAMILY TREE ###
+# TODO Deprecate crossover dict
+def _get_crossover_parents(run):
+    """Dicitionnairy with key individual and values of parents of individuals with values=["Generation", "New Individual", "Parent 1", "Crossover 1", "Parent 2", "Crossover 2"]"""
 
-    color_scale = [rgb2hex((r[i], g[i], b[i])) for i in range(num_colors)]
-    return color_scale
+    df = pd.read_csv(f'../data/{run}/crossover_parents.csv', header=None)
+    df = df.rename(columns={0:"Generation", 1:"Parent 1", 2:"Parent 2", 3:"New Individual"})
+    df = df.reindex(columns=["Generation", "New Individual", "Parent 1", "Crossover 1", "Parent 2", "Crossover 2"])
 
-def get_unique_genes(run):
+    crossover_dict = {}
+
+    for idx, row in df.iterrows():
+        individual = row["New Individual"].replace("New_Individual: ", "")
+
+        generation = int(row["Generation"].replace("Generation: ", ""))
+        parent1 = row["Parent 1"].replace("Parent_1: ", "").replace("(", "").replace(")", "")
+        parent2 = row["Parent 2"].replace("Parent_2: ", "").replace("(", "").replace(")", "")
+
+        parent1, crossover1 = parent1.split(",")[0], parent1.split(",")[1]
+        parent2, crossover2 = parent2.split(",")[0], parent2.split(",")[1]
+
+        crossover_dict[individual] = {
+            "generation": generation,
+            "parent1": parent1,
+            "crossover1": crossover1, 
+            "parent2": parent2,
+            "crossover2": crossover2, 
+        }
+
+    return crossover_dict
+
+def _get_crossover_parents_df(run):
+    """
+    Dataframe of parents of individuals (not in use)
     
-    unique_genes = {}
-    chromosomes = get_individuals(run, generation_range=None, value="chromosome", as_generation_dict=False)    
-    
-    for chromosome in chromosomes:
+    Args:
+        run (str): The directory name of the run data.
         
-        # TODO Why chromosome None
-        if chromosome is not None: 
-            for gene in chromosome:
-                if gene["layer"] not in list(unique_genes.keys()):
-                    unique_genes[gene["layer"]] = {
-                    
-                        "layer": gene["layer"],
-                        "f_name": gene["f_name"],
-                    }
-            
-    opacity_step = 1 / len(unique_genes)
-    
-    # Create a colormap using LinearSegmentedColormap
-    start_color = '#6173E9'
-    end_color = '#B70202'
-    
-    num_colors = len(unique_genes)
-    color_scale = generate_color_scale(start_color, end_color, num_colors)
+    Returns:
+        df (pandas.DataFrame): Dataframe with columns ["generation", "individual", "parent1", "crossover1", "parent2", "crossover2"]
+    """
 
-    for idx, gene in enumerate(unique_genes):
+    df = pd.read_csv(f'../data/{run}/crossover_parents.csv', header=None)
+    df = df.rename(columns={0:"generation", 1:"parent1", 2:"parent2", 3:"individual"})
+    df = df.reindex(columns=["generation", "individual", "parent1", "crossover1", "parent2", "crossover2"])
+
+    df["generation"] = df["generation"].str.replace("Generation: ", "")
+    df["parent1"] = df["parent1"].str.replace("Parent_1: ", "")
+    df["parent2"] = df["parent2"].str.replace("Parent_2: ", "")
+    df["individual"] = df["individual"].str.replace("New_Individual: ", "")
+
+    df["generation"] = df["generation"].astype('int64')
+
+    for idx, row in df.iterrows():
+       
+        p1 = row["parent1"].replace("(", "").replace(")", "")
+        p2 = row["parent2"].replace("(", "").replace(")", "")
+
+        df.loc[idx, "parent1"] = p1.split(",")[0]
+        df.loc[idx, "crossover1"] = p1.split(",")[1]
+        df.loc[idx, "parent2"] = p2.split(",")[0]
+        df.loc[idx, "crossover2"] = p2.split(",")[1]
+
+    return df 
+
+def _get_upstream_tree(run, generation, individual, generation_range):
+    """
+    Helper funnction for family tree: Create upstream famliy tree with nodes, edges and root elements starting from selected individual.
+    
+    Args:
+        run (str): The directory name of the run data.
+        generation (int): Generation of individual
+        individual (str): Individual from where family tree evolves from. 
+        generation_range (range): A python range of generations from which the individuals will be extracted. 
         
-        opacity = 1 - idx * opacity_step
-        unique_genes[gene]["color"] = color_scale[idx]
-
-    return unique_genes
-
-
-### RUN INFORMATION ###
-
-def get_configurations(run):
-    """dict of configuration of EvoNAS run"""
-    return json_to_dict(f'../data/{run}/config.json')
-
-def get_hyperparameters(run):
-    """Dict of hyperparameters of EvoNAS run"""
+    Returns:
+        elements (list): List of nodes and edges for element param in cytoscape.
+        root (list): List of roots nodes to create right tree structure.
+    """
     
-    configs = get_configurations(run)
-    return configs["hyperparameters"]
+    min_generation = generation_range[0]
 
-def get_meas_info(run):
-    """Dict of meas info of EvoNAS run"""
-    
-    configs = get_configurations(run)
-    return configs["results"]
+    # End condition with only one individual
+    if min_generation == generation:
+        return ([{'data': {'id': individual, 'label': individual[0:3], 'generation': generation, 'extinct': False}}], [individual])
 
-    meas_info = {
-        'memory_footprint_h5': ('Byte', None),
-        'memory_footprint_tflite': ('Byte', None),
-        'memory_footprint_c_array': ('Byte', None),
-        'val_acc': ('', None),
-        'inference_time': ('ms', None),
-        'energy_consumption': ('mJ', None),
-        'fitness': ('', None),
-        'mean_power_consumption': ('mJ', None)
-    }
+    # Nodes and edges for individual
+    crossovers = _get_crossover_parents(run)
     
-    return meas_info
+    parent1 = crossovers[individual]["parent1"]
+    crossover1 = crossovers[individual]["crossover1"]
+    
+    parent2 = crossovers[individual]["parent2"]
+    crossover2 = crossovers[individual]["crossover2"]
+
+    individual_el = [
+        {'data': {'id': individual, 'label': individual[0:3], 'generation': generation, 'extinct': False}},
+        {'data': {'source': parent1, 'target': individual, 'edgelabel': crossover1}},
+        {'data': {'source': parent2, 'target': individual, 'edgelabel': crossover2}}
+    ]
+
+    # Recursion for moving up the tree
+    parent1_tree, roots1 = _get_upstream_tree(run, generation-1, parent1, generation_range)
+    parent2_tree, roots2 = _get_upstream_tree(run, generation-1, parent2, generation_range)
+
+    return (parent1_tree + individual_el + parent2_tree, roots1 + roots2)
+
+def _get_downstream_tree(run, generation, individual, generation_range):
+    """
+    Helper funnction for family tree: Create upstream famliy tree with nodes and edges starting from selected individual.
+    
+    Args:
+        run (str): The directory name of the run data.
+        generation (int): Generation of individual
+        individual (str): Individual from where family tree evolves from. 
+        generation_range (range): A python range of generations from which the individuals will be extracted. 
+        
+    Returns:
+        elements (list): list of nodes and edges for element param in cytoscape.
+    """
+
+    max_generation = generation_range[-1]
+    
+    # Get children of individual
+    crossovers = _get_crossover_parents_df(run)
+    children = list(crossovers[crossovers['parent1'].str.contains(individual)]["individual"].values)
+    crossover = list(crossovers[crossovers['parent1'].str.contains(individual)]["crossover1"].values)
+    
+    children += list(crossovers[crossovers['parent2'].str.contains(individual)]["individual"].values)
+    crossover += list(crossovers[crossovers['parent2'].str.contains(individual)]["crossover2"].values)
+    
+    extinct = False if children else True
+
+    # End condition with only one individual
+    if max_generation == generation:
+        return [{'data': {'id': individual, 'label': individual[0:3], 'generation': generation, 'extinct': extinct}}]
+
+    # Nodes and edges for individual
+    individual_el = [{'data': {'id': individual, 'label': individual[0:3], 'generation': generation, 'extinct': extinct}}]
+
+    for idx, child in enumerate(children):
+        individual_el.append({'data': {'source': individual, 'target': child, 'edgelabel': crossover[idx]}})
+
+    # Recursion for moving down the tree
+    children_tree = []
+
+    for child in children: 
+        children_tree += _get_downstream_tree(run, generation+1, child, generation_range)
+
+    return children_tree + individual_el
+
+def get_family_tree(run, generation, individual, generation_range=None):
+    """
+    Create famliy tree with nodes, edges and roots elements starting from selected individual.
+    
+    Args:
+        run (str): The directory name of the run data.
+        generation (int): Generation of individual
+        individual (str): Individual from where family tree evolves from. 
+        generation_range (range): A python range of generations from which the individuals will be extracted. 
+        
+    Returns:
+        elements (list): list of nodes and edges for element param in cytoscape.
+        root (list): List of roots nodes to create right tree structure.
+    """
+
+    # Set default value
+    if generation_range is None:
+        generation_range = range(generation-2, generation+1)
+
+    # Get the entire tree without duplicates
+    upstream_tree, roots = _get_upstream_tree(run, generation, individual, generation_range)
+    downstream_tree = _get_downstream_tree(run, generation, individual, generation_range)
+
+    family_tree = []
+    unique_roots = []
+
+    for el in downstream_tree + upstream_tree:
+        if el not in family_tree: family_tree.append(el)
+
+    for el in roots:
+        if el not in unique_roots: unique_roots.append(el)
+    
+    return (family_tree, unique_roots)
 
 
 ### OTHER HELPER FUNCTIONS ###
@@ -558,119 +697,3 @@ def get_random_individual(run, generation=None):
     individuals = get_individuals(run, range(generation, generation+1), value="names", as_generation_dict=False)
     
     return generation, individuals[0]
-
-def report():
-    run = "ga_20230116-110958_sc_2d_4classes"
-    generation = 1
-    individual = "abstract_wildebeest"
-    
-    print("Best Results:")
-    print("--------------------------------")
-    print("Best Accuracy: ", get_individuals_best_result(run, None, "val_acc"))
-    print("Best Footprint: ", get_individuals_best_result(run, None, "memory_footprint_h5"))
-    print("Best Footprint: ", get_individuals_best_result(run, None, "memory_footprint_tflite"))
-    print("Best Footprint: ", get_individuals_best_result(run, None, "memory_footprint_c_array"))
-    print("Best Inference Time: ", get_individuals_best_result(run, None, "inference_time"))
-    print("Best Energy Consumption: ", get_individuals_best_result(run, None, "energy_consumption"))
-    print("Best Fitness: ", get_individuals_best_result(run, None, "fitness"))
-    print()
-    
-    print("Worst Results:")
-    print("--------------------------------")
-    print("Worst Accuracy: ", get_individuals_worst_result(run, None, "val_acc"))
-    print("Worst Footprint: ", get_individuals_worst_result(run, None, "memory_footprint_h5"))
-    print("Worst Footprint: ", get_individuals_worst_result(run, None, "memory_footprint_tflite"))
-    print("Worst Footprint: ", get_individuals_worst_result(run, None, "memory_footprint_c_array"))
-    print("Worst Inference Time: ", get_individuals_worst_result(run, None, "inference_time"))
-    print("Worst Energy Consumption: ", get_individuals_worst_result(run, None, "energy_consumption"))
-    print("Worst Fitness: ", get_individuals_worst_result(run, None, "fitness"))
-    print()
-    
-    print("Random Individuals:")
-    print("--------------------------------")
-    print("Random Individual: ", get_random_individual(run)[1], "-> Generation: ", get_random_individual(run)[0])
-    
-    measurements = get_individuals_min_max(run, None)
-    print(measurements)
-    
-    for key, value in measurements.values():
-        print(key)
-        print(value)
-        print()
-
-
-### NOT IN USE ###
-
-def get_individuals_best_result(run, generation_range=None, measure="val_acc"):
-    """
-    Get the best results of all individuals of a generation range. 
-    
-    Args:
-        run (str): The directory name of the run data.
-        generation_range (range): A python range of generations from which the individuals will be extracted. 
-        measure (str): Choose the measure you want to comapre. Select between "val_acc", "memory_footprint_h5", "memory_footprint_tflite", "memory_footprint_c_array", "inference_time", "energy_consumption", "mean_power_consumption", "fitness".
-        
-    Returns:
-        generation (int): Generation with best result.
-        individual (str): Individual with best result.
-        best_value (float): The best result of all individuals in given generation rangee.
-    """
-    
-    available_measures = ["val_acc", "memory_footprint_h5", "memory_footprint_tflite", "memory_footprint_c_array", "inference_time", "energy_consumption", "mean_power_consumption", "fitness"]
-    assert measure in available_measures, "Unavailable measure value"
-    
-    values = get_individuals(run, generation_range, "results", as_generation_dict=True)
-    
-    best_value = 0 if (measure == "val_acc" or measure == "fitness") else 100000000
-    generation = None
-    individual = None
-    
-    for gen, results in values.items():
-        for ind, result in results.items():
-            
-            if measure in result:
-                val = result[measure]
-
-                if type(val) == int or type(val) == float: 
-                    
-                    if val < best_value and measure != "val_acc" and measure != "fitness": generation, individual, best_value = gen, ind, val
-                    if val > best_value and (measure == "val_acc" or measure == "fitness"): generation, individual, best_value = gen, ind, val
-               
-    return generation, individual, best_value           
-  
-def get_individuals_worst_result(run, generation_range=None, measure="val_acc"):
-    """
-    Get the worst results of all individuals of a generation range. 
-    
-    Args:
-        run (str): The directory name of the run data.
-        generation_range (range): A python range of generations from which the individuals will be extracted. 
-        measure (str): Choose the measure you want to comapre. Select between "val_acc", "memory_footprint_h5", "memory_footprint_tflite", "memory_footprint_c_array", "inference_time", "energy_consumption", "mean_power_consumption", "fitness".
-        
-    Returns:
-        generation (int): Generation with best result 
-        individual (str): Individual with best result 
-        worst_value (float): The best result of all individuals in given generation range
-    """
-    
-    available_measures = ["val_acc", "memory_footprint_h5", "memory_footprint_tflite", "memory_footprint_c_array", "inference_time", "energy_consumption", "mean_power_consumption", "fitness"]
-    assert measure in available_measures, "Unavailable measure value"
-    
-    values = get_individuals(run, generation_range, "results", as_generation_dict=True)
-    
-    worst_value = 1 if (measure == "val_acc" or measure == "fitness") else 0
-    generation = None
-    individual = None
-    
-    for gen, results in values.items():
-        for ind, result in results.items():
-            
-            if measure in result:
-                val = result[measure]
-
-                if type(val) == int or type(val) == float: 
-                    
-                    if val > worst_value and measure != "val_acc" and measure != "fitness": generation, individual, worst_value = gen, ind, val
-                    if val < worst_value and (measure == "val_acc" or measure == "fitness"): generation, individual, worst_value = gen, ind, val
-               
-    return generation, individual, worst_value

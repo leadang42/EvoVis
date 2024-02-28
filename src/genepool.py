@@ -1,4 +1,6 @@
 import json
+from matplotlib.colors import hex2color, rgb2hex
+import numpy as np
 
 ##########################################################################################
 
@@ -16,7 +18,7 @@ import json
 
 ### READ DATA FROM SEARCH SPACE JSON ###
 
-def json_to_dict(filepath):
+def _json_to_dict(filepath):
     """
     Convert JSON data from a file to a Python dictionary.
 
@@ -31,7 +33,7 @@ def json_to_dict(filepath):
         json.JSONDecodeError: If there is an issue decoding the JSON data.
 
     Example:
-    >>> data = json_to_dict('example.json')
+    >>> data = _json_to_dict('example.json')
     """
     try:
         with open(filepath, 'r') as file:
@@ -42,7 +44,7 @@ def json_to_dict(filepath):
     except json.JSONDecodeError as e:
         raise json.JSONDecodeError(f"Error decoding JSON data in file {filepath}: {e}")
 
-def get_search_space(run):
+def _get_search_space(run):
     """
     Retrieve the search space configuration from a JSON file for a specific run.
 
@@ -57,11 +59,11 @@ def get_search_space(run):
         json.JSONDecodeError: If there is an issue decoding the JSON data in the search_space.json file.
 
     Example:
-    >>> search_space = get_search_space('evonas_run')
+    >>> search_space = _get_search_space('evonas_run')
     """
-    return json_to_dict(f"../data/{run}/search_space.json")
+    return _json_to_dict(f"../data/{run}/search_space.json")
 
-def get_groups(run):
+def _get_groups(run):
     """
     Extract layer identifiers from the 'gene_pool' section of the search space.
 
@@ -71,7 +73,7 @@ def get_groups(run):
     Returns:
         dict: A dictionary mapping group types to lists of layer identifiers.
     """
-    search_space = get_search_space(run)
+    search_space = _get_search_space(run)
     
     layer_dict = {}
     
@@ -82,7 +84,7 @@ def get_groups(run):
         
     return layer_dict
 
-def genes_flattened(run):
+def _get_genes_flattened(run):
     """
     Flatten the genes in the search space by adding the group information to each gene.
 
@@ -93,7 +95,7 @@ def genes_flattened(run):
         list: A list of dictionaries representing flattened genes with group information.
     """
     
-    search_space = get_search_space(run)
+    search_space = _get_search_space(run)
     groups = search_space.get("gene_pool", [])
     
     layers = []
@@ -110,7 +112,7 @@ def genes_flattened(run):
     
 ### GRAPH CREATED FROM RULESETS ### 
             
-def get_layer_graph(run, group_connections=True):
+def _get_layer_graph(run, group_connections=True):
     """
     Retrieves the layer graph based on the search space defined for a given run.
 
@@ -128,12 +130,12 @@ def get_layer_graph(run, group_connections=True):
         TypeError: If the data structure of the search space is not as expected.
 
     Example:
-        >>> get_layer_graph("run_123")
+        >>> _get_layer_graph("run_123")
         {'STFT_2D': ['MAG_2D'], 'MAG_2D': ['FB_2D'], 'FB_2D': ['C_2D', 'DC_2D', 'MAG2DEC_2D'], ...}
     """
     try:
         # Read search space from JSON
-        search_space = get_search_space(run)
+        search_space = _get_search_space(run)
 
         # Store layer connections in dictionary
         graph = {}
@@ -159,7 +161,7 @@ def get_layer_graph(run, group_connections=True):
                 source_groups = group_rule.get("group", [])
 
                 # Identify source and target layers in source and target groups
-                groups = get_groups(run)
+                groups = _get_groups(run)
                 source_layers = groups.get(source_groups, [])
                 target_layers = groups.get(target_group, [])
 
@@ -177,7 +179,7 @@ def get_layer_graph(run, group_connections=True):
     except TypeError as type_error:
         raise TypeError(f"Unexpected data structure in search space data: {type_error}")
 
-def get_group_graph(run):
+def _get_group_graph(run):
     """
     Builds the group graph based on the search space defined for a given run.
 
@@ -193,12 +195,12 @@ def get_group_graph(run):
         TypeError: If the data structure of the search space is not as expected.
 
     Example:
-        >>> get_group_graph("run_123")
+        >>> _get_group_graph("run_123")
         {'Feature Extraction 1D': ['Global Pooling 1D'], 'Feature Extraction 2D': ['Global Pooling 2D']}
     """
     try:
         # Read search space from JSON
-        search_space = get_search_space(run)
+        search_space = _get_search_space(run)
 
         # Store groups connections in dictionary
         group_graph = {}
@@ -210,8 +212,8 @@ def get_group_graph(run):
             if not excluded:
                 # Identify source and target group
                 source_group = group_rule["group"]
-                target_groups = group_rule.get("rule", [])
-                group_graph[source_group] = target_groups
+                tar_get_groups = group_rule.get("rule", [])
+                group_graph[source_group] = tar_get_groups
 
         return group_graph
 
@@ -224,9 +226,9 @@ def get_group_graph(run):
  
 ### CONNECTED LAYERS ### 
   
-def dfs(graph, layer, visited, result):
+def _dfs(graph, layer, visited, result):
     """
-    Perform depth-first search (DFS) on the given graph starting from the specified layer.
+    Perform depth-first search (_DFS) on the given graph starting from the specified layer.
 
     Args:
         graph (dict): A dictionary representing the layer graph.
@@ -241,7 +243,7 @@ def dfs(graph, layer, visited, result):
         >>> graph = {'A': ['B', 'C'], 'B': ['D'], 'C': ['E'], 'D': [], 'E': []}
         >>> visited = set()
         >>> result = []
-        >>> dfs(graph, 'A', visited, result)
+        >>> _dfs(graph, 'A', visited, result)
         >>> print(result)
         ['A', 'B', 'D', 'C', 'E']
     """
@@ -250,9 +252,9 @@ def dfs(graph, layer, visited, result):
         result.append(layer)
 
         for neighbor in graph.get(layer, []):
-            dfs(graph, neighbor, visited, result)
+            _dfs(graph, neighbor, visited, result)
 
-def get_connected_layers(run, start_layer):
+def _get_connected_layers(run, start_layer="Start"):
     """
     Retrieve layers connected to the specified starting layer in the layer graph for a given run.
 
@@ -267,18 +269,18 @@ def get_connected_layers(run, start_layer):
         ValueError: If the specified start_layer is not found in the layer graph.
 
     Example:
-        >>> get_connected_layers('run_123', 'STFT_2D')
+        >>> _get_connected_layers('run_123', 'STFT_2D')
         ['STFT_2D', 'MAG_2D', 'FB_2D', 'C_2D', 'DC_2D', 'MAG2DEC_2D', ...]
     """
     try:
-        graph = get_layer_graph(run, group_connections=True)
+        graph = _get_layer_graph(run, group_connections=True)
         if start_layer not in graph:
             raise ValueError(f"The specified start_layer '{start_layer}' is not found in the layer graph.")
 
         visited = set()
         result = []
 
-        dfs(graph, start_layer, visited, result)
+        _dfs(graph, start_layer, visited, result)
         
         return result
 
@@ -291,7 +293,7 @@ def get_connected_layers(run, start_layer):
 
 ### DASH CYTOSCAPE FORMAT ###
 
-def get_node_element(gene):
+def _get_node_element(gene):
     """
     Create a node element from a gene, representing a layer or group.
 
@@ -303,7 +305,7 @@ def get_node_element(gene):
 
     Example:
         >>> gene = {'layer': 'STFT_2D', 'group': 'Feature Extraction 2D', 'exclude': False}
-        >>> get_node_element(gene)
+        >>> _get_node_element(gene)
         {'id': 'STFT_2D', 'label': 'STFT 2D', 'parent': 'Feature Extraction 2D', 'layer': 'STFT_2D'}
     """
     layer = gene["layer"]
@@ -321,7 +323,7 @@ def get_node_element(gene):
 
     return node
 
-def get_cytoscape_elements(run):
+def get_genepool(run):
     """
     Create Cytoscape elements representing layers and group connections in the search space for a given run.
 
@@ -336,7 +338,7 @@ def get_cytoscape_elements(run):
         TypeError: If the data structure of the search space is not as expected.
 
     Example:
-        >>> get_cytoscape_elements('run_123')
+        >>> get_genepool('run_123')
         ([{'data': {'id': 'Start', 'label': 'Start', 'f_name': 'Start', 'layer': 'Start'}},
           {'data': {'id': 'Feature Extraction 2D', 'label': 'Feature Extraction 2D', 'parent': 'Feature Extraction 2D'}},
           ...
@@ -351,8 +353,8 @@ def get_cytoscape_elements(run):
 
         # Use connected layers to create nodes of layers and groups
         start_layer = "Start"
-        connected_layers = get_connected_layers(run, start_layer)
-        genes = genes_flattened(run)
+        connected_layers = _get_connected_layers(run, start_layer)
+        genes = _get_genes_flattened(run)
 
         for gene in genes:
             layer = gene.get("layer")
@@ -361,7 +363,7 @@ def get_cytoscape_elements(run):
             if not excluded and layer in connected_layers:
                 
                 # Add layer node
-                layer_data = get_node_element(gene)
+                layer_data = _get_node_element(gene)
                 element = {"data": layer_data}
 
                 if element not in elements:
@@ -381,7 +383,7 @@ def get_cytoscape_elements(run):
         elements = group_elements + elements
 
         # Build layer connections
-        layer_graph = get_layer_graph(run, group_connections=False)
+        layer_graph = _get_layer_graph(run, group_connections=False)
 
         for layer, edges in layer_graph.items():
             for edge in edges:
@@ -391,7 +393,7 @@ def get_cytoscape_elements(run):
                     elements.append(element)
 
         # Build group connections
-        group_graph = get_group_graph(run)
+        group_graph = _get_group_graph(run)
 
         for group_source, group_targets in group_graph.items():
             for group_target in group_targets:
@@ -407,3 +409,37 @@ def get_cytoscape_elements(run):
 
     except TypeError as type_error:
         raise TypeError(f"Unexpected data structure in search space data: {type_error}")
+    
+
+### UNIQUE GENES WITH COLORS ###
+
+def _generate_color_scale(start_color, end_color, num_colors):
+    start_rgb = hex2color(start_color)
+    end_rgb = hex2color(end_color)
+
+    r = np.linspace(start_rgb[0], end_rgb[0], num_colors)
+    g = np.linspace(start_rgb[1], end_rgb[1], num_colors)
+    b = np.linspace(start_rgb[2], end_rgb[2], num_colors)
+
+    color_scale = [rgb2hex((r[i], g[i], b[i])) for i in range(num_colors)]
+    return color_scale
+
+def get_unique_gene_colors(run):
+    
+    connected_genes = _get_connected_layers(run)
+    unique_genes = {connected_gene: "" for connected_gene in connected_genes}
+    
+    opacity_step = 1 / len(unique_genes)
+    
+    start_color = '#6173E9'
+    end_color = '#B70202'
+    
+    num_colors = len(unique_genes)
+    color_scale = _generate_color_scale(start_color, end_color, num_colors)
+
+    for idx, gene in enumerate(unique_genes):
+        
+        opacity = 1 - idx * opacity_step
+        unique_genes[gene] = color_scale[idx]
+
+    return unique_genes

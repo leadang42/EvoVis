@@ -3,25 +3,27 @@ from dash import html, dcc, Input, Output, callback
 import dash_mantine_components as dmc
 import plotly.graph_objects as go
 import numpy as np
-from components import dot_heading, bullet_chart_basic, metric_card, genome_overview
-from evolution import get_individuals, get_generations, get_meas_info, get_healthy_individuals_results, get_best_individuals, get_unique_genes
+from dotenv import load_dotenv
+import os
+from components import dot_heading, bullet_chart_card_basic, parameter_card, chromosome_sequence
+from evolution import get_individuals, get_generations, get_meas_info, get_healthy_individuals_results, get_best_individuals
+from genepool import get_unique_gene_colors
+
+load_dotenv()
+run = os.getenv("RUN_RESULTS_PATH")
 
 dash.register_page(__name__, path='/results')
 
 
 ### GLOBAL VARIABLES
-run = "nRF52840" 
-
 grid_gutter = 'xl'
-fitn_obj_height = 150
-
+fitn_obj_height = 180
 healthy, unhealthy = get_healthy_individuals_results(run, as_generation_dict=False)
 tot_gen = len(get_generations(run))
 processed_gen = len(get_generations(run))
-
 best_individuals = get_best_individuals(run)
-unique_genes = get_unique_genes(run)
-
+unique_genes = get_unique_gene_colors(run)
+measurements = get_meas_info(run)
 
 ### HELPER FUNCTIONS FOR PLOTS ###
 
@@ -75,24 +77,11 @@ def add_meas_trace(fig, run, meas, generation_range=None, min=None, max=None, sh
             hoverinfo='x+y'
         ))
     
-    # Add mean in foreground
-    # TODO Make generic
-    names = {
-        'memory_footprint_h5': 'H5',
-        'memory_footprint_c_array': 'C Array',
-        'memory_footprint_tflite': 'TFLite',
-        'val_acc': 'Accuracy',
-        'fitness': 'Fitness',
-        'inference_information': 'Inference time',
-        'energy_information': 'Energy consumption',
-        'mean_power_information': 'Mean power consumption'
-    }
-    
     fig.add_trace(go.Scatter(
         x=generations,
         y=avg_results,
         mode='lines',
-        name=names[meas],
+        name=measurements[meas]["displayname"],
         line=go.scatter.Line(color=linecolor),
         hoverinfo='x+y'
     ))     
@@ -168,28 +157,19 @@ def figure_meas_over_gen(run, measures, generation_range=None, min=None, max=Non
     
     return fig
 
-def graph_meas_over_gen(run, measures, generation_range=None, min=None, max=None, show_std=True, max_width=430, height=200, show_constraint=True, title=None, xaxis_title=None, yaxis_title=None, id="graph-meas-over-gen"):
+def graph_meas_over_gen(run, measures, generation_range=None, min=None, max=None, show_std=True, max_width=430, height=200, width=None, show_constraint=True, title=None, xaxis_title=None, yaxis_title=None, id="graph-meas-over-gen"):
     
     fig = figure_meas_over_gen(run, measures, generation_range, min, max, show_std, show_constraint, title, xaxis_title, yaxis_title)
     
     graph_div = dcc.Graph(
         figure=fig, 
-        style={'height': height, 'max-width': max_width},
+        style={'height': height, 'max-width': max_width, 'min-width': 200, 'width': width},
         id=id
     )
     
     return graph_div
 
 def get_pareto_optimality_fig(run, generation_range=None, max_width=430, height=200):
-    
-    # TODO Alpha shape
-    
-    # Get the results of all healthy individuals
-    results, _ = get_healthy_individuals_results(run, as_generation_dict=False)
-    
-    mems = [result["memory_footprint_tflite"] for result in results]
-    enes = [result["energy_information"] for result in results]
-    vals = [result["val_acc"] for result in results]
     
     # Font of axis
     tickfont = {
@@ -202,31 +182,53 @@ def get_pareto_optimality_fig(run, generation_range=None, max_width=430, height=
         'color': '#D0D0D0',     
         'size': 12,            
     }
+        
+    # TODO Alpha shape
+    fitness_objectives = []
     
-    # Add pareto optimality scatter plot
-    fig = go.Figure()
+    for measurement, rules in measurements.items():
+        if rules["pareto-optimlity-plot"]:
+            fitness_objectives.append(measurement)
+      
+    numb_fo = len(fitness_objectives)
+    obj1, obj2, obj3 = None, None, None
+    marker = None
     
-    custom_colorscale = [
-        [0.0, '#000B51'], 
-        [0.2, '#001075'], 
-        [0.4, '#293AAA'], 
-        [0.6, '#5666CD'], 
-        [0.8, '#7D8CEF'], 
-        [1.0, '#ACB5ED']  
-    ]   
-
-    fig.add_trace(go.Scatter(
-        x=mems,
-        y=enes,
-        mode='markers',
-        marker=dict(
+    # Special Cases
+    if numb_fo == 0 or numb_fo == 1:
+        return None
+    elif numb_fo > 3:
+        fitness_objectives = fitness_objectives[:3]
+    
+    # Objectives
+    results, _ = get_healthy_individuals_results(run, as_generation_dict=False)
+    
+    if numb_fo == 2:
+        obj1 = [result[fitness_objectives[0]] for result in results]
+        obj2 = [result[fitness_objectives[1]] for result in results]
+        
+    elif numb_fo == 3:
+        obj1 = [result[fitness_objectives[0]] for result in results]
+        obj2 = [result[fitness_objectives[1]] for result in results]
+        obj3 = [result[fitness_objectives[2]] for result in results]
+        
+        custom_colorscale = [
+            [0.0, '#ACB5ED'], 
+            [0.2, '#7D8CEF'], 
+            [0.4, '#5666CD'], 
+            [0.6, '#293AAA'], 
+            [0.8, '#001075'], 
+            [1.0, '#000B51']  
+        ] 
+        
+        marker = dict(
             size=3,
-            color=vals,
+            color=obj3,
             colorscale=custom_colorscale,
             reversescale=False,
             symbol='x',
             colorbar={
-                'title':'Validation \nAccuracy',
+                'title':f"{measurements[fitness_objectives[2]]['displayname']} [{measurements[fitness_objectives[2]]['unit']}]",
                 'thickness': 10,
                 'tickfont': tickfont,
                 'titlefont': titlefont,
@@ -236,16 +238,25 @@ def get_pareto_optimality_fig(run, generation_range=None, max_width=430, height=
                 'outlinecolor': '#D0D0D0'
             }
         )
+    
+    # Add pareto optimality scatter plot
+    fig = go.Figure()
+    
+    fig.add_trace(go.Scatter(
+        x=obj1,
+        y=obj2,
+        mode='markers',
+        marker=marker
     ))
     
     # Update layout of figure
     fig.update_layout(
-        title="Pareto optimality",
+        title="", # Pareto optimality
         title_font_color='#717171',
         title_font_size=15,
         title_font=dict(family='sans-serif'),
-        xaxis={'title': "Memory footprint TFLite (B)", 'showline':True , 'tickfont': tickfont, 'title_font': titlefont},
-        yaxis={'title': "Energy Consumption (mJ)", 'showgrid':True, 'gridcolor':'#D0D0D0', 'tickfont': tickfont, 'title_font': titlefont},
+        xaxis={'title': f"{measurements[fitness_objectives[0]]['displayname']} [{measurements[fitness_objectives[0]]['unit']}]", 'showline':True , 'tickfont': tickfont, 'title_font': titlefont},
+        yaxis={'title': f"{measurements[fitness_objectives[1]]['displayname']} [{measurements[fitness_objectives[1]]['unit']}]", 'showgrid':True, 'gridcolor':'#D0D0D0', 'tickfont': tickfont, 'title_font': titlefont},
         coloraxis=dict(
             colorbar=dict(
                 tickfont=tickfont,  # Adjust tick font color and size
@@ -253,12 +264,10 @@ def get_pareto_optimality_fig(run, generation_range=None, max_width=430, height=
                 thickness=15  # Adjust thickness of the color axis
             )
         ),
-        margin={'l': 10, 'b': 0, 't': 100, 'r': 10},
+        margin={'l': 10, 'b': 0, 't': 0, 'r': 10},
         showlegend=False,
         plot_bgcolor='rgba(0,0,0,0)',
         hovermode="x",
-        yaxis_range=[1, 6],  
-        xaxis_range=[10000, 60000],  
     )
     
     # Add plot to a dash component
@@ -273,9 +282,9 @@ def get_pareto_optimality_fig(run, generation_range=None, max_width=430, height=
 ### GENERAL RUN OVERVIEW ###
 
 def general_overview():
-    gen_processed = bullet_chart_basic(processed_gen, 1, tot_gen, unit='Generations processed', info='Generations', back_color='#6173E9', bar_color='#A4B0FE', load_color='#FFFFFF', margin='0px', min_width='260px', flex='1')
-    ind_healthy = metric_card("Healthy Individuals", len(healthy), icon='icon-park-outline:health', margin='0px', width='100%')
-    ind_unhealthy = metric_card("Unhealthy Individuals", len(unhealthy), icon='mdi:robot-dead-outline', margin='0px', width='100%')
+    gen_processed = bullet_chart_card_basic(processed_gen, 1, tot_gen, unit='Generations processed', info='Generations', back_color='#6173E9', bar_color='#A4B0FE', load_color='#FFFFFF', margin='0px', min_width='260px', flex='1')
+    ind_healthy = parameter_card("Healthy Individuals", len(healthy), icon='icon-park-outline:health', margin='0px', width='100%')
+    ind_unhealthy = parameter_card("Unhealthy Individuals", len(unhealthy), icon='mdi:robot-dead-outline', margin='0px', width='100%')
     fitness_plot = graph_meas_over_gen(run, 'fitness', generation_range=None, min=0, max=1, height=222.5, title="Fitness over generations", xaxis_title="", yaxis_title="")
     pareto_optimality_plot = get_pareto_optimality_fig(run, height=222.5)
 
@@ -324,10 +333,10 @@ def memory_plot():
     
     return memory
 
-@callback(
-    Output("mem-graph", "figure"),
-    Input("mem-chips", "value"),
-)
+#@callback(
+#    Output("mem-graph", "figure"),
+#    Input("mem-chips", "value"),
+#)
 def chips_values(mems):
     
     mems_key = {
@@ -342,14 +351,29 @@ def chips_values(mems):
 ### INDIVIDUAL RUN RESULTS PLOT ###
 
 def objectives_overview():
+    
+    objective_trends = []
+    
+    for measurement, meas_info in measurements.items():
+        if meas_info.get("run-result-plot", True):
+            
+            heading = meas_info.get("displayname", measurement)
+            
+            if meas_info.get("unit", None):
+                heading += f" [{meas_info.get('unit')}]"
+            
+            objective_trends.append(
+                dmc.Col(
+                    [
+                        dot_heading(heading, style={"font-size": "14px"}, className='dot-heading-results-page'), 
+                        graph_meas_over_gen(run, measurement, generation_range=None, min=meas_info.get("min-boundary", None), max=meas_info.get("max-boundary", None), height=fitn_obj_height, width=250)
+                    ], 
+                    className="col-results-page"
+                )
+            )
+        
     objectives_overview = dmc.Grid(
-        [
-            dmc.Col([dot_heading('Accuracy', className='dot-heading-results-page'), graph_meas_over_gen(run, 'val_acc', generation_range=None, min=0, max=1, height=fitn_obj_height)], className="col-results-page"), 
-            memory_plot(),
-            dmc.Col([dot_heading('Inference Times', className='dot-heading-results-page'), graph_meas_over_gen(run, 'inference_information', generation_range=None, height=fitn_obj_height)], className="col-results-page"), 
-            dmc.Col([dot_heading('Mean Power Consumption', className='dot-heading-results-page'), graph_meas_over_gen(run, 'mean_power_information', generation_range=None, height=fitn_obj_height)], className="col-results-page"), 
-            dmc.Col([dot_heading('Power Measurement', className='dot-heading-results-page'), graph_meas_over_gen(run, 'energy_information', generation_range=None, height=fitn_obj_height)], className="col-results-page")     
-        ], 
+        objective_trends,
         gutter=grid_gutter,
         grow=True,
         justify='flex-start'
@@ -365,6 +389,10 @@ def best_individuals_overview():
     genomes = []
     
     for gen, ind in best_individuals.items():
+        
+        # TODO WHYY
+        if ind["individual"] is None:
+            continue
         
         splits = ind["individual"].split("_")
         
@@ -391,7 +419,7 @@ def best_individuals_overview():
                 ),
                 html.P(f"GEN {gen}", style={"margin": "5px", "font-weight": "bold", "font-size": "11px"}),
                 
-                genome_overview(ind["chromosome"], justify="flex-start", align="center", compromised=True, unique_genes=unique_genes),
+                chromosome_sequence(ind["chromosome"], justify="flex-start", align="center", compromised=True, unique_genes=unique_genes),
             ],
             className="best-individual"
         )
@@ -404,22 +432,25 @@ def best_individuals_overview():
 
 ### PAGE LAYOUT ###
 
-plots_div = html.Div(
-    children=[
-        html.H1("Run Result Plots", style={'margin-bottom': '25px', 'margin-top': '25px'}),
-        general_overview(),
-        objectives_overview(),
-    ]
-)
+def performance_plots_div():
+    return html.Div(
+        children=[
+            html.H1("Run Result Plots", style={'margin-bottom': '25px', 'margin-top': '25px'}),
+            general_overview(),
+            objectives_overview(),
+        ]
+    )
 
-best_individuals_div = html.Div(
-    children=[
-        html.H1("Fittest Individuals", style={'margin-bottom': '25px', 'margin-top': '25px'}),
-        best_individuals_overview()
-    ]
-)
+def best_individuals_div():
+    return html.Div(
+        children=[
+            html.H1("Fittest Individuals", style={'margin-bottom': '25px', 'margin-top': '25px'}),
+            best_individuals_overview()
+        ]
+    )
 
-layout = dmc.Tabs(
+def run_results_layout():
+    return dmc.Tabs(
     [
         dmc.TabsList(
             [
@@ -427,11 +458,13 @@ layout = dmc.Tabs(
                 dmc.Tab("Fittest individuals", value="best-individuals"),
             ]
         ),
-        dmc.TabsPanel(plots_div, value="plots"),
-        dmc.TabsPanel(best_individuals_div, value="best-individuals"),
+        dmc.TabsPanel(performance_plots_div(), value="plots"),
+        dmc.TabsPanel(best_individuals_div(), value="best-individuals"),
     ],
     color="indigo",
     orientation="horizontal",
     variant="default",
     value="plots"
 )
+
+layout = run_results_layout

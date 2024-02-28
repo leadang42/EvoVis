@@ -1,13 +1,16 @@
 import dash
 from dash import html
 import dash_mantine_components as dmc
-
-from components import dot_heading, metric_card, warning
+from dotenv import load_dotenv
+import os
+from components import dot_heading, parameter_card, warning
 from evolution import get_hyperparameters
 from dataval import validate_hyperparameters
 
+load_dotenv()
+run = os.getenv("RUN_RESULTS_PATH")
+
 dash.register_page(__name__, path='/')
-run = "nRF52840"     
 
 def grouped_metriccards():
     """Generate hyperparameter metric card divs assigned to their specified group divs.
@@ -45,7 +48,7 @@ def grouped_metriccards():
             metric = str(hp.get("value", "")).replace("\n", "")
             
             # Create metric card div component for hyperparameter visual
-            mc = metric_card(metrictype=metrictype, metric=metric, icon=icon, unit=unit, description=description)
+            mc = parameter_card(metrictype=metrictype, metric=metric, icon=icon, unit=unit, description=description)
 
             # Add the metric card to its group or to the list of hyperparameters without a group
             
@@ -118,4 +121,4 @@ def hyperparameter_layout():
         gutter="sm",
     )
     
-layout = hyperparameter_layout()
+layout = hyperparameter_layout

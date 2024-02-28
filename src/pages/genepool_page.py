@@ -1,14 +1,18 @@
 import dash
 from dash import html, Input, Output, callback, dcc
 import dash_cytoscape as cyto
-import re
 import plotly.express as px
 import pandas as pd
+from dotenv import load_dotenv
+import os
 from evolution import get_number_of_genes, get_generations
-from genepool import get_cytoscape_elements
-from components import metric_card
+from genepool import get_genepool
+from components import parameter_card
 
-run = "nRF52840"
+load_dotenv()
+run = os.getenv("RUN_RESULTS_PATH")
+
+elements, groups = get_genepool(run)
 
 dash.register_page(__name__, path='/genepool')
 
@@ -32,9 +36,6 @@ row1d = html.Div( [], style={'width':'600px'}, id="number-of-genes-graph", class
 first_col = html.Div([row1a, row1b, row1c, row1d], className="wrapper-col")
 
 # Body
-
-elements, groups = get_cytoscape_elements("nRF52840")
-    
 def cytoscape_stylesheet(groups):
     
     # Style for layer nodes and egdes and class edges
@@ -172,15 +173,15 @@ def display_node_data(data):
         gene_type = gene["parent"]
     
     # Metric cards
-    metric_cards = []
+    parameter_cards = []
     for key, value in gene.items():
         
         not_metric = ["id", "label", "f_name", "layer", "parent", "exclude"]
         
         if key not in not_metric:
             
-            mc = metric_card(key, str(value), "mdi:input", width=282)
-            metric_cards.append(mc)   
+            mc = parameter_card(key, str(value), "mdi:input", width=282)
+            parameter_cards.append(mc)   
             
     # Number of genes per generation
     numb_of_genes = []
@@ -231,7 +232,15 @@ def display_node_data(data):
             'line-color': '#FFFFFF',
         }})
     
-    return gene_name, gene_amount, gene_type, metric_cards, graph, cytoscape_stylesheet_copy
+    return gene_name, gene_amount, gene_type, parameter_cards, graph, cytoscape_stylesheet_copy
 
+def genepool_layout():
+    return html.Div(
+        [ 
+            first_col, 
+            cytoscape_search_space()
+        ], 
+        className="wrapper"
+    )
 
-layout = html.Div([ first_col, cytoscape_search_space()], className="wrapper")
+layout = genepool_layout
