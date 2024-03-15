@@ -61,7 +61,7 @@ def _get_search_space(run):
     Example:
     >>> search_space = _get_search_space('evonas_run')
     """
-    return _json_to_dict(f"../data/{run}/search_space.json")
+    return _json_to_dict(f"{run}/search_space.json")
 
 def _get_groups(run):
     """

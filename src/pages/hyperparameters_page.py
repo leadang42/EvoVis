@@ -48,7 +48,7 @@ def grouped_metriccards():
             metric = str(hp.get("value", "")).replace("\n", "")
             
             # Create metric card div component for hyperparameter visual
-            mc = parameter_card(metrictype=metrictype, metric=metric, icon=icon, unit=unit, description=description)
+            mc = parameter_card(metrictype=metrictype, metric=metric, icon=icon, unit=unit, description=description, max_width=280)
 
             # Add the metric card to its group or to the list of hyperparameters without a group
             
@@ -87,21 +87,18 @@ def parameter_overview_header():
     ]
 
 def hyperparameter_layout():
-    """Generate the layout for the hyperparameter page.
-
-    This function generates the layout for the hyperparameter page, including the header and grouped metric cards. If hyperparameters fail validation, it displays a warning message.
+    """
+    Generates the layout for the hyperparameter page.
+    If hyperparameters fail validation, it displays a warning message.
 
     Returns:
         dash_mantine_components.Grid: A Mantine Grid component representing the layout of the hyperparameter page.
     """
     
+    validation_result = validate_hyperparameters(run)
     children = None
     
-    # Validate hyperparameters and display grouped metric cards or a warning message accordingly
-    validation_result = validate_hyperparameters(run)
-    
     if validation_result:
-        
         children=[
             dmc.Col(parameter_overview_header(), span='auto', className='hyperparameters-header'),
             dmc.Col(warning(validation_result), span=8)
@@ -109,7 +106,6 @@ def hyperparameter_layout():
         print(validation_result)
         
     else:
-        
         children=[
             dmc.Col(parameter_overview_header(), span='auto', className='hyperparameters-header'),
             dmc.Col(grouped_metriccards(), span=8)

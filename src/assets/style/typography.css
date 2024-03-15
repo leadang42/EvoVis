@@ -24,33 +24,7 @@ h1 {
     flex: 100%;
 }
 
-/* Box centered text */
-.bottom-center {
-    font-family: var(--font-family);
-    font-weight: 500;
-    position: absolute;
-    bottom: 54px;
-    left: 240px;
-}
 
-.center-left {
-    font-family: var(--font-family);
-    font-weight: 500;
-    font-size: 30px;
-    position: absolute;
-    top: 90px;
-    left: 40px;
-    color: #000000;
-}
-  
-.top-left {
-    font-family: var(--font-family);
-    position: absolute;
-    font-size: 13px;
-    font-weight: 500;
-    top: 47px;
-    left: 46px;
-}
   
 
   

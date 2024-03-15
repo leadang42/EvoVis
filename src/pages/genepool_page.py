@@ -1,5 +1,6 @@
 import dash
 from dash import html, Input, Output, callback, dcc
+import dash_mantine_components as dmc
 import dash_cytoscape as cyto
 import plotly.express as px
 import pandas as pd
@@ -7,38 +8,105 @@ from dotenv import load_dotenv
 import os
 from evolution import get_number_of_genes, get_generations
 from genepool import get_genepool
-from components import parameter_card
+from components import parameter_card, warning
+from dataval import validate_search_space
 
+### LOAD PATH FROM ENVIRONMENT VARIABLES
 load_dotenv()
 run = os.getenv("RUN_RESULTS_PATH")
 
-elements, groups = get_genepool(run)
 
+### REGISTER DASH APP
 dash.register_page(__name__, path='/genepool')
 
-# Header
-row1a = html.Div( [ html.H1("Genepool")], className="wrapper")
-row1b = html.Div(
-    [ html.Div([
 
-        html.Img(src="assets/media/gene-background.png", height="250px", width="600px"),
-        html.Div([], className="top-left", id="gene-amount"),
-        html.Div([], className="center-left", id="gene-name"),
-        html.Div([], className="bottom-center", id="gene-type"),],
+### GLOBAL VARIABLES
+ELEMENTS, GROUPS = get_genepool(run)
 
-    className="image-text-container",)], 
-)
 
-row1c = html.Div( [], style={'width':'600px'}, id="metric-cards-section", className="wrapper")
+### GENE INSIGHTS
+def genepool_header():
+    """
+    Generates a header for the Gene Pool page.
 
-row1d = html.Div( [], style={'width':'600px'}, id="number-of-genes-graph", className="wrapper")
+    Returns:
+        dash.html.H1: A dash HTML H1 element representing the header.
+    """
+    return html.H1('Gene Pool', id="genepool-header")
 
-first_col = html.Div([row1a, row1b, row1c, row1d], className="wrapper-col")
+def gene_overview():
+    """
+    Generates an overview section for genes.
 
-# Body
+    Returns:
+        dash.html.Div: A dash HTML Div element representing the gene overview section.
+    """
+    return html.Div(
+        [
+            html.Div([], id="gene-amount"),
+            html.Div([], id="gene-name"),
+            html.Div([], id="gene-type"),
+            html.Img(src="assets/media/gene-overview-img.png", height="250px", id="gene-overview-img"),
+        ],
+        id="gene-overview-back"
+    )
+
+def gene_distribution_plot():
+    """
+    Generates the section for gene distribution plot updated on gene pool node click.
+
+    Returns:
+        dash.html.Div: Plot for gene distribution.
+    """
+    return html.Div([], id="number-of-genes-graph")
+
+def gene_parameters():
+    """
+    Generates the section for gene parameters updated on gene pool node click.
+
+    Returns:
+        dash_mantine_components.Grid: Section for gene parameters.
+    """
+    return dmc.Grid(
+        children=[],
+        gutter="l",
+        id="metric-cards-section",
+        grow=True,
+        style={"width": "100%"}
+    )
+
+def gene_insights():
+    """
+    Combines gene insights components for clicked gene in gene pool graph.
+
+    Returns:
+        dash_mantine_components.Stack: Combined gene insights components.
+    """
+    return dmc.Stack(
+        [
+            genepool_header(),
+            gene_overview(),
+            gene_distribution_plot(),
+            gene_parameters(),
+        ],
+        align="flex-start",
+        justify="flex-start",
+        spacing="xl",
+        style={"margin-right": "20px"}
+    )
+
+
+### GENE POOL CYTOSCAPE
 def cytoscape_stylesheet(groups):
-    
-    # Style for layer nodes and egdes and class edges
+    """
+    Generates the stylesheet for the gene pool cytoscape component.
+
+    Args:
+        groups (list): List of gene groups for styling group nodes.
+
+    Returns:
+        list: Stylesheet for the cytoscape component.
+    """
     cytoscape_stylesheet = [
         {
             'selector': 'node',
@@ -131,14 +199,19 @@ def cytoscape_stylesheet(groups):
     return cytoscape_stylesheet
 
 def cytoscape_search_space():
+    """
+    Generates the cytoscape component for the gene search space.
+
+    Returns:
+        dash_cytoscape.Cytoscape: Cytoscape component for gene search space.
+    """
     
-    # Create stylesheet with different styling of groups
-    stylesheet = cytoscape_stylesheet(groups)
+    stylesheet = cytoscape_stylesheet(GROUPS)
     
     cytoscape = cyto.Cytoscape(
         id='cytoscape-genepool',
-        elements=elements,
-        style={'height': '600px', 'width':'50%', 'display': 'inline-block', 'margin-top':'70px'},
+        elements=ELEMENTS,
+        style={'height': '600px'},
         stylesheet=stylesheet,
         layout={
             'name': 'cose',
@@ -147,7 +220,8 @@ def cytoscape_search_space():
     
     return cytoscape
 
-# Cytoscape interactions
+
+### GENE POOL CYTOSCAPE INTERACTION
 @callback(
     Output('gene-name', 'children'), 
     Output('gene-amount', 'children'),
@@ -158,7 +232,15 @@ def cytoscape_search_space():
     
     Input('cytoscape-genepool', 'tapNodeData'))
 def display_node_data(data):
-    
+    """
+    Displays data for the clicked node in the cytoscape component.
+
+    Args:
+        data (dict): Data of the clicked node.
+
+    Returns:
+        tuple: Tuple containing gene name, gene amount, gene type, parameter cards, graph, and cytoscape stylesheet.
+    """
     gene = data
     
     if data is None:
@@ -180,17 +262,21 @@ def display_node_data(data):
         
         if key not in not_metric:
             
-            mc = parameter_card(key, str(value), "mdi:input", width=282)
+            mc = parameter_card(key, str(value), "mdi:input")
             parameter_cards.append(mc)   
             
     # Number of genes per generation
     numb_of_genes = []
+    
     for generation in range(1, len(get_generations(run))+1):
         numb_of_genes.append(get_number_of_genes(run, generation, gene["layer"]))
     
-    df = pd.DataFrame({"x": list(range(1, len(get_generations(run))+1)), "y": numb_of_genes})
-    fig = px.bar(x = list(range(1, len(get_generations(run))+1)), y = numb_of_genes, labels={"x": "Generation", "y": f"{gene['layer']} layers"})
-    graph = dcc.Graph(figure=fig, style={'width':'585px', 'height':'150px'})
+    fig = px.bar(
+        x = list(range(1, len(get_generations(run))+1)), 
+        y = numb_of_genes, 
+        labels={"x": "Generation", "y": f"{gene['layer']} layers"}
+    )
+    graph = dcc.Graph(figure=fig, id="gene-distribution-plot")
     
     fig.update_layout(
         plot_bgcolor='white',
@@ -214,7 +300,7 @@ def display_node_data(data):
     gene_amount = f"{gene_amount} Count"
             
     # New node style when node is clicked
-    cytoscape_stylesheet_copy = cytoscape_stylesheet(groups)
+    cytoscape_stylesheet_copy = cytoscape_stylesheet(GROUPS)
     
     cytoscape_stylesheet_copy.append({
         'selector': f'[id = "{gene["layer"]}"]',
@@ -234,13 +320,36 @@ def display_node_data(data):
     
     return gene_name, gene_amount, gene_type, parameter_cards, graph, cytoscape_stylesheet_copy
 
+
+### GENE POOL PAGE LAYOUT
 def genepool_layout():
-    return html.Div(
-        [ 
-            first_col, 
-            cytoscape_search_space()
-        ], 
-        className="wrapper"
-    )
+    """
+    Generates the real-time layout for the gene pool page.
+
+    Returns:
+        dash_mantine_components.Grid: Layout for the gene pool page.
+    """
+    validation_result = validate_search_space(run)
+    layout = None
+    
+    if validation_result:
+        layout=html.Div(
+            children=[
+                genepool_header(),
+                warning(validation_result)
+            ]
+        )
+        print(validation_result)
+        
+    else:
+        layout = dmc.Grid(
+            children=[
+                dmc.Col(gene_insights(), span=6),
+                dmc.Col(cytoscape_search_space(), span=6),
+            ],
+            gutter="l",
+        )
+    
+    return layout
 
 layout = genepool_layout

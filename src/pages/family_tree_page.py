@@ -18,6 +18,8 @@ generations_int = get_generations(run, as_int=True)
 random_gen, _ = get_random_individual(run, 5)
 border_meas = get_individuals_min_max(run, generation_range=None)
 
+print(border_meas)
+
 # TODO Meas infor from config
 meas_info = get_meas_info(run)
 del meas_info['fitness']
@@ -69,7 +71,7 @@ cytoscape_stylesheet = [
 cytoscape = cyto.Cytoscape(
     id='cytoscape-family-tree',
     className="wrapper",
-    style={'height': '300px', 'max-width': '100%'},
+    style={'height': '450px', 'max-width': '100%'},
     stylesheet=cytoscape_stylesheet,
 )
 
@@ -249,7 +251,7 @@ def set_values(ind_clicked, ind_select, gen_select):
         ind_exceptions.append(warning("Individual errored."))
 
     ### 3 CHROMOSOME ###
-    ind_genes = [dot_heading("Genome", style={"margin": "10px",'flex': '100%'}), chromosome_sequence(chromosome=ind_genome)]
+    ind_genes = [dot_heading("Genes", style={"margin": "10px",'flex': '100%'}), chromosome_sequence(chromosome=ind_genome)]
     
     ### 4 RESULTS ###
     ind_fitness = [dot_heading("Fitness", style={"margin": "10px",'flex': '100%'})]
@@ -281,7 +283,6 @@ def set_values(ind_clicked, ind_select, gen_select):
 ### LAYOUT ###
 
 def family_tree():
-    
     return dmc.Col(html.Div(
         [ 
             html.H1('Family Tree', style = {"margin-bottom": "20px", "margin-top": "20px"}), 
@@ -307,7 +308,7 @@ def individual_information():
                 grow=True
             )
         ], 
-        span=4, 
+        span=2, 
         className='cytoscape-values', 
         id='values-col'
     )
@@ -315,12 +316,10 @@ def individual_information():
 def family_tree_layout():
     return dmc.Grid(
         children=[
-        
             family_tree(),
             individual_information()
     ],
     gutter="s",
-    #justify='',
     grow=True
 )
 

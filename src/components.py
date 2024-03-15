@@ -29,13 +29,13 @@ def dot_heading(heading, className='dot-heading', style=None):
 
 ### METRIC ###
 
-def parameter_card(metrictype, metric, icon=None, unit=None, description=None, width=280, margin='5px', metric_card_id="metric-card"):
+def parameter_card(metrictype, metric, icon=None, unit=None, description=None, min_width=280, max_width="100%", width="100%", margin='5px', metric_card_id="metric-card"):
     
     # Styles
     parameter_card_style = {
-        'max-width': f"{width}px",
+        'max-width': f"{max_width}px",
         'width': f"{width}px",
-        'min-width': f"{width}px",
+        'min-width': f"{min_width}px",
         'display': 'inline-flex',
         'margin': margin,
         'vertical-align': 'center',
@@ -51,24 +51,21 @@ def parameter_card(metrictype, metric, icon=None, unit=None, description=None, w
         "margin": "5px", 
         "vertical-align":"center",
         "background-color": "#FFFFFF",
-    }
-    
-    if width != "100%":
-        width = f"{width - 80}px"   
+    } 
     
     metric_type_style = {
         "margin": "5px", 
         "font-weight": "lighter",
         "font-size": "15px", 
         "overflow": "auto", 
-        "width": width,
+        "width": "200px",
         "height":"18px"
     }
     
     metric_style = { 
         "margin": "5px", 
         "overflow": "auto", 
-        "width": width, 
+        "width": "200px",
         "height":"19px"
     }
     
@@ -160,6 +157,7 @@ def bullet_chart_card(metrictype, img, metric, min, max, constraint=None, unit=N
     
     range = max - min
     load_percent = ((metric - min) / range * 100) if range != 0 else 0
+    load_percent = 100 if load_percent > 100 else load_percent
     
     load_style = {
         'border-radius': '30px',

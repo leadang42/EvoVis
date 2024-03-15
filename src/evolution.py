@@ -47,7 +47,7 @@ def _json_to_dict(filepath):
 
 def _get_configurations(run):
     """dict of configuration of EvoNAS run"""
-    return _json_to_dict(f'../data/{run}/config.json')
+    return _json_to_dict(f'{run}/config.json')
 
 # TODO Include default values
 def get_hyperparameters(run):
@@ -91,14 +91,14 @@ def get_generations(run, as_int=False):
         [1, 2, ...]
     """
     # Validate input values
-    if not os.path.exists(f"../data/{run}"):
+    if not os.path.exists(run):
         raise FileNotFoundError(f"Run directory not found: {run}")
 
     if not isinstance(as_int, bool):
         raise ValueError("'as_int' must be a boolean.")
 
     # Retrieve generation names and numbers
-    generation_path = f"../data/{run}"
+    generation_path = run
     items = os.listdir(generation_path)
     generations = [item for item in items if os.path.isdir(os.path.join(generation_path, item))]
     generations_int = [int(gen.split("_")[1]) for gen in generations]
@@ -132,7 +132,7 @@ def get_individual_result(run, generation, individual):
 
     """
     # Construct the file path
-    path = f'../data/{run}/Generation_{generation}/{individual}/results.json'
+    path = f'{run}/Generation_{generation}/{individual}/results.json'
 
     # Check if the file exists
     if os.path.isfile(path):
@@ -178,7 +178,7 @@ def get_individual_chromosome(run, generation, individual):
 
     """
     # Construct the file path
-    path = f'../data/{run}/Generation_{generation}/{individual}/chromosome.json'
+    path = f'{run}/Generation_{generation}/{individual}/chromosome.json'
 
     # Check if the file exists
     if os.path.isfile(path):
@@ -229,8 +229,8 @@ def _get_individuals_of_generation(run, generation, value="names"):
         raise ValueError(f"Invalid generation. Available generations are {generations}.")
     
     # Access individuals names
-    items = os.listdir(f"../data/{run}/Generation_{generation}")
-    individuals_names = [item for item in items if os.path.isdir(os.path.join(f"../data/{run}/Generation_{generation}", item))]
+    items = os.listdir(f"{run}/Generation_{generation}")
+    individuals_names = [item for item in items if os.path.isdir(os.path.join(f"{run}/Generation_{generation}", item))]
 
     if value == "names":
         individuals_names.sort()
@@ -375,6 +375,8 @@ def get_individuals_min_max(run, generation_range=None):
         raise ValueError("Invalid 'generation_range'. Must be a tuple of two integers.")
 
     values = get_individuals(run, generation_range, "results", as_generation_dict=False)
+    
+    values, _ = get_healthy_individuals_results(run, generation_range, as_generation_dict=False)
     meas_infos = get_meas_info(run)
     measurements = {}
 
@@ -504,7 +506,7 @@ def get_number_of_genes(run, generation, genename):
 def _get_crossover_parents(run):
     """Dicitionnairy with key individual and values of parents of individuals with values=["Generation", "New Individual", "Parent 1", "Crossover 1", "Parent 2", "Crossover 2"]"""
 
-    df = pd.read_csv(f'../data/{run}/crossover_parents.csv', header=None)
+    df = pd.read_csv(f'{run}/crossover_parents.csv', header=None)
     df = df.rename(columns={0:"Generation", 1:"Parent 1", 2:"Parent 2", 3:"New Individual"})
     df = df.reindex(columns=["Generation", "New Individual", "Parent 1", "Crossover 1", "Parent 2", "Crossover 2"])
 
@@ -541,7 +543,7 @@ def _get_crossover_parents_df(run):
         df (pandas.DataFrame): Dataframe with columns ["generation", "individual", "parent1", "crossover1", "parent2", "crossover2"]
     """
 
-    df = pd.read_csv(f'../data/{run}/crossover_parents.csv', header=None)
+    df = pd.read_csv(f'{run}/crossover_parents.csv', header=None)
     df = df.rename(columns={0:"generation", 1:"parent1", 2:"parent2", 3:"individual"})
     df = df.reindex(columns=["generation", "individual", "parent1", "crossover1", "parent2", "crossover2"])
 

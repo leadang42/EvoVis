@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import numpy as np
 from dotenv import load_dotenv
 import os
+from alphashape import alphashape
 from components import dot_heading, bullet_chart_card_basic, parameter_card, chromosome_sequence
 from evolution import get_individuals, get_generations, get_meas_info, get_healthy_individuals_results, get_best_individuals
 from genepool import get_unique_gene_colors
@@ -183,7 +184,7 @@ def get_pareto_optimality_fig(run, generation_range=None, max_width=430, height=
         'size': 12,            
     }
         
-    # TODO Alpha shape
+    # Get all fitness objectives
     fitness_objectives = []
     
     for measurement, rules in measurements.items():
@@ -248,6 +249,19 @@ def get_pareto_optimality_fig(run, generation_range=None, max_width=430, height=
         mode='markers',
         marker=marker
     ))
+    
+    # Alpha Shape
+    #points = list(zip(obj1, obj2))
+    #alpha_shape = alphashape(points, 0.01)
+    ##alpha_shape_vertices = np.array(alpha_shape.exterior.coords)
+    #print(alpha_shape_vertices)
+    
+    #fig.add_trace(go.Scatter(
+    #    x=alpha_shape_vertices[:, 0],
+    #    y=alpha_shape_vertices[:, 1],
+    #    mode='lines',
+    #    line=dict(color='blue')
+    ##))
     
     # Update layout of figure
     fig.update_layout(
@@ -366,7 +380,7 @@ def objectives_overview():
                 dmc.Col(
                     [
                         dot_heading(heading, style={"font-size": "14px"}, className='dot-heading-results-page'), 
-                        graph_meas_over_gen(run, measurement, generation_range=None, min=meas_info.get("min-boundary", None), max=meas_info.get("max-boundary", None), height=fitn_obj_height, width=250)
+                        graph_meas_over_gen(run, measurement, generation_range=None, min=meas_info.get("min-boundary", None), max=meas_info.get("max-boundary", None), height=fitn_obj_height, width=950)
                     ], 
                     className="col-results-page"
                 )
