@@ -3,7 +3,6 @@ from dash import html, Input, Output, callback, dcc
 import dash_mantine_components as dmc
 import dash_cytoscape as cyto
 import plotly.express as px
-import pandas as pd
 from dotenv import load_dotenv
 import os
 from evolution import get_number_of_genes, get_generations
@@ -20,7 +19,7 @@ run = os.getenv("RUN_RESULTS_PATH")
 dash.register_page(__name__, path='/genepool')
 
 
-### GLOBAL VARIABLES
+### RETRIEVE DATA 
 ELEMENTS, GROUPS = get_genepool(run)
 
 

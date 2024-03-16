@@ -7,11 +7,20 @@ from components import dot_heading, parameter_card, warning
 from evolution import get_hyperparameters
 from dataval import validate_hyperparameters
 
+### LOAD PATH FROM ENVIRONMENT VARIABLES
 load_dotenv()
 run = os.getenv("RUN_RESULTS_PATH")
 
+
+### REGISTER DASH APP
 dash.register_page(__name__, path='/')
 
+
+### RETRIEVE DATA 
+HYPERPARAMETERS = get_hyperparameters(run)
+
+
+### HYPERPARAMETER PAGE COMPONENTS
 def grouped_metriccards():
     """Generate hyperparameter metric card divs assigned to their specified group divs.
 
@@ -24,7 +33,7 @@ def grouped_metriccards():
     """
     
     # Retrieve hyperparameters for the specified run
-    hps = get_hyperparameters(run)
+    hps = HYPERPARAMETERS
     
     # Initialize dictionary to store hyperparameters grouped by their respective groups
     groups = {}
@@ -51,7 +60,6 @@ def grouped_metriccards():
             mc = parameter_card(metrictype=metrictype, metric=metric, icon=icon, unit=unit, description=description, max_width=280)
 
             # Add the metric card to its group or to the list of hyperparameters without a group
-            
             if group is None:
                 other_params.append(mc)
             elif group not in groups:
@@ -86,6 +94,8 @@ def parameter_overview_header():
         html.Img(src="assets/media/evolution-cover.png", id="evolution-cover"),
     ]
 
+
+### HYPERPARAMETER PAGE LAYOUT 
 def hyperparameter_layout():
     """
     Generates the layout for the hyperparameter page.

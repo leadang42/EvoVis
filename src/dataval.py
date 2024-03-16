@@ -1,6 +1,8 @@
 
 import os
+import re
 import json
+import pandas as pd
 
 ##########################################################################################
 
@@ -76,9 +78,6 @@ def validate_hyperparameters(run):
             message += f"Error config.json file: Missing 'value' key for hyperparameter '{hp}'.\n"
         
     return message
-
-def validate_meas_info(run):
-    return ""
 
 def validate_search_space(run):
     
@@ -166,6 +165,104 @@ def validate_search_space(run):
     return message
 
 def validate_crossover_parents(run):
+    
+    filepath = f"{run}/crossover_parents.csv"
+    
+    # Check if config.json exists
+    if not os.path.exists(filepath):
+        return "Error crossover_parents.csv file: Config file 'crossover_parents.csv' not found."
+    
+    # Check if the file is a CSV file
+    try:
+        df = pd.read_csv(filepath, header=None)
+    except pd.errors.EmptyDataError:
+        return "Error crossover_parents.csv file: Invalid CSV format in crossover_parents.csv."
+    
+    message = ""
+    
+    for idx, row in df.iterrows():
+        
+        # Check if all columns are present
+        if len(row) < 4:
+            message += f"Error crossover_parents.csv file row {idx+1}: Not all columns are present.\n"
+            continue
+
+        # Extracting values from each row
+        if "Generation: " in row[0]:
+            generation = row[0].split(",")[0].replace("Generation: ", "")
+                
+            if not generation.isdigit():
+                message += f"Error crossover_parents.csv file row {idx+1}: Generation should be a number.\n"
+        else:
+            message += f"Error crossover_parents.csv file row {idx+1}: 'Generation' label not found.\n"
+        
+        if "Parent_1: " in row[1]:
+            parent1 = row[1].split(",")[0].replace("Parent_1: (", "").strip()
+            parent1_value = row[1].split(",")[1].replace(")", "").strip()
+                
+            if not parent1:
+                message += f"Error crossover_parents.csv file row {idx+1}: Parent 1 is missing.\n"
+                    
+            if not parent1_value.isdigit():
+                message += f"Error crossover_parents.csv file row {idx+1}: Parent 1 crossover value should be a number.\n"
+        else:
+            message += f"Error crossover_parents.csv file row {idx+1}: 'Parent_1' label not found.\n"
+
+        if "Parent_2: " in row[2]:
+            parent2 = row[2].split(",")[0].replace("Parent_2: (", "").strip()
+            parent2_value = row[2].split(",")[1].replace(")", "").strip()
+                
+            if not parent2:
+                message += f"Error crossover_parents.csv file row {idx+1}: Parent 2 is missing.\n"
+                    
+            if not parent2_value.isdigit():
+                message += f"Error crossover_parents.csv file row {idx+1}: Parent 2 crossover value should be a number.\n"    
+        else:
+            message += f"Error crossover_parents.csv file row {idx+1}: 'Parent_2' label not found.\n"
+
+        if "New_Individual: " in row[3]:
+            new_individual = row[3].replace("New_Individual: ", "").strip()
+                
+            if not new_individual:
+                message += f"Error crossover_parents.csv file row {idx+1}: New Individual is missing.\n"
+        else:
+            message += f"Error crossover_parents.csv file row {idx+1}: 'New_Individual' label not found.\n"
+
+    return message
+
+def validate_generations_of_individuals(run):
+    
+    # Check for the presence of generation directories
+    generation_directories = [d for d in os.listdir(run) if re.match(r"^Generation_\d+$", d)]
+    
+    if not generation_directories:
+        return "No generation directories found."
+
+    # Check for individual directories and their required files
+    for generation_directory in generation_directories:
+        generation_dir_path = os.path.join(run, generation_directory)
+        generation_contents = os.listdir(generation_dir_path)
+        
+        for item in generation_contents:
+            individual_directory = os.path.join(generation_dir_path, item)
+            
+            # Skip non-directory items
+            if not os.path.isdir(individual_directory):
+                continue 
+            
+            # Check for required files for individuals
+            individual_files = ["chromosome.json", "results.json"]
+            
+            for file_name in individual_files:
+                file_path = os.path.join(individual_directory, file_name)
+                
+                if not os.path.exists(file_path):
+                    return f"Missing file in individual {item}: {file_name}"
+
+    return ""
+
+# TODO
+def validate_meas_info(run):
     return ""
 
 def validate_individual_results(run):
