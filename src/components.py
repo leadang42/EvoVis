@@ -1,12 +1,10 @@
 import dash
-from dash import html, dcc
+from dash import html, callback, Output, Input
 from dash_iconify import DashIconify
 import plotly.graph_objects as go
 import dash_mantine_components as dmc
 
-app = dash.Dash(__name__)
-
-
+### HEADING ###
 
 def dot_heading(heading, className='dot-heading', style=None):
     heading_div = html.Div(
@@ -29,10 +27,15 @@ def dot_heading(heading, className='dot-heading', style=None):
     return heading_div
 
 
-def metric_card(metrictype, metric, icon, width="260px", margin='5px', metric_card_id="metric-card"):
-    metric_card_style = {
-        'min-width': width,
-        #'widht': '100%',
+### METRIC ###
+
+def parameter_card(metrictype, metric, icon=None, unit=None, description=None, min_width=280, max_width="100%", width="100%", margin='5px', metric_card_id="metric-card"):
+    
+    # Styles
+    parameter_card_style = {
+        'max-width': f"{max_width}px",
+        'width': f"{width}px",
+        'min-width': f"{min_width}px",
         'display': 'inline-flex',
         'margin': margin,
         'vertical-align': 'center',
@@ -48,24 +51,60 @@ def metric_card(metrictype, metric, icon, width="260px", margin='5px', metric_ca
         "margin": "5px", 
         "vertical-align":"center",
         "background-color": "#FFFFFF",
+    } 
+    
+    metric_type_style = {
+        "margin": "5px", 
+        "font-weight": "lighter",
+        "font-size": "15px", 
+        "overflow": "auto", 
+        "width": "200px",
+        "height":"18px"
     }
+    
+    metric_style = { 
+        "margin": "5px", 
+        "overflow": "auto", 
+        "width": "200px",
+        "height":"19px"
+    }
+    
+    # Button with and withoout tooltip depending if description is given
+    button = html.Button(
+        children=DashIconify(icon=icon, height=25, width=25, color="#000000"), 
+        className="metric-btn",
+        id=f"metric-btn-{metrictype}"
+    )
+    
+    tooltip_button = dmc.Tooltip(
+        label=description,
+        position="bottom",
+        offset=5,
+        radius=15,
+        transition="pop-top-left",
+        color="#6173E9",
+        multiline=True,
+        width=280,
+        children=[button]
+    ) 
+    
+    button = button if description is None else tooltip_button
 
-    metric_card_div = html.Div([
-
-        html.Button(children=DashIconify(icon=icon, height=25, width=25, color="#000000"), className="metric-btn"),
-
+    # Metric card div of button, metrictype and metric
+    parameter_card_div = html.Div([
+        
+        button,
         html.Div([   
-            html.P(metrictype, style={"margin": "5px", "font-weight": "lighter","font-size": "15px", "width":"200px"}, id=f"{metric_card_id}-label"),
-            html.H4(metric, style={ "margin": "5px" }, id=f"{metric_card_id}-value")],
+            html.P(metrictype, style=metric_type_style, id=f"{metric_card_id}-label"),
+            html.H4(metric if unit is None else f"{metric} {unit}", style=metric_style, id=f"{metric_card_id}-value")], 
             style= text_block_style)   
         ], 
         
-        style = metric_card_style, 
+        style = parameter_card_style, 
         id = metric_card_id
     )
 
-    return metric_card_div
-
+    return parameter_card_div
 
 def bullet_chart_card(metrictype, img, metric, min, max, constraint=None, unit=None, min_width='180px', metric_card_id="bullet-chart-card"):
     
@@ -117,8 +156,8 @@ def bullet_chart_card(metrictype, img, metric, min, max, constraint=None, unit=N
     }
     
     range = max - min
-    
     load_percent = ((metric - min) / range * 100) if range != 0 else 0
+    load_percent = 100 if load_percent > 100 else load_percent
     
     load_style = {
         'border-radius': '30px',
@@ -132,6 +171,7 @@ def bullet_chart_card(metrictype, img, metric, min, max, constraint=None, unit=N
     }
     
     constraint_style = None
+    
     if constraint is not None:
         constraint_percent = ((constraint - min) / range * 100) if range != 0 else 0
         if constraint_percent > 100: constraint_percent = 100
@@ -178,12 +218,11 @@ def bullet_chart_card(metrictype, img, metric, min, max, constraint=None, unit=N
         paper_bgcolor='rgba(0,0,0,0)'
     )
     
-    
     metric_str = f'{metric} {unit}' if unit is not None else str(metric)
     
     bullet_chart_card_div = html.Div(
         [
-            html.Img(src=f"assets/media/{img}.png", style=img_style, id=img),
+            html.Img(src=f"assets/media/{img}", style=img_style, id=img),
             html.Div(
                 [
                     html.P(metrictype, style={"margin": "5px", "margin-top": "20px", "font-weight": "lighter", "font-size": "15px", 'white-space': 'nowrap', 'min-width':'180px'}, id=f"{metric_card_id}-label"),
@@ -201,8 +240,7 @@ def bullet_chart_card(metrictype, img, metric, min, max, constraint=None, unit=N
     
     return bullet_chart_card_div
 
-
-def bullet_chart_basic(metric, min, max, unit='', info='', back_color="#FFFFFF", bar_color='#EFEFEF', load_color='#6173E9', margin='10px', flex='100%', min_width=None,metric_card_id="bullet-chart-basic"):
+def bullet_chart_card_basic(metric, min, max, unit='', info='', back_color="#FFFFFF", bar_color='#EFEFEF', load_color='#6173E9', margin='10px', flex='100%', min_width=None,metric_card_id="bullet-chart-basic"):
     
     metric = round(metric, 3)
     range = max - min
@@ -249,8 +287,10 @@ def bullet_chart_basic(metric, min, max, unit='', info='', back_color="#FFFFFF",
         style = bullet_chart_basic_style
     )
     
-    return bullet_chart_basic_div
-    
+    return bullet_chart_basic_div  
+
+
+### FEEDBACK ###
 
 def warning(message):
     
@@ -259,7 +299,6 @@ def warning(message):
     
     return warning_div
 
-
 def information(message):
     
     children = [DashIconify(icon='mingcute:information-line', height=25, width=25), html.P(message, className='feedback-text')]
@@ -267,6 +306,38 @@ def information(message):
     
     return warning_div
 
+
+### CHROMOSOME SEQUENCE ###
+def chromosome_sequence(chromosome, justify="flex-start", align="flex-start", compromised=False, unique_genes=None):
+    
+    chromosome_sequence = []
+    
+    for gene in chromosome:
+        
+        color = '#6173E9'
+        if unique_genes is not None:
+            color = unique_genes[gene["layer"]]
+        
+        gene_params = str(gene)
+        gene_params = gene_params.replace('{', '').replace('}', '').replace("'", '').replace(",", '\n')
+        gene_name = gene["layer"][0] if compromised else gene["layer"].replace('_', '')
+        
+        tooltip = dmc.Tooltip(
+            label=gene_params,
+            position="right",
+            offset=3,
+            transition="slide-up",
+            color='gray',
+            multiline=True,
+            children=[dmc.Badge(gene_name, variant='light', color='indigo', style={'flex': '100%', 'background-color': f"{color}33", 'color': color})]
+        )
+        
+        chromosome_sequence.append(tooltip)
+        
+    return dmc.Stack(chromosome_sequence, justify=justify, align=align, spacing="0px")
+
+
+### NOT IN USE ###
 
 def fitness_function():
     
@@ -324,7 +395,6 @@ def fitness_function():
     
     return fitness_function_div
 
-
 def fitnes_function_latex(dashlatex):
     
     style_backrgound = {
@@ -345,37 +415,3 @@ def fitnes_function_latex(dashlatex):
     
     return fitness_function_div
     
-
-def genome_overview(chromosome, justify="flex-start", align="flex-start", compromised=False, unique_genes=None):
-    
-    genome_overview = []
-    
-    for gene in chromosome:
-        
-        color = '#6173E9'
-        if unique_genes is not None:
-            color = unique_genes[gene["layer"]]["color"]
-        
-        gene_params = str(gene)
-        gene_params = gene_params.replace('{', '').replace('}', '').replace("'", '').replace(",", '\n')
-        gene_name = gene["layer"][0] if compromised else gene["layer"].replace('_', '')
-        
-        tooltip = dmc.Tooltip(
-            label=gene_params,
-            position="right",
-            offset=3,
-            transition="slide-up",
-            color='gray',
-            multiline=True,
-            children=[dmc.Badge(gene_name, variant='light', color='indigo', style={'flex': '100%', 'background-color': f"{color}33", 'color': color})]
-        )
-        
-        genome_overview.append(tooltip)
-        
-    return dmc.Stack(genome_overview, justify=justify, align=align, spacing="0px")
-
-    
-app.layout = html.Div([dot_heading("fitness"), metric_card("max memory footprint", "800000 B", "fluent:memory-16-regular")])
-
-if __name__ == "__main__":
-    app.run(debug=True)
