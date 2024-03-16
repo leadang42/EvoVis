@@ -17,19 +17,6 @@ run = os.getenv("RUN_RESULTS_PATH")
 ### REGISTER DASH APP
 dash.register_page(__name__, path='/family-tree')
 
-<<<<<<< HEAD:src/pages/family_tree.py
-### GLOBAL VARIABLES ###
-run = "ga_20230116-110958_sc_2d_4classes"
-
-generations = get_generations(run)
-generations_int = get_generations(run, as_int=True)
-random_gen, _ = get_random_individual(run, 5)
-border_meas = get_individuals_min_max(run, generation_range=None)
-meas_info = get_meas_info(run)
-del meas_info['fitness']
-del meas_info['mean_power_consumption']
-=======
->>>>>>> new-data-structure:src/pages/family_tree_page.py
 
 ### GLOBAL VARIABLES 
 GENERATIONS = get_generations(run)
