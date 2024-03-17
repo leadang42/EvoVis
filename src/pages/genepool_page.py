@@ -23,79 +23,7 @@ dash.register_page(__name__, path='/genepool')
 ELEMENTS, GROUPS = get_genepool(run)
 
 
-### GENE INSIGHTS
-def genepool_header():
-    """
-    Generates a header for the Gene Pool page.
-
-    Returns:
-        dash.html.H1: A dash HTML H1 element representing the header.
-    """
-    return html.H1('Gene Pool', id="genepool-header")
-
-def gene_overview():
-    """
-    Generates an overview section for genes.
-
-    Returns:
-        dash.html.Div: A dash HTML Div element representing the gene overview section.
-    """
-    return html.Div(
-        [
-            html.Div([], id="gene-amount"),
-            html.Div([], id="gene-name"),
-            html.Div([], id="gene-type"),
-            html.Img(src="assets/media/gene-overview-img.png", height="250px", id="gene-overview-img"),
-        ],
-        id="gene-overview-back"
-    )
-
-def gene_distribution_plot():
-    """
-    Generates the section for gene distribution plot updated on gene pool node click.
-
-    Returns:
-        dash.html.Div: Plot for gene distribution.
-    """
-    return html.Div([], id="number-of-genes-graph")
-
-def gene_parameters():
-    """
-    Generates the section for gene parameters updated on gene pool node click.
-
-    Returns:
-        dash_mantine_components.Grid: Section for gene parameters.
-    """
-    return dmc.Grid(
-        children=[],
-        gutter="l",
-        id="metric-cards-section",
-        grow=True,
-        style={"width": "100%"}
-    )
-
-def gene_insights():
-    """
-    Combines gene insights components for clicked gene in gene pool graph.
-
-    Returns:
-        dash_mantine_components.Stack: Combined gene insights components.
-    """
-    return dmc.Stack(
-        [
-            genepool_header(),
-            gene_overview(),
-            gene_distribution_plot(),
-            gene_parameters(),
-        ],
-        align="flex-start",
-        justify="flex-start",
-        spacing="xl",
-        style={"margin-right": "20px"}
-    )
-
-
-### GENE POOL CYTOSCAPE
+### GENE POOL PAGE COMPONENTS
 def cytoscape_stylesheet(groups):
     """
     Generates the stylesheet for the gene pool cytoscape component.
@@ -210,7 +138,7 @@ def cytoscape_search_space():
     cytoscape = cyto.Cytoscape(
         id='cytoscape-genepool',
         elements=ELEMENTS,
-        style={'height': '600px'},
+        style={'height': '600px', 'width': '100%'},
         stylesheet=stylesheet,
         layout={
             'name': 'cose',
@@ -218,6 +146,76 @@ def cytoscape_search_space():
     )
     
     return cytoscape
+
+def genepool_header():
+    """
+    Generates a header for the Gene Pool page.
+
+    Returns:
+        dash.html.H1: A dash HTML H1 element representing the header.
+    """
+    return html.H1('Gene Pool', id="genepool-header")
+
+def gene_overview():
+    """
+    Generates an overview section for genes.
+
+    Returns:
+        dash.html.Div: A dash HTML Div element representing the gene overview section.
+    """
+    return html.Div(
+        [
+            html.Div([], id="gene-amount"),
+            html.Div([], id="gene-name"),
+            html.Div([], id="gene-type"),
+            html.Img(src="assets/media/gene-overview-img.png", height="250px", id="gene-overview-img"),
+        ],
+        id="gene-overview-back"
+    )
+
+def gene_distribution_plot():
+    """
+    Generates the section for gene distribution plot updated on gene pool node click.
+
+    Returns:
+        dash.html.Div: Plot for gene distribution.
+    """
+    return html.Div([], id="number-of-genes-graph")
+
+def gene_parameters():
+    """
+    Generates the section for gene parameters updated on gene pool node click.
+
+    Returns:
+        dash_mantine_components.Grid: Section for gene parameters.
+    """
+    return dmc.Grid(
+        children=[],
+        gutter="l",
+        id="metric-cards-section",
+        grow=True,
+        style={"width": "100%"}
+    )
+
+def gene_insights():
+    """
+    Combines gene insights components for clicked gene in gene pool graph.
+
+    Returns:
+        dash_mantine_components.Stack: Combined gene insights components.
+    """
+    return dmc.Stack(
+        [
+            genepool_header(),
+            gene_overview(),
+            gene_distribution_plot(),
+            gene_parameters(),
+        ],
+        align="flex-start",
+        justify="flex-start",
+        spacing="xl",
+        style={"margin-right": "20px"}
+    )
 
 
 ### GENE POOL CYTOSCAPE INTERACTION
@@ -343,8 +341,8 @@ def genepool_layout():
     else:
         layout = dmc.Grid(
             children=[
-                dmc.Col(gene_insights(), span=6),
-                dmc.Col(cytoscape_search_space(), span=6),
+                dmc.Col(gene_insights(), span='auto', style={ 'min-width': '525px'}),
+                dmc.Col(cytoscape_search_space(), span='auto', style={ 'min-width': '525px'}),
             ],
             gutter="l",
         )

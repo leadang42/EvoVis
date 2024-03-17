@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 import os
 from evolution import get_family_tree, get_generations, get_individuals, get_random_individual, get_individuals_min_max, get_individual_result, get_individual_chromosome, get_meas_info
 from components import dot_heading, bullet_chart_card, bullet_chart_card_basic, warning, information, chromosome_sequence
-
+from dataval import validate_generations_of_individuals, validate_crossover_parents
 
 ### LOAD PATH FROM ENVIRONMENT VARIABLES
 load_dotenv()
@@ -67,6 +67,14 @@ CYTOSCAPE_STYLE = [
         }
     },
 ]
+MARKS_STYLE = {
+    'color': '#6173E9', 
+    'background-color': '#D1D6F8', 
+    'padding': '2px', 
+    'border-radius': '3px',
+    'font-size': '12px',
+    'font-weight': '300',
+}
 
 
 ### FAMILY TREE COMPONENTS 
@@ -83,23 +91,15 @@ def generation_slider():
         min(GENERATIONS_INT), 
         max(GENERATIONS_INT), 
         1, 
-        marks=None, 
+        marks={
+            min(GENERATIONS_INT): {"label": f"Generation_{min(GENERATIONS_INT)}", "style": MARKS_STYLE}, 
+            max(GENERATIONS_INT): {"label": f"Generation_{max(GENERATIONS_INT)}", "style": MARKS_STYLE}
+        }, 
         #pushable=1, 
         allowCross=False,
         id='gen-range-slider',
-        tooltip={"placement": "bottom", "always_visible": False},
+        tooltip={"placement": "top", "always_visible": True},
         value=[RANDOM_GENERATION-3, RANDOM_GENERATION, RANDOM_GENERATION+1], 
-    )
-
-def generation_select():
-    return dmc.Select(
-        label="Select Generation",
-        placeholder="Select Generation",
-        icon=DashIconify(icon="material-symbols-light:circle", height=10, width=10, color="#6173E9"),
-        id="gen-select",
-        className="circle-select",
-        data=[{"value": gen, "label": gen.replace("_", " ")} for gen in GENERATIONS],
-        value=f"Generation_{RANDOM_GENERATION}",
     )
 
 def individual_select(): 
@@ -111,46 +111,19 @@ def individual_select():
         className="circle-select",
     )
 
-def node_select():
-    return dmc.Grid(
-        children=[
-            dmc.Col(generation_select(), span="auto"),
-            dmc.Col(individual_select(), span="auto"),
-        ],
-        justify="center",
-        gutter="sm",
-    )
-
 
 ### FAMILY TREE MODIFICATION CALLBACKS 
-@callback( Output("ind-select", "data"), Output("ind-select", "value"), Input("gen-select", "value") )
-def set_individuals_select(gen):
-    gen = int(gen.split("_")[1])
+@callback( Output("ind-select", "data"), Output("ind-select", "value"), Input("gen-range-slider", "value"))
+def set_individuals_select(gen_range):
+    gen = gen_range[1]
     
-    data = [{"value": ind, "label": ind.replace("_", " ")} for ind in get_individuals(run, generation_range=range(gen, gen+1), value="names", as_generation_dict=False)]
+    data = [{"value": ind, "label": ind} for ind in get_individuals(run, generation_range=range(gen, gen+1), value="names", as_generation_dict=False)]
     gen, value = get_random_individual(run, generation=gen)
     
     return data, value
 
-
-@callback(Output("gen-select", "value"), Input("gen-range-slider", "value"))
-def set_generation_select(gen_range):
-    return f"Generation_{gen_range[1]}"
-
-
-@callback(Output("gen-range-slider", "value"), Input("gen-range-slider", "value"), Input("gen-select", "value"))
-def set_generation_range(gen_range, gen):
-    gen = int(gen.split("_")[1])
-    
-    if gen_range[1] != gen:
-        return [gen-3, gen, gen+1]
-    
-    else:
-        return gen_range
-
-
-@callback( Output("cytoscape-family-tree", "elements"), Output("cytoscape-family-tree", "layout"), Output("cytoscape-family-tree", "stylesheet"), Input("gen-range-slider", "value"), Input("gen-select", "value"), Input("ind-select", "value"), Input("cytoscape-family-tree", "tapNodeData"), Input("cytoscape-family-tree", "tapEdgeData"))
-def set_cytoscape(gen_range, gen, ind, ind_clicked, edge_clicked):
+@callback( Output("cytoscape-family-tree", "elements"), Output("cytoscape-family-tree", "layout"), Output("cytoscape-family-tree", "stylesheet"), Input("gen-range-slider", "value"), Input("ind-select", "value"), Input("cytoscape-family-tree", "tapNodeData"), Input("cytoscape-family-tree", "tapEdgeData"))
+def set_cytoscape(gen_range, ind, ind_clicked, edge_clicked):
     
     # Get Family tree through individual selection
     generation_range = range(gen_range[0], gen_range[2]+1)
@@ -221,9 +194,10 @@ def set_cytoscape(gen_range, gen, ind, ind_clicked, edge_clicked):
     
     return elements, cytoscape_layout, new_cytoscape_style
 
-
-@callback( Output("individual-heading", "children"),  Output("individual-exceptions", "children"), Output("individual-genes", "children"), Output("individual-results", "children"), Input("cytoscape-family-tree", "tapNodeData"), Input("ind-select", "value"), Input("gen-select", "value"))
-def set_values(ind_clicked, ind_select, gen_select):
+@callback( 
+    Output("individual-heading", "children"),  Output("individual-exceptions", "children"), Output("individual-genes", "children"), Output("individual-results", "children"), 
+    Input("cytoscape-family-tree", "tapNodeData"), Input("ind-select", "value"), Input("gen-range-slider", "value"))
+def set_values(ind_clicked, ind_select, gen_range):
     
     # Individual selected in cytoscape
     ind = None
@@ -232,7 +206,7 @@ def set_values(ind_clicked, ind_select, gen_select):
     
     if ind_clicked is None: 
         ind = ind_select
-        gen = gen_select.split('_')[1]
+        gen = gen_range[1]
         extinct = False
     
     else:
@@ -287,16 +261,19 @@ def set_values(ind_clicked, ind_select, gen_select):
 
 
 ### FAMILY TREE PAGE LAYOUT  
+def family_tree_header():
+    return html.H1('Family Tree', style = {"margin-bottom": "20px", "margin-top": "20px"})
+
 def family_tree():
     return dmc.Col(html.Div(
         [ 
-            html.H1('Family Tree', style = {"margin-bottom": "20px", "margin-top": "20px"}), 
-            node_select(), 
+            family_tree_header(), 
+            individual_select(), 
             family_tree_cytsocape(),
             generation_slider()
         ]), 
         span='auto',
-        style={'max-width': '100%'} # 100% needed for scaling cytoscape to 100%
+        style={'max-width': '100%'} 
     )
     
 def individual_information():
@@ -319,13 +296,29 @@ def individual_information():
     )
 
 def family_tree_layout():
-    return dmc.Grid(
-        children=[
-            family_tree(),
-            individual_information()
-    ],
-    gutter="s",
-    grow=True
-)
+    
+    validation_result = validate_generations_of_individuals(run) + validate_crossover_parents(run)
+    layout = None
+    
+    if validation_result:
+        layout=html.Div(
+            children=[
+                family_tree_header(),
+                warning(validation_result)
+            ]
+        )
+        print(validation_result)
+        
+    else:
+        layout = dmc.Grid(
+            children=[
+                family_tree(),
+                individual_information()
+            ],
+            gutter="s",
+            grow=True
+        )
+    
+    return layout
 
 layout = family_tree_layout
