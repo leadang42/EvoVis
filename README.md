@@ -10,9 +10,9 @@ EvoVis is a dashboard for visualizing Evolutionary Neural Architecture Search (E
 
 EvoVis offers a holistic view of the ENAS process. It provides insights into architectural evolution and performance optimization.
 
-# Contents
+## Contents
 - [EvoVis](#evovis)
-- [Contents](#contents)
+  - [Contents](#contents)
   - [Getting started](#getting-started)
   - [License](#license)
   - [Contact](#contact)
