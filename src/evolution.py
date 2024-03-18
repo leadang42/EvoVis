@@ -5,15 +5,6 @@ import random
 from matplotlib.colors import hex2color, rgb2hex
 import json
 
-# get_hyperparameters
-
-# get_number_of_genes, get_generations
-
-# get_family_tree, get_generations, get_individuals, get_random_individual, get_individuals_min_max, 
-# get_individual_result, get_individual_chromosome, get_meas_info
-
-# get_individuals, get_generations, get_meas_info, get_healthy_individuals_results, get_best_individuals, get_unique_genes
-
 ### READ HELPER ###
 
 def _json_to_dict(filepath):

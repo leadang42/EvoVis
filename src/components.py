@@ -1,5 +1,4 @@
-import dash
-from dash import html, callback, Output, Input
+from dash import html
 from dash_iconify import DashIconify
 import plotly.graph_objects as go
 import dash_mantine_components as dmc
