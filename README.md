@@ -12,30 +12,30 @@ EvoVis is a dashboard for visualizing Evolutionary Neural Architecture Search (E
 
 EvoVis offers a holistic view of the ENAS process. It provides insights into architectural evolution and performance optimization.
 
-## Installation
+## Getting started
 
-1. Clone the EvoVis repository from [GitHub](https://github.com/leadang42/EvoNAS-Dashboard.git).
+1. Clone the EvoVis repository from [GitHub](https://github.com/leadang42/EvoVis.git).
 2. Navigate to the project directory and install dependencies using `pip install -r requirements.txt`.
-3. Run EvoVis using `python EvoVis.py`.
+3. Run EvoVis using `python EvoVis.py <run_results_path>`.
 
-## Usage
+````    
+git clone https://github.com/leadang42/EvoVis.git
+cd EvoVis
+pip install -r requirements.txt
+python EvoVis.py <run_results_path>
+````
 
-1. Access EvoVis dashboard via the provided URL.
-2. Explore hyperparameters, gene pool graph, family tree graph, and performance plots.
-3. Analyze results and gain insights into ENAS processes.
-
-## Contributing
-
-Contributions to EvoVis are welcome. Please refer to the contribution guidelines in the repository.
+4. Access EvoVis dashboard via the provided localhost.
+5. Explore hyperparameters, gene pool graph, family tree graph, and performance plots.
 
 ## License
 
-EvoVis is licensed under the MIT License. See LICENSE file for details.
+EvoVis is licensed under the Apache License. See LICENSE file for details.
 
 ## Contact
 
-For any inquiries or support, please contact [email@example.com](mailto:email@example.com).
+For any inquiries or support, please contact [lea.van.anh.dang@gmail.com](mailto:lea.van.anh.dang@gmail.com).
 
 ---
 
-EvoVis aims to revolutionize the visualization of ENAS processes, providing researchers and practitioners with a comprehensive tool for understanding and optimizing neural architectures.
+EvoVis aims to visualize ENAS processes to provide researchers and practitioners with a comprehensive tool for understanding and optimizing neural architectures.
