@@ -104,7 +104,6 @@ def get_generations(run, as_int=False):
 
 ### SINGLE INDIVIDUAL INFORMATION ###
 
-# TODO: Take first element of json not mean
 def get_individual_result(run, generation, individual):
     """
     Retrieve individual's objective measurements from a JSON file.
@@ -492,8 +491,8 @@ def get_number_of_genes(run, generation, genename):
     return count
 
 
-### FAMILY TREE ###
-# TODO Deprecate crossover dict
+### FAMILY TREE 
+
 def _get_crossover_parents(run):
     """Dicitionnairy with key individual and values of parents of individuals with values=["Generation", "New Individual", "Parent 1", "Crossover 1", "Parent 2", "Crossover 2"]"""
 
@@ -678,7 +677,7 @@ def get_family_tree(run, generation, individual, generation_range=None):
     return (family_tree, unique_roots)
 
 
-### OTHER HELPER FUNCTIONS ###
+### OTHER HELPER FUNCTIONS 
 
 def get_random_individual(run, generation=None):
     """Get the first sorted individual from a random generation of specified run."""
