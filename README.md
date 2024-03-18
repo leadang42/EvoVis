@@ -13,18 +13,9 @@ EvoVis offers a holistic view of the ENAS process. It provides insights into arc
 # Contents
 - [EvoVis](#evovis)
 - [Contents](#contents)
-  - [Data Structure](#data-structure)
-    - [Folder Structure](#folder-structure)
-    - [](#)
   - [Getting started](#getting-started)
   - [License](#license)
   - [Contact](#contact)
-
-## Data Structure
-
-### Folder Structure
-
-### 
 
 
 ## Getting started
