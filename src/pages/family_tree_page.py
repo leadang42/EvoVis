@@ -18,13 +18,7 @@ run = os.getenv("RUN_RESULTS_PATH")
 dash.register_page(__name__, path='/family-tree')
 
 
-### GLOBAL VARIABLES 
-GENERATIONS = get_generations(run)
-GENERATIONS_INT = get_generations(run, as_int=True)
-RANDOM_GENERATION, _ = get_random_individual(run, 5)
-BORDER_MEAS = get_individuals_min_max(run, generation_range=None)
-MEAS_INFO = get_meas_info(run)
-del MEAS_INFO['fitness']
+### STYLES
 CYTOSCAPE_STYLE = [
     {
         'selector': 'node',
@@ -87,19 +81,23 @@ def family_tree_cytsocape():
     )
 
 def generation_slider():
+    
+    generations_int = get_generations(run, as_int=True)
+    random_generation, _ = get_random_individual(run, generations_int[round(len(generations_int)/2)])
+    
     return dcc.RangeSlider(
-        min(GENERATIONS_INT), 
-        max(GENERATIONS_INT), 
+        min(generations_int), 
+        max(generations_int), 
         1, 
         marks={
-            min(GENERATIONS_INT): {"label": f"Generation_{min(GENERATIONS_INT)}", "style": MARKS_STYLE}, 
-            max(GENERATIONS_INT): {"label": f"Generation_{max(GENERATIONS_INT)}", "style": MARKS_STYLE}
+            min(generations_int): {"label": f"Generation_{min(generations_int)}", "style": MARKS_STYLE}, 
+            max(generations_int): {"label": f"Generation_{max(generations_int)}", "style": MARKS_STYLE}
         }, 
         #pushable=1, 
         allowCross=False,
         id='gen-range-slider',
         tooltip={"placement": "top", "always_visible": True},
-        value=[RANDOM_GENERATION-3, RANDOM_GENERATION, RANDOM_GENERATION+1], 
+        value=[random_generation-1, random_generation, random_generation+1], 
     )
 
 def individual_select(): 
@@ -239,19 +237,23 @@ def set_values(ind_clicked, ind_select, gen_range):
     if "fitness" in ind_meas:
         ind_fitness += [bullet_chart_card_basic(ind_meas['fitness'], 0, 1, metric_card_id="bullet-chart-basic")]
 
-    for meas_key in list(MEAS_INFO.keys()):
+    border_meas = get_individuals_min_max(run, generation_range=None)
+    meas_info = get_meas_info(run)
+    del meas_info['fitness']
+    
+    for meas_key in list(meas_info.keys()):
         if meas_key in ind_meas:
             
             if isinstance(ind_meas[meas_key], (float, int)):
                 
                 ind_fitness += [(
                     bullet_chart_card(
-                        MEAS_INFO[meas_key]["displayname"], 
-                        MEAS_INFO[meas_key]["individual-info-img"], 
+                        meas_info[meas_key]["displayname"], 
+                        meas_info[meas_key]["individual-info-img"], 
                         ind_meas[meas_key], 
-                        BORDER_MEAS[meas_key][0], 
-                        BORDER_MEAS[meas_key][1], 
-                        unit=MEAS_INFO[meas_key]["unit"], 
+                        border_meas[meas_key][0], 
+                        border_meas[meas_key][1], 
+                        unit=meas_info[meas_key]["unit"], 
                         constraint=None, 
                         metric_card_id="bullet-chart-card"
                     )

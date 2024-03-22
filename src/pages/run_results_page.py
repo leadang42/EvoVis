@@ -1,13 +1,12 @@
 import dash
-from dash import html, dcc, Input, Output, callback
+from dash import html, dcc
 import dash_mantine_components as dmc
 import plotly.graph_objects as go
 import numpy as np
 from dotenv import load_dotenv
 import os
-from alphashape import alphashape
 from components import dot_heading, bullet_chart_card_basic, parameter_card, chromosome_sequence
-from evolution import get_individuals, get_generations, get_meas_info, get_healthy_individuals_results, get_best_individuals
+from evolution import get_individuals, get_generations, get_meas_info, get_healthy_individuals_results, get_best_individuals, get_hyperparameters
 from genepool import get_unique_gene_colors
 
 load_dotenv()
@@ -19,11 +18,6 @@ dash.register_page(__name__, path='/results')
 ### GLOBAL VARIABLES
 grid_gutter = 'xl'
 fitn_obj_height = 180
-healthy, unhealthy = get_healthy_individuals_results(run, as_generation_dict=False)
-tot_gen = len(get_generations(run))
-processed_gen = len(get_generations(run))
-best_individuals = get_best_individuals(run)
-unique_genes = get_unique_gene_colors(run)
 measurements = get_meas_info(run)
 
 ### HELPER FUNCTIONS FOR PLOTS ###
@@ -296,6 +290,11 @@ def get_pareto_optimality_fig(run, generation_range=None, max_width=430, height=
 ### GENERAL RUN OVERVIEW ###
 
 def general_overview():
+    
+    tot_gen = get_hyperparameters(run)["generations"]["value"]
+    processed_gen = len(get_generations(run))
+    healthy, unhealthy = get_healthy_individuals_results(run, as_generation_dict=False)
+    
     gen_processed = bullet_chart_card_basic(processed_gen, 1, tot_gen, unit='Generations processed', info='Generations', back_color='#6173E9', bar_color='#A4B0FE', load_color='#FFFFFF', margin='0px', min_width='260px', flex='1')
     ind_healthy = parameter_card("Healthy Individuals", len(healthy), icon='icon-park-outline:health', margin='0px', width='100%')
     ind_unhealthy = parameter_card("Unhealthy Individuals", len(unhealthy), icon='mdi:robot-dead-outline', margin='0px', width='100%')
@@ -401,6 +400,8 @@ def objectives_overview():
 def best_individuals_overview():
     
     genomes = []
+    best_individuals = get_best_individuals(run)
+    unique_genes = get_unique_gene_colors(run)
     
     for gen, ind in best_individuals.items():
         
@@ -439,7 +440,12 @@ def best_individuals_overview():
         )
         genomes.append(ind_overview)
 
-    genomes_div = dmc.Group(genomes, position='apart', align='start', style={"gap":"5px"})
+    genomes_div = dmc.Group(
+        genomes, 
+        position='left', 
+        align='start', 
+        style={"gap":"5px"}
+    )
     
     return genomes_div
 

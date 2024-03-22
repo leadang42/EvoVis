@@ -16,10 +16,6 @@ run = os.getenv("RUN_RESULTS_PATH")
 dash.register_page(__name__, path='/')
 
 
-### RETRIEVE DATA 
-HYPERPARAMETERS = get_hyperparameters(run)
-
-
 ### HYPERPARAMETER PAGE COMPONENTS
 def grouped_metriccards():
     """Generate hyperparameter metric card divs assigned to their specified group divs.
@@ -33,7 +29,7 @@ def grouped_metriccards():
     """
     
     # Retrieve hyperparameters for the specified run
-    hps = HYPERPARAMETERS
+    hps = get_hyperparameters(run)
     
     # Initialize dictionary to store hyperparameters grouped by their respective groups
     groups = {}

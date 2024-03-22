@@ -14,7 +14,7 @@ else:
     if 'RUN_RESULTS_PATH' in os.environ:
         
         RUN = os.getenv("RUN_RESULTS_PATH")
-        print("ENAS run results files: {RUN}")
+        print(f"ENAS run results files: {RUN}")
         
     else:
         print("Error: Please run the dashboard with the run results directory path specified after 'python3 app.py' or specify the environmental variable 'RUN_RESULTS_PATH'.")

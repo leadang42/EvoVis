@@ -19,10 +19,6 @@ run = os.getenv("RUN_RESULTS_PATH")
 dash.register_page(__name__, path='/genepool')
 
 
-### RETRIEVE DATA 
-ELEMENTS, GROUPS = get_genepool(run)
-
-
 ### GENE POOL PAGE COMPONENTS
 def cytoscape_stylesheet(groups):
     """
@@ -133,11 +129,12 @@ def cytoscape_search_space():
         dash_cytoscape.Cytoscape: Cytoscape component for gene search space.
     """
     
-    stylesheet = cytoscape_stylesheet(GROUPS)
+    elements, groups = get_genepool(run)
+    stylesheet = cytoscape_stylesheet(groups)
     
     cytoscape = cyto.Cytoscape(
         id='cytoscape-genepool',
-        elements=ELEMENTS,
+        elements=elements,
         style={'height': '600px', 'width': '100%'},
         stylesheet=stylesheet,
         layout={
@@ -297,7 +294,8 @@ def display_node_data(data):
     gene_amount = f"{gene_amount} Count"
             
     # New node style when node is clicked
-    cytoscape_stylesheet_copy = cytoscape_stylesheet(GROUPS)
+    _, groups = get_genepool(run)
+    cytoscape_stylesheet_copy = cytoscape_stylesheet(groups)
     
     cytoscape_stylesheet_copy.append({
         'selector': f'[id = "{gene["layer"]}"]',
