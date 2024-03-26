@@ -11,28 +11,28 @@ EvoVis is a dashboard for visualizing Evolutionary Neural Architecture Search (E
 EvoVis offers a holistic view of the ENAS process. It provides insights into architectural evolution and performance optimization.
 
 ## Contents
-- [EvoVis](#evovis)
-  - [Contents](#contents)
-  - [Getting started](#getting-started)
-  - [License](#license)
-  - [Contact](#contact)
+
+[Contents](#contents)
+[Getting started](#getting-started)
+[License](#license)
+[Contact](#contact)
 
 
 ## Getting started
 
-1. Clone the EvoVis repository from [GitHub](https://github.com/leadang42/EvoVis.git) and navigate to the project directory.
+1. **EvoVis Cloning:** Clone the EvoVis repository from [GitHub](https://github.com/leadang42/EvoVis.git) and navigate to the project directory.
 
 ````    
 git clone https://github.com/leadang42/EvoVis.git
 cd EvoVis
 ````
 
-2. Install the project's dependencies.
+2. **EvoVis Dependencies:** Install the project's dependencies.
 ````    
 pip install -r requirements.txt
 ````
 
-3. Run EvoVis. The repository also contains a sample enas run in the enas_example_run_results directory.
+3. **EvoVis Execution:** Run EvoVis by specifying your run results directory path or use the sample enas run in the enas_example_run_results directory.
 ````    
 python EvoVis.py <run_results_path>
 ````
@@ -40,7 +40,7 @@ python EvoVis.py <run_results_path>
 python EvoVis.py ./enas_example_run_results
 ````
 
-4. Access EvoVis dashboard via the provided localhost and explore hyperparameters, gene pool graph, family tree graph, and performance plots.
+4. **EvoVis Usage:** Access EvoVis dashboard via the provided localhost and explore hyperparameters, gene pool graph, family tree graph, and performance plots.
 
 
 ## License
