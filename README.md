@@ -32,17 +32,15 @@ cd EvoVis
 pip install -r requirements.txt
 ````
 
-1. Run EvoVis. 
+3. Run EvoVis. The repository also contains a sample enas run in the enas_example_run_results directory.
 ````    
 python EvoVis.py <run_results_path>
 ````
-
-The repository contains a sample enas run in the enas_example_run_results directory.
 ````
 python EvoVis.py ./enas_example_run_results
 ````
 
-1. Access EvoVis dashboard via the provided localhost and explore hyperparameters, gene pool graph, family tree graph, and performance plots.
+4. Access EvoVis dashboard via the provided localhost and explore hyperparameters, gene pool graph, family tree graph, and performance plots.
 
 
 ## License

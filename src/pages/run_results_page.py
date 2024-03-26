@@ -72,14 +72,20 @@ def add_meas_trace(fig, run, meas, generation_range=None, min=None, max=None, sh
             hoverinfo='x+y'
         ))
     
+    # Add mean in forground
     fig.add_trace(go.Scatter(
         x=generations,
         y=avg_results,
-        mode='lines',
+        mode='lines+markers',
         name=measurements[meas]["displayname"],
         line=go.scatter.Line(color=linecolor),
         hoverinfo='x+y'
     ))     
+    
+    # Set xaxis ticks to generations to avoid non int values
+    fig.update_layout(
+        xaxis={'tickvals': generations},
+    )
 
 def add_constraint_trace(fig, constraint):
     
@@ -152,7 +158,7 @@ def figure_meas_over_gen(run, measures, generation_range=None, min=None, max=Non
     
     return fig
 
-def graph_meas_over_gen(run, measures, generation_range=None, min=None, max=None, show_std=True, max_width=430, height=200, width=None, show_constraint=True, title=None, xaxis_title=None, yaxis_title=None, id="graph-meas-over-gen"):
+def graph_meas_over_gen(run, measures, generation_range=None, min=None, max=None, show_std=True, max_width=600, height=200, width=None, show_constraint=True, title=None, xaxis_title=None, yaxis_title=None, id="graph-meas-over-gen"):
     
     fig = figure_meas_over_gen(run, measures, generation_range, min, max, show_std, show_constraint, title, xaxis_title, yaxis_title)
     
@@ -164,7 +170,7 @@ def graph_meas_over_gen(run, measures, generation_range=None, min=None, max=None
     
     return graph_div
 
-def get_pareto_optimality_fig(run, generation_range=None, max_width=430, height=200):
+def get_pareto_optimality_fig(run, generation_range=None, max_width=600, height=200):
     
     # Font of axis
     tickfont = {
@@ -244,19 +250,6 @@ def get_pareto_optimality_fig(run, generation_range=None, max_width=430, height=
         marker=marker
     ))
     
-    # Alpha Shape
-    #points = list(zip(obj1, obj2))
-    #alpha_shape = alphashape(points, 0.01)
-    ##alpha_shape_vertices = np.array(alpha_shape.exterior.coords)
-    #print(alpha_shape_vertices)
-    
-    #fig.add_trace(go.Scatter(
-    #    x=alpha_shape_vertices[:, 0],
-    #    y=alpha_shape_vertices[:, 1],
-    #    mode='lines',
-    #    line=dict(color='blue')
-    ##))
-    
     # Update layout of figure
     fig.update_layout(
         title="", # Pareto optimality
@@ -303,9 +296,9 @@ def general_overview():
 
     general_overview = dmc.Grid(
         [
-            dmc.Col(dmc.Stack([gen_processed, ind_healthy, ind_unhealthy]), span='auto'),
-            dmc.Col(fitness_plot, span=3, className="col-results-page"), 
-            dmc.Col(pareto_optimality_plot, span=5, className="col-results-page"),
+            dmc.Col(dmc.Stack([gen_processed, ind_healthy, ind_unhealthy]), span="auto"),
+            dmc.Col(fitness_plot, span="auto", className="col-results-page"), 
+            dmc.Col(pareto_optimality_plot, span="auto", className="col-results-page"),
         ],
         gutter=grid_gutter,
         grow=True,

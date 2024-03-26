@@ -95,7 +95,18 @@ def get_generations(run, as_int=False):
     generations_int = [int(gen.split("_")[1]) for gen in generations]
 
     generations_int.sort()
-
+    
+    # Check last generation finished processed
+    take_last_gen = True
+    results_last_gen = _get_individuals_of_generation(run, generations_int[-1], "results")
+    
+    for result in results_last_gen.values():
+        if result.get("fitness", None) is None:
+            take_last_gen = False
+            
+    if not take_last_gen:
+        generations_int = generations_int[0:len(generations_int)-1]
+        
     if not as_int:
         return [f"Generation_{gen}" for gen in generations_int]
     else:
@@ -201,7 +212,6 @@ def _get_individuals_of_generation(run, generation, value="names"):
         
     Raises:
         ValueError: If value is not one of the allowed values ("names", "results", "chromosome").
-                   If the specified generation is not present in the run data.
 
     Example:
         >>> names = _get_individuals_of_generation('my_run', 3, 'names')
@@ -210,14 +220,10 @@ def _get_individuals_of_generation(run, generation, value="names"):
     
     # Validate input values
     available_values = ["names", "results", "chromosome"]
-    generations = [int(gen.split("_")[1]) for gen in get_generations(run)]
     
     if value not in available_values:
         raise ValueError(f"Invalid value. Allowed values are {available_values}.")
-    
-    if generation not in generations:
-        raise ValueError(f"Invalid generation. Available generations are {generations}.")
-    
+
     # Access individuals names
     items = os.listdir(f"{run}/Generation_{generation}")
     individuals_names = [item for item in items if os.path.isdir(os.path.join(f"{run}/Generation_{generation}", item))]
