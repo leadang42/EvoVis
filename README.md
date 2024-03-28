@@ -2,6 +2,8 @@
 
 EvoVis is a dashboard for visualizing Evolutionary Neural Architecture Search (ENAS) algorithms. ENAS mimics biological evolution to discover optimal neural network architectures, starting with a population of randomly generated architectures and iteratively improving them through selection, crossover, and mutation. The key features of EvoVis are the following:
 
+![EvoVis Overview](./src/assets/media/EvoVis-overview.png)
+
 1. **Hyperparameter Overview:** Efficiently tune hyperparameters with an overview of settings.
 2. **Gene Pool Graph:** Visualize potential neural architecture topologies and connectivity patterns across generations.
 3. **Family Tree Graph:** Navigate the family tree of architectures, analyze performance metrics, and explore structures.
@@ -55,11 +57,13 @@ python EvoVis.py ./enas_example_run_results
 
 
 ## Data Structure Interface
-In order to visualize ENAS runs with EvoVis, the ENAS algorithm must output a run results directory that follows a specific data structure. Check out the `enas_example_run_results` directory as an example. Here's an overview of the required files:
+In order to visualize ENAS runs with EvoVis, the ENAS algorithm must output a run results directory that follows a specific data structure. See the `enas_example_run_results` directory as an example. Here's an overview of the required files, followed by a more detailed description:
 
-`config.json`: Configuration settings for the ENAS algorithm's hyperparameters and measurements done on the neural architectures.
+![Run Results File Structure](./src/assets/media/run-results-file-structure.png)
 
-Settings for the `hyperparameters`
+**`config.json`**
+
+Settings for the `hyperparameters` in `config.json`
 | Key | Description |
 | --- | --- |
 | `value` | The numerical value of the parameter. (Required) |
@@ -69,31 +73,46 @@ Settings for the `hyperparameters`
 | `group` | The category to which the parameter belongs. |
 | `description` | A brief description explaining the significance of the parameter. |
 
-Settings for the `results`
+Settings for the `results` in `config.json`
 | Key | Description |
 | --- | --- |
 | `displayname` | The human-readable name of the result metric. |
 | `unit` | The unit of measurement for the result. |
-| `run-result-plot` | Indicates whether to include the result in the aggregated results over generations plot in the run results page. |
-| `individual-info-plot` | Indicates whether to include the result in individual information in the family tree page. |
-| `pareto-optimlity-plot` | Indicates whether to include the result in the multi-objective mapping plot. |
-| `individual-info-img` | The image representing the result found in `src/assets/media` directory. |
+| `run-result-plot` | Indicates whether to include result in run results page. |
+| `individual-info-plot` | Indicates whether to include result in family tree page. |
+| `pareto-optimlity-plot` | Indicates whether to include result in the multi-objective mapping plot. |
+| `individual-info-img` | The image representing the result found in `src/assets/icons` directory. |
 | `min-boundary` | The minimum boundary for valid result values. |
 | `max-boundary` | The maximum boundary for valid result values. |
 
-`crossover_parents.csv`: Information about offspring evolvement through crossover of two parents.
+**`crossover_parents.csv`**
+Documents crossover events between parent individuals, each represented as a tuple with their names and crossover points. It specifies the resulting new individuals of a newly evolving generation.
+
+**`search_space.json`**
+
+The JSON file serves as the blueprint for generating the gene pool DAG from which the initial population for ENAS is derived. 
+
+| Key | Description |
+| --- | --- |
+| `gene_pool` | Contains neural network layers categorized into groups based on functionality. Each layer is represented by a unique identifier `layer` and associated parameters. |
+| `rule_set` | Specifies which subsequent genes can follow a given gene. The rule set must contain a `Start` which determines the starting point within the gene sequence, influencing the accessibility of subsequent genes. |
+| `rule_set_group` | Specifies which subsequent group can follow a given group and therefore facilitates indirect connections between genes based on group associations. |
 
 
-`search_space.json`:
+**`chromosome.json`**
+The individual’s chromosome contains a sequence of genes from the `gene_pool` of the `search_space.json` that encodes the neural architecture.
 
+**`reslts.json`**
 
-`chromosome.json`:
+| Key | Description |
+| --- | --- |
+| `metric` | Stores metrics from the training process as keys along with their value. These metrics correspond to the measurements specified in the config.json file. |
+| `error` | Indicates whether the individual was successfully trained and deployed. If set to true, the individual’s metrics will not be included in the subsequent evaluation analysis of the ENAS run. |
 
-`reslts.json`:
 
 ## Project Organization
 
-![Image Name](/src/assets/media/project-organisation.png)
+![Project Organization](./src/assets/media/project-organisation.png)
 
 ## License
 

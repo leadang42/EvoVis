@@ -275,7 +275,7 @@ def bullet_chart_card(metrictype, img, metric, min, max, constraint=None, unit=N
     
     bullet_chart_card_div = html.Div(
         [
-            html.Img(src=f"assets/media/{img}", style=img_style, id=img),
+            html.Img(src=f"assets/icons/{img}", style=img_style, id=img),
             html.Div(
                 [
                     html.P(metrictype, style={"margin": "5px", "margin-top": "20px", "font-weight": "lighter", "font-size": "15px", 'white-space': 'nowrap', 'min-width':'180px'}, id=f"{metric_card_id}-label"),
