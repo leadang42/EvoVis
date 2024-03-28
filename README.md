@@ -17,12 +17,11 @@ EvoVis offers a holistic view of the ENAS process. It provides insights into arc
 - [EvoVis](#evovis)
   - [Contents](#contents)
   - [Getting Started](#getting-started)
-  - [Compatible Algorithms](#compatible-algorithms)
+  - [Compatible ENAS Algorithms](#compatible-enas-algorithms)
   - [Data Structure Interface](#data-structure-interface)
   - [Project Organization](#project-organization)
   - [License](#license)
   - [Contact](#contact)
-
 
 ## Getting Started
 
@@ -48,20 +47,21 @@ python EvoVis.py ./enas_example_run_results
 
 4. **EvoVis Usage:** Access EvoVis dashboard via the provided localhost and explore hyperparameters, gene pool graph, family tree graph, and performance plots.
 
-## Compatible Algorithms
+## Compatible ENAS Algorithms
 1. **Gene Pool:** DAG-structured and one searchable level (e.g. no hierarchical search spaces) 
 2. **Optimization Problems:** Multi-objective and single-objective 
 3. **Selection:** All strategies
 4. **Crossover:** One-point crossover strategy 
 5. **Mutation:** All strategies
 
-
 ## Data Structure Interface
-In order to visualize ENAS runs with EvoVis, the ENAS algorithm must output a run results directory that follows a specific data structure. See the `enas_example_run_results` directory as an example. Here's an overview of the required files, followed by a more detailed description:
+In order to visualize ENAS runs with EvoVis, the ENAS algorithm must output a run results directory that follows a specific data structure. See the `enas_example_run_results` directory as an example. Here's an overview of the run results directory structure, followed by a detailed description of the contained files:
 
 ![Run Results File Structure](./src/assets/media/run-results-file-structure.png)
 
 **`config.json`**
+
+The JSON file provides the hyperparameters of the ENAS algorithm and the results of measurements conducted on the neural architectures. Additionally, the hyperparameters and results are accompanied by additional settings to modify the EvoVis UI. The only mandatory hyperparameter is `generations`, which defines the number of iterations for an ENAS run. EvoVis relies on this parameter to monitor the ENAS run’s progress.
 
 Settings for the `hyperparameters` in `config.json`
 | Key | Description |
@@ -86,7 +86,8 @@ Settings for the `results` in `config.json`
 | `max-boundary` | The maximum boundary for valid result values. |
 
 **`crossover_parents.csv`**
-Documents crossover events between parent individuals, each represented as a tuple with their names and crossover points. It specifies the resulting new individuals of a newly evolving generation.
+
+The CSV file logs crossover events between parent individuals, each represented as a tuple with their names and crossover points. It specifies the resulting new individuals of a newly evolving generation. From the logs the family tree graph is generated. 
 
 **`search_space.json`**
 
@@ -100,14 +101,18 @@ The JSON file serves as the blueprint for generating the gene pool DAG from whic
 
 
 **`chromosome.json`**
-The individual’s chromosome contains a sequence of genes from the `gene_pool` of the `search_space.json` that encodes the neural architecture.
 
-**`reslts.json`**
+The individual’s chromosome JSON file contains a sequence of genes from the `gene_pool` of the `search_space.json` that encodes the neural architecture.
+
+**`results.json`**
+
+The individual’s result JSON file contains the measurements and fitness of an individual.
 
 | Key | Description |
 | --- | --- |
-| `metric` | Stores metrics from the training process as keys along with their value. These metrics correspond to the measurements specified in the config.json file. |
-| `error` | Indicates whether the individual was successfully trained and deployed. If set to true, the individual’s metrics will not be included in the subsequent evaluation analysis of the ENAS run. |
+| `fitness` | Stores the fitness from the training process. (Required) |
+| `metric` | Stores metrics from the training process. These metrics correspond to the measurements specified in the config.json file. |
+| `error` | Indicates whether the individual was successfully trained. If set to true, the individual’s metrics will not be included in the evaluation analysis of the ENAS run. |
 
 
 ## Project Organization
