@@ -3,9 +3,30 @@ from dash_iconify import DashIconify
 import plotly.graph_objects as go
 import dash_mantine_components as dmc
 
-### HEADING ###
 
+####################################################################################
+
+# MODULE COMPONENTS
+
+# Module provides importable HTML components that are used across all EvoVis pages 
+# to reduce code duplication and promote consistency in design.
+
+####################################################################################
+
+
+### HEADING ###
 def dot_heading(heading, className='dot-heading', style=None):
+    """
+    Generate a heading with a purple dot in front.
+
+    Args:
+        heading (str): The text content of the heading.
+        className (str, optional): CSS class name for the heading div. Defaults to 'dot-heading'.
+        style (dict, optional): CSS styles for the heading div. Defaults to None.
+
+    Returns:
+        dash.html.Div: Div containing the dot heading.
+    """
     heading_div = html.Div(
         [
             DashIconify(icon="material-symbols:circle", height=12, width=12, color="#6173E9", 
@@ -27,8 +48,25 @@ def dot_heading(heading, className='dot-heading', style=None):
 
 
 ### METRIC ###
+def parameter_card(metrictype, metric, icon=None, unit=None, description=None, min_width=280, max_width="100%", width="100%", margin="5px", metric_card_id="metric-card"):
+    """
+    Generate a card to display a metric parameter.
 
-def parameter_card(metrictype, metric, icon=None, unit=None, description=None, min_width=280, max_width="100%", width="100%", margin='5px', metric_card_id="metric-card"):
+    Args:
+        metrictype (str): The type of metric.
+        metric (float): The value of the metric.
+        icon (str, optional): The icon for the metric card button. Defaults to None.
+        unit (str, optional): The unit of measurement for the metric. Defaults to None.
+        description (str, optional): The description of the metric. Defaults to None.
+        min_width (int or str, optional): The minimum width of the card. Defaults to 280.
+        max_width (str, optional): The maximum width of the card. Defaults to "100%".
+        width (str, optional): The width of the card. Defaults to "100%".
+        margin (str, optional): The margin around the card. Defaults to "5px".
+        metric_card_id (str, optional): The id of the metric card. Defaults to "metric-card".
+
+    Returns:
+        dash.html.Div: Card containing the metric parameter.
+    """
     
     # Styles
     parameter_card_style = {
@@ -106,7 +144,23 @@ def parameter_card(metrictype, metric, icon=None, unit=None, description=None, m
     return parameter_card_div
 
 def bullet_chart_card(metrictype, img, metric, min, max, constraint=None, unit=None, min_width='180px', metric_card_id="bullet-chart-card"):
-    
+    """
+    Generate a card to display a metric as a bullet chart.
+
+    Args:
+        metrictype (str): The type of metric.
+        img (str): The filename of the image associated with the metric.
+        metric (float): The value of the metric.
+        min (float): The minimum value of the metric range.
+        max (float): The maximum value of the metric range.
+        constraint (float, optional): The constraint value for the metric. Defaults to None.
+        unit (str, optional): The unit of measurement for the metric. Defaults to None.
+        min_width (str, optional): The minimum width of the card. Defaults to '180px'.
+        metric_card_id (str, optional): The id of the bullet chart card. Defaults to "bullet-chart-card".
+
+    Returns:
+        dash.html.Div: Card containing the bullet chart.
+    """
     metric = round(metric, 3)
     
     bullet_chart_card_style = {
@@ -240,7 +294,26 @@ def bullet_chart_card(metrictype, img, metric, min, max, constraint=None, unit=N
     return bullet_chart_card_div
 
 def bullet_chart_card_basic(metric, min, max, unit='', info='', back_color="#FFFFFF", bar_color='#EFEFEF', load_color='#6173E9', margin='10px', flex='100%', min_width=None,metric_card_id="bullet-chart-basic"):
-    
+    """
+    Generate a basic bullet chart card to display a metric.
+
+    Args:
+        metric (float): The value of the metric.
+        min (float): The minimum value of the metric range.
+        max (float): The maximum value of the metric range.
+        unit (str, optional): The unit of measurement for the metric. Defaults to ''.
+        info (str, optional): Additional information about the metric. Defaults to ''.
+        back_color (str, optional): Background color of the card. Defaults to "#FFFFFF".
+        bar_color (str, optional): Color of the bar in the bullet chart. Defaults to '#EFEFEF'.
+        load_color (str, optional): Color of the loaded part of the bar. Defaults to '#6173E9'.
+        margin (str, optional): The margin around the card. Defaults to '10px'.
+        flex (str, optional): Flex value of the card. Defaults to '100%'.
+        min_width (str, optional): The minimum width of the card. Defaults to None.
+        metric_card_id (str, optional): The id of the bullet chart basic card. Defaults to "bullet-chart-basic".
+
+    Returns:
+        dash.html.Div: Basic bullet chart card containing the metric.
+    """
     metric = round(metric, 3)
     range = max - min
     load_percent = ((metric - min) / range * 100) if range != 0 else 0
@@ -290,16 +363,31 @@ def bullet_chart_card_basic(metric, min, max, unit='', info='', back_color="#FFF
 
 
 ### FEEDBACK ###
-
 def warning(message):
-    
+    """
+    Generate a warning message.
+
+    Args:
+        message (str): The text content of the warning message.
+
+    Returns:
+        dash.html.Div: Div containing the warning message.
+    """
     children = [DashIconify(icon='mingcute:information-line', height=25, width=25), html.P(message, className='feedback-text')]
     warning_div = html.Div(children=children, className="feedback feedback-warning")
     
     return warning_div
 
 def information(message):
-    
+    """
+    Generate an information message.
+
+    Args:
+        message (str): The text content of the information message.
+
+    Returns:
+        dash.html.Div: Div containing the information message.
+    """
     children = [DashIconify(icon='mingcute:information-line', height=25, width=25), html.P(message, className='feedback-text')]
     warning_div = html.Div(children=children, className="feedback feedback-information")
     
@@ -308,7 +396,19 @@ def information(message):
 
 ### CHROMOSOME SEQUENCE ###
 def chromosome_sequence(chromosome, justify="flex-start", align="flex-start", compromised=False, unique_genes=None):
-    
+    """
+    Generate a sequence of chromosome genes.
+
+    Args:
+        chromosome (list): List of genes in the chromosome.
+        justify (str, optional): Justification of the sequence. Defaults to "flex-start".
+        align (str, optional): Alignment of the sequence. Defaults to "flex-start".
+        compromised (bool, optional): Whether the chromosome is compromised or not. Defaults to False.
+        unique_genes (dict, optional): Dictionary of unique genes with corresponding colors. Defaults to None.
+
+    Returns:
+        dash_mantine_components.Stack: Stack of chromosome genes.
+    """
     chromosome_sequence = []
     
     for gene in chromosome:
@@ -337,7 +437,6 @@ def chromosome_sequence(chromosome, justify="flex-start", align="flex-start", co
 
 
 ### NOT IN USE ###
-
 def fitness_function():
     
     style_backrgound = {

@@ -14,12 +14,15 @@ EvoVis offers a holistic view of the ENAS process. It provides insights into arc
 
 - [EvoVis](#evovis)
   - [Contents](#contents)
-  - [Getting started](#getting-started)
+  - [Getting Started](#getting-started)
+  - [Compatible Algorithms](#compatible-algorithms)
+  - [Data Structure Interface](#data-structure-interface)
+  - [Project Organization](#project-organization)
   - [License](#license)
   - [Contact](#contact)
 
 
-## Getting started
+## Getting Started
 
 1. **EvoVis Cloning:** Clone the EvoVis repository from [GitHub](https://github.com/leadang42/EvoVis.git) and navigate to the project directory.
 
@@ -43,6 +46,54 @@ python EvoVis.py ./enas_example_run_results
 
 4. **EvoVis Usage:** Access EvoVis dashboard via the provided localhost and explore hyperparameters, gene pool graph, family tree graph, and performance plots.
 
+## Compatible Algorithms
+1. **Gene Pool:** DAG-structured and one searchable level (e.g. no hierarchical search spaces) 
+2. **Optimization Problems:** Multi-objective and single-objective 
+3. **Selection:** All strategies
+4. **Crossover:** One-point crossover strategy 
+5. **Mutation:** All strategies
+
+
+## Data Structure Interface
+In order to visualize ENAS runs with EvoVis, the ENAS algorithm must output a run results directory that follows a specific data structure. Check out the `enas_example_run_results` directory as an example. Here's an overview of the required files:
+
+`config.json`: Configuration settings for the ENAS algorithm's hyperparameters and measurements done on the neural architectures.
+
+Settings for the `hyperparameters`
+| Key | Description |
+| --- | --- |
+| `value` | The numerical value of the parameter. (Required) |
+| `unit` | The unit of measurement for the parameter. |
+| `icon` | The icon representing the parameter, for visual identification. |
+| `displayname` | The human-readable name of the parameter. |
+| `group` | The category to which the parameter belongs. |
+| `description` | A brief description explaining the significance of the parameter. |
+
+Settings for the `results`
+| Key | Description |
+| --- | --- |
+| `displayname` | The human-readable name of the result metric. |
+| `unit` | The unit of measurement for the result. |
+| `run-result-plot` | Indicates whether to include the result in the aggregated results over generations plot in the run results page. |
+| `individual-info-plot` | Indicates whether to include the result in individual information in the family tree page. |
+| `pareto-optimlity-plot` | Indicates whether to include the result in the multi-objective mapping plot. |
+| `individual-info-img` | The image representing the result found in `src/assets/media` directory. |
+| `min-boundary` | The minimum boundary for valid result values. |
+| `max-boundary` | The maximum boundary for valid result values. |
+
+`crossover_parents.csv`: Information about offspring evolvement through crossover of two parents.
+
+
+`search_space.json`:
+
+
+`chromosome.json`:
+
+`reslts.json`:
+
+## Project Organization
+
+![Image Name](/src/assets/media/project-organisation.png)
 
 ## License
 

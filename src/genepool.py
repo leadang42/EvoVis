@@ -2,6 +2,7 @@ import json
 from matplotlib.colors import hex2color, rgb2hex
 import numpy as np
 
+
 ##########################################################################################
 
 # MODULE SEARCH SPACE
@@ -13,11 +14,8 @@ import numpy as np
 
 ###########################################################################################
 
-# Changes: rule_set_group, grouping of genepool
-
 
 ### READ DATA FROM SEARCH SPACE JSON ###
-
 def _json_to_dict(filepath):
     """
     Convert JSON data from a file to a Python dictionary.
@@ -49,7 +47,7 @@ def _get_search_space(run):
     Retrieve the search space configuration from a JSON file for a specific run.
 
     Parameters:
-        run (str): The identifier for the run. This is used to construct the path to the search_space.json file.
+        run (str): The path of the ENAS run results directory.
 
     Returns:
         dict: A Python dictionary representing the search space configuration for the specified run.
@@ -68,8 +66,8 @@ def _get_groups(run):
     Extract layer identifiers from the 'gene_pool' section of the search space.
 
     Args:
-        run (str): The identifier for the run. This is used to construct the path to the search_space.json file.
-
+        run (str): The path of the ENAS run results directory.
+        
     Returns:
         dict: A dictionary mapping group types to lists of layer identifiers.
     """
@@ -89,7 +87,7 @@ def _get_genes_flattened(run):
     Flatten the genes in the search space by adding the group information to each gene.
 
     Args:
-        run (str): The identifier for the run. This is used to construct the path to the search_space.json file.
+        run (str): The path of the ENAS run results directory.
 
     Returns:
         list: A list of dictionaries representing flattened genes with group information.
@@ -110,14 +108,13 @@ def _get_genes_flattened(run):
     return layers
   
     
-### GRAPH CREATED FROM RULESETS ### 
-            
+### GRAPH CREATED FROM RULESETS ###         
 def _get_layer_graph(run, group_connections=True):
     """
     Retrieves the layer graph based on the search space defined for a given run.
 
     Args:
-        run (str): The identifier for the run. This is used to construct the path to the search_space.json file.
+        run (str): The path of the ENAS run results directory.
         group_connections (bool, optional): If True, includes group connections in the graph. 
             Defaults to True.
 
@@ -184,7 +181,7 @@ def _get_group_graph(run):
     Builds the group graph based on the search space defined for a given run.
 
     Args:
-        run (str): The identifier for the run. This is used to construct the path to the search_space.json file.
+        run (str): The path of the ENAS run results directory.
 
     Returns:
         dict: A dictionary representing the group graph. Keys are source groups, 
@@ -225,7 +222,6 @@ def _get_group_graph(run):
  
  
 ### CONNECTED LAYERS ### 
-  
 def _dfs(graph, layer, visited, result):
     """
     Perform depth-first search (_DFS) on the given graph starting from the specified layer.
@@ -259,7 +255,7 @@ def _get_connected_layers(run, start_layer="Start"):
     Retrieve layers connected to the specified starting layer in the layer graph for a given run.
 
     Args:
-        run (str): The identifier for the run. This is used to construct the path to the search_space.json file.
+        run (str): The path of the ENAS run results directory.
         start_layer (str): The layer from which to start exploring connected layers.
 
     Returns:
@@ -292,7 +288,6 @@ def _get_connected_layers(run, start_layer="Start"):
 
 
 ### DASH CYTOSCAPE FORMAT ###
-
 def _get_node_element(gene):
     """
     Create a node element from a gene, representing a layer or group.
@@ -328,8 +323,8 @@ def get_genepool(run):
     Create Cytoscape elements representing layers and group connections in the search space for a given run.
 
     Args:
-        run (str): The identifier for the run. This is used to construct the path to the search_space.json file.
-
+        run (str): The path of the ENAS run results directory.
+        
     Returns:
         tuple: A tuple containing a list of Cytoscape elements and a list of unique group names.
 
@@ -412,8 +407,18 @@ def get_genepool(run):
     
 
 ### UNIQUE GENES WITH COLORS ###
-
 def _generate_color_scale(start_color, end_color, num_colors):
+    """
+    Generate a color scale between two given colors.
+
+    Args:
+        start_color (str): The starting color in hexadecimal format.
+        end_color (str): The ending color in hexadecimal format.
+        num_colors (int): The number of colors in the scale.
+
+    Returns:
+        list: A list of hexadecimal color codes representing the color scale.
+    """
     start_rgb = hex2color(start_color)
     end_rgb = hex2color(end_color)
 
@@ -425,7 +430,15 @@ def _generate_color_scale(start_color, end_color, num_colors):
     return color_scale
 
 def get_unique_gene_colors(run):
-    
+    """
+    Get unique colors for each gene layer in a run.
+
+    Args:
+        run (str): The path of the ENAS run results directory.
+
+    Returns:
+        dict: A dictionary where keys are unique gene layers and values are unique colors in hexadecimal format.
+    """
     connected_genes = _get_connected_layers(run)
     unique_genes = {connected_gene: "" for connected_gene in connected_genes}
     

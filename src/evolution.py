@@ -5,8 +5,20 @@ import random
 from matplotlib.colors import hex2color, rgb2hex
 import json
 
-### READ HELPER ###
 
+##################################################
+
+# MODULE EVOLUTION
+
+# The Evolution Module provides functionalities 
+# for generating the family tree cytoscape,
+# for processing information about individuals, 
+# and for providing run configurations. 
+
+##################################################
+
+
+### READ HELPER ###
 def _json_to_dict(filepath):
     """
     Convert JSON data from a file to a Python dictionary.
@@ -35,34 +47,64 @@ def _json_to_dict(filepath):
 
 
 ### RUN INFORMATION ###
-
 def _get_configurations(run):
-    """dict of configuration of EvoNAS run"""
+    """
+    Retrieve configurations from the specified run.
+
+    Args:
+        run (str): The path of the ENAS run results directory.
+
+    Returns:
+        dict: A dictionary containing the configurations retrieved from the specified run.
+    """
     return _json_to_dict(f'{run}/config.json')
 
-# TODO Include default values
 def get_hyperparameters(run):
-    """Dict of hyperparameters of EvoNAS run"""
-    
+    """
+    Retrieve hyperparameters from the specified run.
+
+    Args:
+        run (str): The path of the ENAS run results directory.
+
+    Returns:
+        dict: A dictionary containing the hyperparameters retrieved from the specified run.
+    """
     configs = _get_configurations(run)
     return configs["hyperparameters"]
 
-# TODO Include default values!!!
 def get_meas_info(run):
-    """Dict of meas info of EvoNAS run"""
-    
+    """
+    Retrieve measurement information from the specified run.
+
+    Args:
+        run (str): The path of the ENAS run results directory.
+
+    Returns:
+        dict: A dictionary containing the measurement information retrieved from the specified run.
+    """
     configs = _get_configurations(run)
+    results = configs["results"]
+    
+    for result, setting in results.items():
+        setting["displayname"] = setting.get("displayname", result) 
+        setting["unit"] = setting.get("unit", None) 
+        setting["run-result-plot"] = setting.get("run-result-plot", True) 
+        setting["individual-info-plot"] = setting.get("individual-info-plot", True) 
+        setting["pareto-optimlity-plot"] = setting.get("pareto-optimlity-plot", False) 
+        setting["individual-info-img"] = setting.get("individual-info-img", "measure1-icon.png") or "measure1-icon.png"
+        setting["min-boundary"] = setting.get("min-boundary", None) 
+        setting["max-boundary"] = setting.get("max-boundary", None) 
+    
     return configs["results"]
 
 
 ### NAMES OF DIRECTORIES ###
-
 def get_generations(run, as_int=False):
     """
     Get a list of all generation names (directories) in the specified run.
 
     Args:
-        run (str): The directory name representing the run.
+        run (str): The path of the ENAS run results directory.
         as_int (bool, optional): If True, returns a list of generation numbers as integers. Default is False.
 
     Returns:
@@ -114,13 +156,12 @@ def get_generations(run, as_int=False):
 
 
 ### SINGLE INDIVIDUAL INFORMATION ###
-
 def get_individual_result(run, generation, individual):
     """
     Retrieve individual's objective measurements from a JSON file.
 
     Parameters:
-        run (str): The identifier for the run.
+        run (str): The path of the ENAS run results directory.
         generation (int): The generation number.
         individual (str): The individual's identifier.
 
@@ -166,7 +207,7 @@ def get_individual_chromosome(run, generation, individual):
     Retrieve individual's genes/layers from a JSON file representing the chromosome.
 
     Parameters:
-        run (str): The identifier for the run.
+        run (str): The path of the ENAS run results directory.
         generation (int): The generation number.
         individual (str): The individual's identifier.
 
@@ -197,13 +238,12 @@ def get_individual_chromosome(run, generation, individual):
 
     
 ### INDIVIDUALS INFORMATION ###
-
 def _get_individuals_of_generation(run, generation, value="names"):
     """
     Get the data of all individuals of a specified generation.
     
     Args:
-        run (str): The identifier for the run.
+        run (str): The path of the ENAS run results directory.
         generation (int): The generation number.
         value (str): The data of an individual that will be accessed. Available are "names", "results" or "chromosome".
     
@@ -250,7 +290,7 @@ def get_individuals(run, generation_range=None, value="names", as_generation_dic
     Get data from the individuals of a generation range or all the generations. 
     
     Args: 
-        run (str): The identifier for the run.
+        run (str): The path of the ENAS run results directory.
         generation_range (range): A python range of generations from which the individuals will be extracted. 
         value (str): The return values of the individuals. Choose between the values "names", "results" or "chromosome".
         as_generation_dict (bool): Specify if individuals values should be returned as generation and individual name dictionairies.
@@ -349,7 +389,7 @@ def get_individuals_min_max(run, generation_range=None):
     Get the minimum and maximum values for various measurements across generations and individuals.
 
     Parameters:
-        run (str): The data structure representing the run.
+        run (str): The path of the ENAS run results directory.
         generation_range (tuple, optional): A tuple specifying the range of generations to consider (start, end).
 
     Returns:
@@ -390,7 +430,20 @@ def get_individuals_min_max(run, generation_range=None):
     return measurements
   
 def get_healthy_individuals_results(run, generation_range=None, as_generation_dict=False): 
-    
+    """
+    Retrieve healthy and unhealthy individuals' results.
+
+    Args:
+        run (str): The path of the ENAS run results directory.
+        generation_range (tuple): A tuple specifying the range of generations to consider. Default is None, meaning all generations.
+        as_generation_dict (bool): If True, returns dictionaries with generation keys containing individual results.
+                                   If False, returns lists of individual results.
+                                   Default is False.
+
+    Returns:
+        tuple or list: If as_generation_dict is True, returns a tuple containing dictionaries of healthy and unhealthy individuals' results.
+                       If as_generation_dict is False, returns two lists of healthy and unhealthy individual results.
+    """
     gen_results = get_individuals(run, generation_range, value="results", as_generation_dict=True)   
     
     healthy = {}
@@ -431,7 +484,7 @@ def get_best_individuals(run):
     """Get the individuals with the highest fitness value per generation.
 
     Args:
-        run (str): The directory name of the run data.
+        run (str): The path of the ENAS run results directory.
 
     Returns:
         dict: Generation dictionnairy with dictionnairy of "individual", its "results" and "chromosome"
@@ -471,13 +524,12 @@ def get_best_individuals(run):
 
 
 ### GENES ###
-
 def get_number_of_genes(run, generation, genename):
     """
     Get the number of genes in a certain generation.
     
     Args:
-        run (str): The directory name of the run data.
+        run (str): The path of the ENAS run results directory.
         generation (int): Generation where genes will be counted.
         genename (str): The "layer" identifier of the a gene. 
         
@@ -498,10 +550,22 @@ def get_number_of_genes(run, generation, genename):
 
 
 ### FAMILY TREE 
-
 def _get_crossover_parents(run):
-    """Dicitionnairy with key individual and values of parents of individuals with values=["Generation", "New Individual", "Parent 1", "Crossover 1", "Parent 2", "Crossover 2"]"""
+    """
+    Retrieve information about crossover parents and their offspring.
 
+    Args:
+        run (str): The path of the ENAS run results directory.
+
+    Returns:
+        dict: A dictionary containing information about crossover parents and their offspring.
+              Keys are the names of the new individuals, and values are dictionaries with the following keys:
+              - 'generation': The generation number of the offspring.
+              - 'parent1': The name of the first parent.
+              - 'crossover1': The crossover point in the first parent's chromosome.
+              - 'parent2': The name of the second parent.
+              - 'crossover2': The crossover point in the second parent's chromosome.
+    """
     df = pd.read_csv(f'{run}/crossover_parents.csv', header=None)
     df = df.rename(columns={0:"Generation", 1:"Parent 1", 2:"Parent 2", 3:"New Individual"})
     df = df.reindex(columns=["Generation", "New Individual", "Parent 1", "Crossover 1", "Parent 2", "Crossover 2"])
@@ -533,7 +597,7 @@ def _get_crossover_parents_df(run):
     Dataframe of parents of individuals (not in use)
     
     Args:
-        run (str): The directory name of the run data.
+        run (str): The path of the ENAS run results directory.
         
     Returns:
         df (pandas.DataFrame): Dataframe with columns ["generation", "individual", "parent1", "crossover1", "parent2", "crossover2"]
@@ -567,7 +631,7 @@ def _get_upstream_tree(run, generation, individual, generation_range):
     Helper funnction for family tree: Create upstream famliy tree with nodes, edges and root elements starting from selected individual.
     
     Args:
-        run (str): The directory name of the run data.
+        run (str): The path of the ENAS run results directory.
         generation (int): Generation of individual
         individual (str): Individual from where family tree evolves from. 
         generation_range (range): A python range of generations from which the individuals will be extracted. 
@@ -609,7 +673,7 @@ def _get_downstream_tree(run, generation, individual, generation_range):
     Helper funnction for family tree: Create upstream famliy tree with nodes and edges starting from selected individual.
     
     Args:
-        run (str): The directory name of the run data.
+        run (str): The path of the ENAS run results directory.
         generation (int): Generation of individual
         individual (str): Individual from where family tree evolves from. 
         generation_range (range): A python range of generations from which the individuals will be extracted. 
@@ -653,7 +717,7 @@ def get_family_tree(run, generation, individual, generation_range=None):
     Create famliy tree with nodes, edges and roots elements starting from selected individual.
     
     Args:
-        run (str): The directory name of the run data.
+        run (str): The path of the ENAS run results directory.
         generation (int): Generation of individual
         individual (str): Individual from where family tree evolves from. 
         generation_range (range): A python range of generations from which the individuals will be extracted. 
@@ -684,9 +748,17 @@ def get_family_tree(run, generation, individual, generation_range=None):
 
 
 ### OTHER HELPER FUNCTIONS 
-
 def get_random_individual(run, generation=None):
-    """Get the first sorted individual from a random generation of specified run."""
+    """
+    Get a random individual from a specified generation or from all generations if no generation is specified.
+
+    Args:
+        run (str): The path of the ENAS run results directory.
+        generation (int, optional): The generation number from which to select the individual. If not specified, a random generation will be chosen. Defaults to None.
+
+    Returns:
+        tuple: A tuple containing the selected generation number and the random individual's name.
+    """
     if generation is None:
         generations = get_generations(run)
         generation = random.choice(generations)

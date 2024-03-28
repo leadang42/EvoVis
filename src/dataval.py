@@ -4,7 +4,8 @@ import re
 import json
 import pandas as pd
 
-##########################################################################################
+
+################################################################################################################################################
 
 # MODULE ENAS DATA CHECK
 
@@ -12,7 +13,8 @@ import pandas as pd
 # Parameters: run (str) The identifier for the run. This is used to construct the path to the search_space.json file.
 # Returns: (str) A message suggesting improvements to the data structure if validation fails or an empty string if the data structure is valid.
 
-###########################################################################################
+################################################################################################################################################
+
 
 def json_to_dict(filepath):
     """
@@ -38,6 +40,7 @@ def json_to_dict(filepath):
         return data
     except FileNotFoundError:
         raise FileNotFoundError(f"File not found: {filepath}")
+    
     except json.JSONDecodeError as e:
         raise json.JSONDecodeError(f"Error decoding JSON data in file {filepath}: {e}")
 
@@ -70,7 +73,7 @@ def validate_hyperparameters(run):
     for hp, details in hyperparameters.items():
         
         if not isinstance(details, dict):
-            message += f"Error config.json file: Hyperparameter '{hp}' details must be a dictionary.\n"
+            message += f"Error config.json file: Hyperparameter '{hp}' settings must be a dictionary.\n"
             continue
         
         # Check if 'value' key exists
@@ -261,12 +264,70 @@ def validate_generations_of_individuals(run):
 
     return ""
 
-# TODO
 def validate_meas_info(run):
+    filepath = f"{run}/config.json"
+    
+    # Check if config.json exists
+    if not os.path.exists(filepath):
+        return "Error config.json file: Config file 'config.json' not found."
+    
+    # Check if the file is a JSON
+    try:
+        data = json_to_dict(filepath)
+    except json.JSONDecodeError:
+        return "Error config.json file: Invalid JSON format in config.json."
+    
+    # Check if 'reslts' key exists
+    if 'results' not in data:
+        return "Error config.json file: Missing 'results' key in config.json."
+    
+    results = data['results']
+    
+    # Check if hyperparameters contain a dictionary as value
+    if not isinstance(results, dict):
+        return "Error config.json file: Results must be a dictionary."
+    
+    message = ""
+    
+    # Check each hyperparameter
+    for result, details in results.items():
+        
+        if not isinstance(details, dict):
+            message += f"Error config.json file: Result '{result}' settings must be a dictionary.\n"
+            continue
+        
+    return message
+
+def validate_individual_result(run, generation, individual):
+    
+    filepath = f"{run}/Generation_{generation}/{individual}/results.json"
+    
+    # Check if config.json exists
+    if not os.path.exists(filepath):
+        return f"Error results.json file for {individual} in {generation}: Results file 'results.json' not found."
+    
+    # Check if the file is a JSON
+    try:
+        data = json_to_dict(filepath)
+    except json.JSONDecodeError:
+        return f"Error results.json file for {individual} in {generation}: Invalid JSON format in results.json."
+    
     return ""
 
-def validate_individual_results(run):
-    return ""
-
-def validate_individual_chromosomes(run):
+def validate_individual_chromosome(run, generation, individual):
+    
+    filepath = f"{run}/Generation_{generation}/{individual}/chromosome.json"
+    
+    print(filepath)
+    
+    # Check if config.json exists
+    if not os.path.exists(filepath):
+        return f"Error chromosome.json file for {individual} in {generation}: Chromosome file 'chromosome.json' not found."
+    
+    # Check if the file is a JSON
+    try:
+        data = json_to_dict(filepath)
+    except json.JSONDecodeError:
+        return f"Error chromosome.json file for {individual} in {generation}: Invalid JSON format in chromosome.json."
+    
     return ""

@@ -2,8 +2,25 @@ import dash
 from dash import html
 from dash_iconify import DashIconify
 
+
+############################################################
+
+# MODULE EVOVIS APP
+
+# The Module combines the four EvoVis pages into a web 
+# application where the user can navigate from page to page.
+
+############################################################
+
+
 ### LAYOUT COMPONENTS
 def navbar():
+    """
+    Generate the navigation bar of EvoVis.
+
+    Returns:
+        dash.html.Div: Navigation bar containing links to different pages.
+    """
     return html.Div(
     [
         html.Div(
@@ -26,10 +43,21 @@ def navbar():
 )
 
 def page():
+    """
+    Generate the page content container.
+
+    Returns:
+        dash.html.Div: Page content container.
+    """
     return html.Div([ dash.page_container], id="page-content")
 
 def app_layout():
-    
+    """
+    Generate the layout of the application.
+
+    Returns:
+        dash.html.Div: Layout of the application containing the navigation bar and page content.
+    """
     return html.Div([
         navbar(), 
         page()

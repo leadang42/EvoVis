@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 import os
 from evolution import get_family_tree, get_generations, get_individuals, get_random_individual, get_individuals_min_max, get_individual_result, get_individual_chromosome, get_meas_info
 from components import dot_heading, bullet_chart_card, bullet_chart_card_basic, warning, information, chromosome_sequence
-from dataval import validate_generations_of_individuals, validate_crossover_parents
+from dataval import validate_generations_of_individuals, validate_crossover_parents, validate_meas_info, validate_individual_chromosome, validate_individual_result
 
 ### LOAD PATH FROM ENVIRONMENT VARIABLES
 load_dotenv()
@@ -282,6 +282,13 @@ def set_values(ind_clicked, ind_select, gen_range):
 
     if "error" in ind_meas and (ind_meas["error"] == "True" or ind_meas["error"] == True):
         ind_exceptions.append(warning("Individual errored."))
+        
+    val_msg = validate_individual_result(run, gen, ind) + validate_individual_chromosome(run, gen, ind)
+    
+    if val_msg:
+        ind_exceptions.append(warning(val_msg))
+        return ind_heading, ind_exceptions, None, None
+        
 
     ### 3 CHROMOSOME ###
     ind_genes = [dot_heading("Genes", style={"margin": "10px",'flex': '100%'}), chromosome_sequence(chromosome=ind_genome)]
@@ -297,7 +304,7 @@ def set_values(ind_clicked, ind_select, gen_range):
     del meas_info['fitness']
     
     for meas_key in list(meas_info.keys()):
-        if meas_key in ind_meas:
+        if meas_key in ind_meas and meas_info[meas_key]["individual-info-plot"]:
             
             if isinstance(ind_meas[meas_key], (float, int)):
                 
@@ -379,6 +386,7 @@ def family_tree_layout():
         dash_html_components.Div: Layout for the family tree page.
     """
     validation_result = validate_generations_of_individuals(run) + validate_crossover_parents(run)
+    validation_result_ind_inf = validate_meas_info(run)
     layout = None
     
     if validation_result:
@@ -391,15 +399,27 @@ def family_tree_layout():
         print(validation_result)
         
     else:
-        layout = dmc.Grid(
-            children=[
-                family_tree(),
-                individual_information()
-            ],
-            gutter="s",
-            grow=True
-        )
-    
+        if validation_result_ind_inf:
+            layout = dmc.Grid(
+                children=[
+                    family_tree(),
+                    dmc.Col(html.Div([warning(validation_result_ind_inf)]), span='auto', style={'max-width': '100%'})  
+                ],
+                gutter="s",
+                grow=True
+            )
+            print(validation_result)
+            
+        else:  
+            layout = dmc.Grid(
+                children=[
+                    family_tree(),
+                    individual_information()
+                ],
+                gutter="s",
+                grow=True
+            )
+            
     return layout
 
 layout = family_tree_layout

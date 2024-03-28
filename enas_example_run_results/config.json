@@ -187,27 +187,25 @@
 			"unit": "B",        
             "run-result-plot": true,
             "individual-info-plot": true,
-            "individual-info-img": "chip-icon.png",      
             "pareto-optimlity-plot": true,
-            "board": false 
+            "individual-info-img": "chip-icon.png"     
+            
         },
         "inference_time": {
             "displayname": "Inference Time",              
 			"unit": "ms",        
             "run-result-plot": true,
             "individual-info-plot": true,
-            "individual-info-img": "time-icon.png",      
             "pareto-optimlity-plot": true,
-            "board": true 
+            "individual-info-img": "time-icon.png"     
         },
         "val_acc": {
             "displayname": "Accuracy",              
 			"unit": null,        
             "run-result-plot": false,
             "individual-info-plot": true,
-            "individual-info-img": "correct-icon.png",      
             "pareto-optimlity-plot": true,
-            "board": false,
+            "individual-info-img": "correct-icon.png",      
             "min-boundary": 0,
             "max-boundary": 1
         },
@@ -216,9 +214,8 @@
 			"unit": null,        
             "run-result-plot": false,
             "individual-info-plot": false,
-            "individual-info-img": null,      
             "pareto-optimlity-plot": false,
-            "board": false,
+            "individual-info-img": null,      
             "min-boundary": 0,
             "max-boundary": 1
         }

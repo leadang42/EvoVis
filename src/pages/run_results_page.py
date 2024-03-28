@@ -5,9 +5,11 @@ import plotly.graph_objects as go
 import numpy as np
 from dotenv import load_dotenv
 import os
-from components import dot_heading, bullet_chart_card_basic, parameter_card, chromosome_sequence
+from components import dot_heading, bullet_chart_card_basic, parameter_card, chromosome_sequence, warning
 from evolution import get_individuals, get_generations, get_meas_info, get_healthy_individuals_results, get_best_individuals, get_hyperparameters
 from genepool import get_unique_gene_colors
+from dataval import validate_generations_of_individuals, validate_meas_info
+
 
 ### LOAD PATH FROM ENVIRONMENT VARIABLES
 load_dotenv()
@@ -21,6 +23,7 @@ dash.register_page(__name__, path='/results')
 ### STYLES
 grid_gutter = 'xl'
 fitn_obj_height = 180
+
 
 ### HELPER FUNCTIONS FOR PLOTS ###
 def add_meas_trace(fig, run, meas, generation_range=None, min=None, max=None, show_std=True, linecolor='#6173E9'):
@@ -62,7 +65,6 @@ def add_meas_trace(fig, run, meas, generation_range=None, min=None, max=None, sh
         
         for ind, result in results.items():
             
-            # TODO Why result None
             if result is not None and meas in result:
                 value = result[meas]
 
@@ -365,7 +367,8 @@ def get_pareto_optimality_fig(run, generation_range=None, max_width=600, height=
 ### GENERAL RUN OVERVIEW ###
 def general_overview():
     """
-    Generate a Dash Grid component containing the general overview of run results.
+    Generate a Dash Grid component containing the count of healthy and unhealthy individuals, fitness plot, 
+    mulit-objective individual mapping plot.
 
     Returns:
         dash_mantine_components.Grid: Dash Grid component containing general overview.
@@ -398,7 +401,12 @@ def general_overview():
 
 ### INDIVIDUAL RUN RESULTS PLOT ###
 def objectives_overview():
-    
+    """
+    Generate a Dash Grid component containing the overview of metrics over generations plots.
+
+    Returns:
+        dash_mantine_components.Grid: Dash Grid component containing overview of metrics over generations plots.
+    """
     measurements = get_meas_info(run)
     objective_trends = []
     
@@ -431,16 +439,19 @@ def objectives_overview():
 
 
 ### BEST INDIVIDUALS PLOT ###
-
 def best_individuals_overview():
-    
+    """
+    Generate a Dash Group component containing the overview of the best individuals chromosomes.
+
+    Returns:
+        dash_mantine_components.Group: Dash Group component containing best individuals chromosomes.
+    """
     genomes = []
     best_individuals = get_best_individuals(run)
     unique_genes = get_unique_gene_colors(run)
     
     for gen, ind in best_individuals.items():
         
-        # TODO WHYY
         if ind["individual"] is None:
             continue
         
@@ -486,8 +497,13 @@ def best_individuals_overview():
 
 
 ### PAGE LAYOUT ###
-
 def performance_plots_div():
+    """
+    Generate a Dash Div component containing performance plots.
+
+    Returns:
+        dash_html_components.Div: Dash Div component containing performance plots.
+    """
     return html.Div(
         children=[
             html.H1("Run Result Plots", style={'margin-bottom': '25px', 'margin-top': '25px'}),
@@ -497,6 +513,12 @@ def performance_plots_div():
     )
 
 def best_individuals_div():
+    """
+    Generate a Dash Div component containing chromsomes of the best individuals.
+
+    Returns:
+        dash_html_components.Div: Dash Div component containing chromsomes of the best individuals.
+    """
     return html.Div(
         children=[
             html.H1("Fittest Individuals", style={'margin-bottom': '25px', 'margin-top': '25px'}),
@@ -505,21 +527,43 @@ def best_individuals_div():
     )
 
 def run_results_layout():
-    return dmc.Tabs(
-    [
-        dmc.TabsList(
-            [
-                dmc.Tab("Run results plots", value="plots"),
-                dmc.Tab("Fittest individuals", value="best-individuals"),
+    """
+    Generate the layout for the run results page.
+
+    Returns:
+        dash_mantine_components.Tabs: Layout for the run results page.
+    """
+    validation_result = validate_generations_of_individuals(run) + validate_meas_info(run)
+    layout = None
+    
+    if validation_result:
+        layout=html.Div(
+            children=[
+                html.H1("Run Results", style={'margin-bottom': '25px', 'margin-top': '25px'}),
+                warning(validation_result)
             ]
-        ),
-        dmc.TabsPanel(performance_plots_div(), value="plots"),
-        dmc.TabsPanel(best_individuals_div(), value="best-individuals"),
-    ],
-    color="indigo",
-    orientation="horizontal",
-    variant="default",
-    value="plots"
-)
+        )
+        print(validation_result)
+        
+    else:
+        layout = dmc.Tabs(
+            [
+                dmc.TabsList(
+                    [   
+                        dmc.Tab("Run results plots", value="plots"),
+                        dmc.Tab("Fittest individuals", value="best-individuals"),
+                    ]
+                ),
+                dmc.TabsPanel(performance_plots_div(), value="plots"),
+                dmc.TabsPanel(best_individuals_div(), value="best-individuals"),
+            ],
+            color="indigo",
+            orientation="horizontal",
+            variant="default",
+            value="plots"
+        )  
+    
+    return layout
+
 
 layout = run_results_layout
