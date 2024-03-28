@@ -320,6 +320,7 @@ def display_node_data(data):
 def genepool_layout():
     """
     Generates the real-time layout for the gene pool page.
+    If the search space data fails validation, it displays a warning message.
 
     Returns:
         dash_mantine_components.Grid: Layout for the gene pool page.

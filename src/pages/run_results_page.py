@@ -9,20 +9,39 @@ from components import dot_heading, bullet_chart_card_basic, parameter_card, chr
 from evolution import get_individuals, get_generations, get_meas_info, get_healthy_individuals_results, get_best_individuals, get_hyperparameters
 from genepool import get_unique_gene_colors
 
+### LOAD PATH FROM ENVIRONMENT VARIABLES
 load_dotenv()
 run = os.getenv("RUN_RESULTS_PATH")
 
+
+### REGISTER DASH APP
 dash.register_page(__name__, path='/results')
 
 
-### GLOBAL VARIABLES
+### STYLES
 grid_gutter = 'xl'
 fitn_obj_height = 180
-measurements = get_meas_info(run)
 
 ### HELPER FUNCTIONS FOR PLOTS ###
-
 def add_meas_trace(fig, run, meas, generation_range=None, min=None, max=None, show_std=True, linecolor='#6173E9'):
+    """
+    Add a measurement trace to a Plotly figure.
+
+    Args:
+        fig (plotly.graph_objs.Figure): Plotly figure to which the measurement trace will be added.
+        run (str): Path to the run results.
+        meas (str): Measurement to be plotted.
+        generation_range (tuple): Tuple containing the minimum and maximum generation.
+        min (float): Minimum boundary for valid values.
+        max (float): Maximum boundary for valid values.
+        show_std (bool): Whether to show standard deviation.
+        linecolor (str): Color of the measurement trace.
+
+    Returns:
+        None
+    """
+    
+    measurements = get_meas_info(run)
     
     # Defining borders to exclude and include invalid values
     if min is None:
@@ -88,7 +107,16 @@ def add_meas_trace(fig, run, meas, generation_range=None, min=None, max=None, sh
     )
 
 def add_constraint_trace(fig, constraint):
-    
+    """
+    Add a constraint trace to a Plotly figure.
+
+    Args:
+        fig (plotly.graph_objs.Figure): Plotly figure to which the constraint trace will be added.
+        constraint (float): Value of the constraint.
+
+    Returns:
+        None
+    """
     generations = get_generations(run, as_int=True)
     fig.add_trace(
         go.Scatter(
@@ -101,7 +129,25 @@ def add_constraint_trace(fig, constraint):
     )
 
 def figure_meas_over_gen(run, measures, generation_range=None, min=None, max=None, show_std=True, show_constraint=True, title=None, xaxis_title=None, yaxis_title=None):
+    """
+    Generate a Plotly figure showing measurement trends over generations.
 
+    Args:
+        run (str): Path to the run results.
+        measures (str or list): Measurement(s) to be plotted.
+        generation_range (tuple): Tuple containing the minimum and maximum generation values.
+        min (float): Minimum boundary for valid values.
+        max (float): Maximum boundary for valid values.
+        show_std (bool): Whether to show standard deviation.
+        show_constraint (bool): Whether to show constraint trace.
+        title (str): Title of the figure.
+        xaxis_title (str): Title of the x-axis.
+        yaxis_title (str): Title of the y-axis.
+
+    Returns:
+        plotly.graph_objs.Figure: Plotly figure showing measurement trends over generations.
+    """
+    
     # Check if measures is a list or a string
     if type(measures) is str:
         measures = [measures]
@@ -159,6 +205,28 @@ def figure_meas_over_gen(run, measures, generation_range=None, min=None, max=Non
     return fig
 
 def graph_meas_over_gen(run, measures, generation_range=None, min=None, max=None, show_std=True, max_width=600, height=200, width=None, show_constraint=True, title=None, xaxis_title=None, yaxis_title=None, id="graph-meas-over-gen"):
+    """
+    Generate a Dash Graph component showing measurement trends over generations.
+
+    Args:
+        run (str): Path to the run results.
+        measures (str or list): Measurement(s) to be plotted.
+        generation_range (tuple): Tuple containing the minimum and maximum generation values.
+        min (float): Minimum boundary for valid values.
+        max (float): Maximum boundary for valid values.
+        show_std (bool): Whether to show standard deviation.
+        max_width (int): Maximum width of the graph.
+        height (int): Height of the graph.
+        width (int): Width of the graph.
+        show_constraint (bool): Whether to show constraint trace.
+        title (str): Title of the graph.
+        xaxis_title (str): Title of the x-axis.
+        yaxis_title (str): Title of the y-axis.
+        id (str): ID of the graph component.
+
+    Returns:
+        dash_core_components.Graph: Dash Graph component showing measurement trends over generations.
+    """
     
     fig = figure_meas_over_gen(run, measures, generation_range, min, max, show_std, show_constraint, title, xaxis_title, yaxis_title)
     
@@ -171,6 +239,20 @@ def graph_meas_over_gen(run, measures, generation_range=None, min=None, max=None
     return graph_div
 
 def get_pareto_optimality_fig(run, generation_range=None, max_width=600, height=200):
+    """
+    Generate a Dash Graph component showing multi-objective mappingto identify pareto optimal neural architectures.
+
+    Args:
+        run (str): Path to the run results.
+        generation_range (tuple): Tuple containing the minimum and maximum generation values.
+        max_width (int): Maximum width of the graph.
+        height (int): Height of the graph.
+
+    Returns:
+        dash_core_components.Graph: Dash Graph component showing  multi-objective mapping of architectures.
+    """
+    
+    measurements = get_meas_info(run)
     
     # Font of axis
     tickfont = {
@@ -281,8 +363,13 @@ def get_pareto_optimality_fig(run, generation_range=None, max_width=600, height=
 
 
 ### GENERAL RUN OVERVIEW ###
-
 def general_overview():
+    """
+    Generate a Dash Grid component containing the general overview of run results.
+
+    Returns:
+        dash_mantine_components.Grid: Dash Grid component containing general overview.
+    """
     
     tot_gen = get_hyperparameters(run)["generations"]["value"]
     processed_gen = len(get_generations(run))
@@ -309,55 +396,10 @@ def general_overview():
     return general_overview
 
 
-### MEMORY PLOT ###
-def memory_plot():
-    mem_chips = dmc.ChipGroup(
-        [
-            dmc.Chip(
-                x,
-                value=x,
-                variant="filled",
-                color="indigo",
-                size='xs',
-            )
-            for x in ["H5", "TFLite", "C Array"]
-        ],
-        id="mem-chips",
-        value=["H5", "TFLite", "C Array"],
-        multiple=True,
-        style={'padding': '5px'}
-    )
-    
-    memory = dmc.Col(
-        [
-            dot_heading('Memory', className='dot-heading-results-page', style={'width': '100px'}),     
-            graph_meas_over_gen(run, ['memory_footprint_h5', 'memory_footprint_tflite', 'memory_footprint_c_array'], height=fitn_obj_height, id="mem-graph"),
-            mem_chips
-        ], 
-        className="col-results-page"
-    )
-    
-    return memory
-
-#@callback(
-#    Output("mem-graph", "figure"),
-#    Input("mem-chips", "value"),
-#)
-def chips_values(mems):
-    
-    mems_key = {
-        "H5": "memory_footprint_h5", 
-        "TFLite": "memory_footprint_tflite", 
-        "C Array": "memory_footprint_c_array",
-    }
-    
-    return figure_meas_over_gen(run, [mems_key[mem] for mem in mems])
-
-
 ### INDIVIDUAL RUN RESULTS PLOT ###
-
 def objectives_overview():
     
+    measurements = get_meas_info(run)
     objective_trends = []
     
     for measurement, meas_info in measurements.items():

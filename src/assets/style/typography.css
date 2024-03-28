@@ -20,11 +20,6 @@ h1 {
 .dot-heading {
     display: flex;
     align-items: center;
-    justify-content: flex-start; /* This aligns items to the left */
+    justify-content: flex-start; 
     flex: 100%;
 }
-
-
-  
-
-  

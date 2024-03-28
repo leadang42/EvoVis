@@ -12,10 +12,11 @@ EvoVis offers a holistic view of the ENAS process. It provides insights into arc
 
 ## Contents
 
-[Contents](#contents)
-[Getting started](#getting-started)
-[License](#license)
-[Contact](#contact)
+- [EvoVis](#evovis)
+  - [Contents](#contents)
+  - [Getting started](#getting-started)
+  - [License](#license)
+  - [Contact](#contact)
 
 
 ## Getting started

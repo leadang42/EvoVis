@@ -73,6 +73,12 @@ MARKS_STYLE = {
 
 ### FAMILY TREE COMPONENTS 
 def family_tree_cytsocape():
+    """
+    Generates a Dash Cytoscape component representing the family tree.
+
+    Returns:
+        dash_cytoscape.Cytoscape: Dash Cytoscape component representing the family tree.
+    """
     return cyto.Cytoscape(
         id='cytoscape-family-tree',
         className="wrapper",
@@ -81,7 +87,12 @@ def family_tree_cytsocape():
     )
 
 def generation_slider():
-    
+    """
+    Generates a Dash RangeSlider component for selecting generations.
+
+    Returns:
+        dash_core_components.RangeSlider: Dash RangeSlider component.
+    """
     generations_int = get_generations(run, as_int=True)
     random_generation, _ = get_random_individual(run, generations_int[round(len(generations_int)/2)])
     
@@ -101,6 +112,12 @@ def generation_slider():
     )
 
 def individual_select(): 
+    """
+    Generates a Dash Mantine Select component for selecting individuals.
+
+    Returns:
+        dash_mantine_components.Select: Dash Mantine Select component.
+    """
     return dmc.Select(
         label="Select Individual",
         placeholder="Select Individual",
@@ -113,6 +130,16 @@ def individual_select():
 ### FAMILY TREE MODIFICATION CALLBACKS 
 @callback( Output("ind-select", "data"), Output("ind-select", "value"), Input("gen-range-slider", "value"))
 def set_individuals_select(gen_range):
+    """
+    Sets the options and default value for the individual selection dropdown based on the selected generation range.
+
+    Args:
+        gen_range (list): List containing the selected generation (idx 1) and minimum (idx 0), maximum (idx 2) generation values selected on the RangeSlider.
+
+    Returns:
+        list: Data options for the individual selection dropdown.
+        str: Default value for the individual selection dropdown.
+    """
     gen = gen_range[1]
     
     data = [{"value": ind, "label": ind} for ind in get_individuals(run, generation_range=range(gen, gen+1), value="names", as_generation_dict=False)]
@@ -122,6 +149,20 @@ def set_individuals_select(gen_range):
 
 @callback( Output("cytoscape-family-tree", "elements"), Output("cytoscape-family-tree", "layout"), Output("cytoscape-family-tree", "stylesheet"), Input("gen-range-slider", "value"), Input("ind-select", "value"), Input("cytoscape-family-tree", "tapNodeData"), Input("cytoscape-family-tree", "tapEdgeData"))
 def set_cytoscape(gen_range, ind, ind_clicked, edge_clicked):
+    """
+    Sets the elements, layout, and stylesheet for the family tree visualization based on user interactions.
+
+    Args:
+        gen_range (list): List containing the selected generation (idx 1) and minimum (idx 0), maximum (idx 2) generation values selected on the RangeSlider.
+        ind (str): Selected individual from the dropdown.
+        ind_clicked (dict): Data of the individual node clicked on the Cytoscape component.
+        edge_clicked (dict): Data of the edge clicked on the Cytoscape component.
+
+    Returns:
+        list: Nodes and edges of Cytoscape component.
+        dict: Layout configuration for the Cytoscape component.
+        list: Stylesheet for the Cytoscape component.
+    """
     
     # Get Family tree through individual selection
     generation_range = range(gen_range[0], gen_range[2]+1)
@@ -196,6 +237,20 @@ def set_cytoscape(gen_range, ind, ind_clicked, edge_clicked):
     Output("individual-heading", "children"),  Output("individual-exceptions", "children"), Output("individual-genes", "children"), Output("individual-results", "children"), 
     Input("cytoscape-family-tree", "tapNodeData"), Input("ind-select", "value"), Input("gen-range-slider", "value"))
 def set_values(ind_clicked, ind_select, gen_range):
+    """
+    Sets the information to be displayed about the selected individual.
+
+    Args:
+        ind_clicked (dict): Data of the individual node clicked on the Cytoscape component.
+        ind_select (str): Selected individual from the dropdown.
+        gen_range (tuple): Tuple containing the minimum and maximum generation values selected on the RangeSlider.
+
+    Returns:
+        list: Name of the selected individual.
+        list: Exception information about the selected individual.
+        list: Genes of the selected individual.
+        list: Metrics of the selected individual.
+    """
     
     # Individual selected in cytoscape
     ind = None
@@ -264,9 +319,21 @@ def set_values(ind_clicked, ind_select, gen_range):
 
 ### FAMILY TREE PAGE LAYOUT  
 def family_tree_header():
+    """
+    Generates the header for the family tree page.
+
+    Returns:
+        dash_html_components.H1: Header for the family tree page.
+    """
     return html.H1('Family Tree', style = {"margin-bottom": "20px", "margin-top": "20px"})
 
 def family_tree():
+    """
+    Generates the layout for the family tree page.
+
+    Returns:
+        dash_mantine_components.Col: Column layout for the family tree page.
+    """
     return dmc.Col(html.Div(
         [ 
             family_tree_header(), 
@@ -279,6 +346,12 @@ def family_tree():
     )
     
 def individual_information():
+    """
+    Generates the layout for individual information display.
+
+    Returns:
+        dash_mantine_components.Col: Column layout for individual information display.
+    """
     return dmc.Col(
         [
             html.Div([], id='individual-heading'), 
@@ -298,7 +371,13 @@ def individual_information():
     )
 
 def family_tree_layout():
-    
+    """
+    Generates the layout for the family tree page based on data validation.
+    If data fails validation, it displays a warning message.
+
+    Returns:
+        dash_html_components.Div: Layout for the family tree page.
+    """
     validation_result = validate_generations_of_individuals(run) + validate_crossover_parents(run)
     layout = None
     

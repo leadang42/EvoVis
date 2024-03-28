@@ -1,4 +1,3 @@
-/* Box centered text */
 #gene-type  {
     font-family: var(--font-family);
     font-size: 15px;
@@ -15,7 +14,7 @@
     color: white;
     background-color: var(--accent-color);
     border-radius: 10px; 
-    box-shadow: 3px 3px 10px 1px rgba(0, 0, 0, 0.03);
+    box-shadow: var(--shadow);
 }
 
 #gene-name {
@@ -60,7 +59,7 @@
     background-color: white; 
     border-radius: 15px; 
     margin: 5px; 
-    box-shadow: 3px 3px 10px 1px rgba(0, 0, 0, 0.03);
+    box-shadow: var(--shadow);
     position: relative; 
     margin-bottom: 60px;
 }
@@ -77,4 +76,8 @@
 
 #number-of-genes-graph{
     width: 100%;
+}
+
+#cytoscape-genepool {
+    background: var(--background-color);
 }
