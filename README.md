@@ -19,7 +19,7 @@ EvoVis offers a holistic view of the ENAS process. It provides insights into arc
   - [Getting Started](#getting-started)
   - [Compatible ENAS Algorithms](#compatible-enas-algorithms)
   - [Data Structure Interface](#data-structure-interface)
-  - [Project Organization](#project-organization)
+  - [Project Code Organization](#project-code-organization)
   - [License](#license)
   - [Contact](#contact)
 
@@ -115,7 +115,7 @@ The individual’s result JSON file contains the measurements and fitness of an 
 | `error` | Indicates whether the individual was successfully trained. If set to true, the individual’s metrics will not be included in the evaluation analysis of the ENAS run. |
 
 
-## Project Organization
+## Project Code Organization
 
 ![Project Organization](./src/assets/media/project-organisation.png)
 
