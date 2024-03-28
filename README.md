@@ -48,6 +48,9 @@ python EvoVis.py ./enas_example_run_results
 4. **EvoVis Usage:** Access EvoVis dashboard via the provided localhost and explore hyperparameters, gene pool graph, family tree graph, and performance plots.
 
 ## Compatible ENAS Algorithms
+
+![Run Results File Structure](./src/assets/media/evonas-overview.png)
+
 1. **Gene Pool:** DAG-structured and one searchable level (e.g. no hierarchical search spaces) 
 2. **Optimization Problems:** Multi-objective and single-objective 
 3. **Selection:** All strategies
