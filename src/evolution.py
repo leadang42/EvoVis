@@ -476,9 +476,6 @@ def get_healthy_individuals_results(run, generation_range=None, as_generation_di
     unhealthy_list = []
     for gen, results in unhealthy.items():
         unhealthy_list += list(results.values())
-        
-    print("Healthy:", len(healthy_list))
-    print("Unhealthy:", len(unhealthy_list))
             
     if as_generation_dict:
         return healthy, unhealthy

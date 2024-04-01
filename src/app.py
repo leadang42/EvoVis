@@ -68,4 +68,4 @@ app = dash.Dash(__name__, use_pages=True)
 app.layout = app_layout
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)
