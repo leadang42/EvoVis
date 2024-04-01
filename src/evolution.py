@@ -462,7 +462,8 @@ def get_healthy_individuals_results(run, generation_range=None, as_generation_di
             if "error" not in result or result["error"] == "False" or result["error"] == False:
                 healthy[gen][ind] = result
                 
-            elif result["error"] == "True" or result["error"] == True:
+            #elif result["error"] == "True" or result["error"] == True:
+            else:
                 unhealthy[gen][ind] = result
             
             ###################################

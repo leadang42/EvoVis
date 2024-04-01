@@ -1,8 +1,8 @@
 # EvoVis
 
-EvoVis is a dashboard for visualizing Evolutionary Neural Architecture Search (ENAS) algorithms. ENAS mimics biological evolution to discover optimal neural network architectures, starting with a population of randomly generated architectures and iteratively improving them through selection, crossover, and mutation. The key features of EvoVis are the following:
+EvoVis is a dashboard for visualizing Evolutionary Neural Architecture Search (ENAS) algorithms. ENAS is an optimization process that mimics biological evolution to automatically discover optimal neural network architectures for specific tasks. It starts with a population of randomly generated architectures and iteratively improving them through selection, crossover, and mutation. 
 
-![EvoVis Overview](./src/assets/media/EvoVis-overview.png)
+EvoVis offers a holistic view of the ENAS process. It provides insights into architectural evolution and performance optimization.The key features of EvoVis are the following:
 
 1. **Hyperparameter Overview:** Efficiently tune hyperparameters with an overview of settings.
 2. **Gene Pool Graph:** Visualize potential neural architecture topologies and connectivity patterns across generations.
@@ -10,7 +10,7 @@ EvoVis is a dashboard for visualizing Evolutionary Neural Architecture Search (E
 4. **Performance Plots:** Monitor performance trends in real-time with evolutionary metrics.
 5. **Data Structure Interface:** Support for visualizing ENAS results from various frameworks and sources.
 
-EvoVis offers a holistic view of the ENAS process. It provides insights into architectural evolution and performance optimization.
+![EvoVis Overview](./src/assets/media/EvoVis-overview.png)
 
 ## Contents
 
@@ -45,14 +45,14 @@ python EvoVis.py <run_results_path>
 python EvoVis.py ./enas_example_run_results
 ````
 
-4. **EvoVis Usage:** Access EvoVis dashboard via the provided localhost and explore hyperparameters, gene pool graph, family tree graph, and performance plots.
+4. **EvoVis Usage:** Access EvoVis dashboard via the provided localhost and explore the hyperparameters, gene pool graph, family tree graph, and performance plots.
 
 ## Compatible ENAS Algorithms
 
 ![Run Results File Structure](./src/assets/media/evonas-overview.png)
 
 1. **Gene Pool:** DAG-structured and one searchable level (e.g. no hierarchical search spaces) 
-2. **Optimization Problems:** Multi-objective and single-objective 
+2. **Fitness:** Multi-objective and single-objective fitness functions
 3. **Selection:** All strategies
 4. **Crossover:** One-point crossover strategy 
 5. **Mutation:** All strategies
