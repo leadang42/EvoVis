@@ -2,6 +2,8 @@
 
 EvoVis is a dashboard for visualizing Evolutionary Neural Architecture Search (ENAS) algorithms. ENAS is an optimization process that mimics biological evolution to automatically discover optimal neural network architectures for specific tasks. It starts with a population of randomly generated architectures and iteratively improving them through selection, crossover, and mutation. 
 
+![EvoVis Overview](./src/assets/media/EvoVis-overview.png)
+
 EvoVis offers a holistic view of the ENAS process. It provides insights into architectural evolution and performance optimization.The key features of EvoVis are the following:
 
 1. **Hyperparameter Overview:** Efficiently tune hyperparameters with an overview of settings.
@@ -9,8 +11,6 @@ EvoVis offers a holistic view of the ENAS process. It provides insights into arc
 3. **Family Tree Graph:** Navigate the family tree of architectures, analyze performance metrics, and explore structures.
 4. **Performance Plots:** Monitor performance trends in real-time with evolutionary metrics.
 5. **Data Structure Interface:** Support for visualizing ENAS results from various frameworks and sources.
-
-![EvoVis Overview](./src/assets/media/EvoVis-overview.png)
 
 ## Contents
 
@@ -69,11 +69,11 @@ The JSON file provides the hyperparameters of the ENAS algorithm and the results
 Settings for the `hyperparameters` in `config.json`
 | Key | Description |
 | --- | --- |
-| `value` | The numerical value of the parameter. (Required) |
+| `value` | The value of the parameter. (Required) |
 | `unit` | The unit of measurement for the parameter. |
-| `icon` | The icon representing the parameter, for visual identification. |
+| `icon` | The icon representing the parameter from [Iconify](https://icon-sets.iconify.design/). |
 | `displayname` | The human-readable name of the parameter. |
-| `group` | The category to which the parameter belongs. |
+| `group` | The category to which the parameter belongs that determines the grouping of the parameters. |
 | `description` | A brief description explaining the significance of the parameter. |
 
 Settings for the `results` in `config.json`
