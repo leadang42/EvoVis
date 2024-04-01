@@ -1,7 +1,7 @@
 {
     "hyperparameters": {
         "generations": {
-            "value": 5,
+            "value": 20,
             "unit": null,
             "icon": "iconoir:tree",
             "displayname": "Generations",

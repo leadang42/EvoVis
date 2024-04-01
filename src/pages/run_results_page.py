@@ -6,7 +6,7 @@ import numpy as np
 from dotenv import load_dotenv
 import os
 from components import dot_heading, bullet_chart_card_basic, parameter_card, chromosome_sequence, warning
-from evolution import get_individuals, get_generations, get_meas_info, get_healthy_individuals_results, get_best_individuals, get_hyperparameters
+from evolution import get_generations, get_meas_info, get_healthy_individuals_results, get_best_individuals, get_hyperparameters
 from genepool import get_unique_gene_colors
 from dataval import validate_generations_of_individuals, validate_meas_info
 
@@ -53,7 +53,7 @@ def add_meas_trace(fig, run, meas, generation_range=None, min=None, max=None, sh
         max = 100000000000
 
     # Get the indivuals' information by sotring the valid values in arrays
-    gen_results = get_individuals(run, generation_range, value='results', as_generation_dict=True)
+    gen_results, _ = get_healthy_individuals_results(run, generation_range, as_generation_dict=True)
     
     generations = []
     avg_results = []

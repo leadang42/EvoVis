@@ -445,6 +445,7 @@ def get_healthy_individuals_results(run, generation_range=None, as_generation_di
                        If as_generation_dict is False, returns two lists of healthy and unhealthy individual results.
     """
     gen_results = get_individuals(run, generation_range, value="results", as_generation_dict=True)   
+    measurements = list(get_meas_info(run).keys())
     
     healthy = {}
     unhealthy = {}
@@ -465,7 +466,19 @@ def get_healthy_individuals_results(run, generation_range=None, as_generation_di
                 unhealthy[gen][ind] = result
             
             ###################################
-                  
+            
+            
+    healthy_list = []
+    for gen, results in healthy.items():
+        healthy_list += list(results.values())
+                
+    unhealthy_list = []
+    for gen, results in unhealthy.items():
+        unhealthy_list += list(results.values())
+        
+    print("Healthy:", len(healthy_list))
+    print("Unhealthy:", len(unhealthy_list))
+            
     if as_generation_dict:
         return healthy, unhealthy
         

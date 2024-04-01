@@ -3,6 +3,16 @@ import os
 import sys
 import subprocess
 
+##################################################
+
+# MAIN MODULE EVOVIS
+
+# The python script stores the ENAS run results path in an environmental variable
+# After that it executes the Dash web app.
+
+##################################################
+
+
 ### RUN RESULTS PATH
 if len(sys.argv) == 2:
     with open('.env', 'w') as env:

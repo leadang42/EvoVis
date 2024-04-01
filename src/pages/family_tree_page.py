@@ -94,7 +94,7 @@ def generation_slider():
         dash_core_components.RangeSlider: Dash RangeSlider component.
     """
     generations_int = get_generations(run, as_int=True)
-    random_generation, _ = get_random_individual(run, generations_int[round(len(generations_int)/2)])
+    random_generation, _ = get_random_individual(run, generations_int[round(len(generations_int)/3)])
     
     return dcc.RangeSlider(
         min(generations_int), 
@@ -108,7 +108,7 @@ def generation_slider():
         allowCross=False,
         id='gen-range-slider',
         tooltip={"placement": "top", "always_visible": True},
-        value=[random_generation-1, random_generation, random_generation+1], 
+        value=[random_generation-4, random_generation, random_generation+1], 
     )
 
 def individual_select(): 
