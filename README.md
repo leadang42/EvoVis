@@ -83,7 +83,7 @@ Settings for the `results` in `config.json`
 | `unit` | The unit of measurement for the result. |
 | `run-result-plot` | Indicates whether to include result in run results page. |
 | `individual-info-plot` | Indicates whether to include result in family tree page. |
-| `pareto-optimlity-plot` | Indicates whether to include result in the multi-objective mapping plot. |
+| `pareto-optimlity-plot` | Indicates whether to include result in the multi-objective mapping plot (fitness function objectives).|
 | `individual-info-img` | The image representing the result found in `src/assets/icons` directory. |
 | `min-boundary` | The minimum boundary for valid result values. |
 | `max-boundary` | The maximum boundary for valid result values. |
