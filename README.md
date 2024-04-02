@@ -32,20 +32,20 @@ git clone https://github.com/leadang42/EvoVis.git
 cd EvoVis
 ````
 
-2. **EvoVis Dependencies:** Install the project's dependencies.
+1. **EvoVis Dependencies:** Install the project's dependencies. This project was developed and tested using Python 3.11.3. While it may work with other versions of Python, compatibility with versions other than 3.11.3 is not guaranteed.
 ````    
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ````
 
-3. **EvoVis Execution:** Run EvoVis by specifying your run results directory path or use the sample enas run in the enas_example_run_results directory.
+1. **EvoVis Execution:** Run EvoVis by specifying your run results directory path or use the sample enas run in the enas_example_run_results directory.
 ````    
-python EvoVis.py <run_results_path>
+python3 EvoVis.py <run_results_path>
 ````
 ````
-python EvoVis.py ./enas_example_run_results
+python3 EvoVis.py ./enas_example_run_results
 ````
 
-4. **EvoVis Usage:** Access EvoVis dashboard via the provided localhost and explore the hyperparameters, gene pool graph, family tree graph, and performance plots.
+1. **EvoVis Usage:** Access EvoVis dashboard via the provided localhost and explore the hyperparameters, gene pool graph, family tree graph, and performance plots.
 
 ## Compatible ENAS Algorithms
 
