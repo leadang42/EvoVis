@@ -422,7 +422,7 @@ def objectives_overview():
                 dmc.Col(
                     [
                         dot_heading(heading, style={"font-size": "14px"}, className='dot-heading-results-page'), 
-                        graph_meas_over_gen(run, measurement, generation_range=None, min=meas_info.get("min-boundary", None), max=meas_info.get("max-boundary", None), height=fitn_obj_height, width=950)
+                        graph_meas_over_gen(run, measurement, generation_range=None, min=meas_info.get("min-boundary", None), max=meas_info.get("max-boundary", None), height=fitn_obj_height, width=250)
                     ], 
                     className="col-results-page"
                 )
