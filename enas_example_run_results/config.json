@@ -1,6 +1,6 @@
 {
     "hyperparameters": {
-        "generations": {
+        "num_generations": {
             "value": 20,
             "unit": null,
             "icon": "iconoir:tree",

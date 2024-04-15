@@ -374,7 +374,7 @@ def general_overview():
         dash_mantine_components.Grid: Dash Grid component containing general overview.
     """
     
-    tot_gen = get_hyperparameters(run)["generations"]["value"]
+    tot_gen = get_hyperparameters(run)["num_generations"]["value"]
     processed_gen = len(get_generations(run))
     healthy, unhealthy = get_healthy_individuals_results(run, as_generation_dict=False)
     
