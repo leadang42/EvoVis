@@ -138,12 +138,10 @@ def _get_layer_graph(run, group_connections=True):
         graph = {}
 
         # Process layers connections
-        for layer_rule in search_space.get("rule_set", []):
-            if not (layer_rule.get("exclude", False)):
-                
-                # Identify source and target layers
-                src_layer = layer_rule["layer"]
-                target_layers = layer_rule["rule"]
+        for src_layer in search_space.get("rule_set", []):
+                     
+                # Identify target layers
+                target_layers = search_space["rule_set"].get(src_layer).get("rule", [])
                 graph[src_layer] = target_layers
         
         # Return graph without group connections

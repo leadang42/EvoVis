@@ -114,8 +114,8 @@ def validate_search_space(run):
     
     rule_set = data['rule_set']
     
-    if not isinstance(rule_set, list):
-        return "Error config.json file: Rule set must be a list."
+    if not isinstance(rule_set, dict):
+        return "Error config.json file: Rule set must be a dict."
     
     # Check 'rule_set_group' key (doesn't need to exists if no group rules)
     rule_set_group = data.get('rule_set_group', [])
@@ -143,14 +143,12 @@ def validate_search_space(run):
     start_found = False
     
     for rule_entry in rule_set:
-        if not isinstance(rule_entry, dict):
-            message += "Error search_space.json file: Rule in 'rule_set' must be a dictionary.\n"
-        elif 'layer' not in rule_entry:
-            message += "Error search_space.json file: Rule entry in 'rule_set' is missing 'layer' key.\n"
-        elif 'rule' not in rule_entry:
+        if not isinstance(rule_entry, str):
+            message += "Error search_space.json file: Rule key in 'rule_set' must be a string.\n"
+        elif 'rule' not in rule_set[rule_entry].keys():
             message += "Error search_space.json file: Rule entry in 'rule_set' is missing 'rule' key.\n"
         else:
-            if rule_entry['layer'] == "Start":
+            if rule_entry == "Start":
                 start_found = True
 
     if not start_found:
